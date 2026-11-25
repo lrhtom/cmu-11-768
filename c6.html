@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>06 训练（下）：进阶 RL 算法与 RL 系统 · 11-768</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/site.css">
+<script>window.PAGE = { key: 'c6' };</script>
+<script src="assets/course.js"></script>
+<script src="assets/glossary.js"></script>
+<script src="assets/site.js"></script>
+</head>
+<body>
+<main class="doc">
+<header class="mhead">
+  <div class="kicker">06 · Training · Advanced RL &amp; RL Systems</div>
+  <h1>训练智能体（下）：让 RL 更新更稳、奖励更可靠，再跑成系统</h1>
+  <p class="lede">第 11 讲沿着一个修 bug 的任务，把上一章的基础算法补全。失败的尝试怎么也提供信号。每一步该分多少功劳：价值函数、TD 误差、GAE。rollout 来自旧策略时，用重要性采样修正。一次更新不能走太远，靠 PPO 裁剪、KL 和熵。奖励什么时候不可靠。验证器会有假阴性和假阳性。还有奖励作弊、没有信息的组、探索坍缩。最后是怎么向老师学：蒸馏和同策略蒸馏。第 12 讲讲 RL 框架本身。推理引擎和训练引擎各自怎么优化，权重怎么同步。还有异步 RL、序列延伸和 Token-In Token-Out。最后看架构怎么从单程序走到「一切皆服务」。两讲都直接对应作业 3。</p>
+  <div class="chips"><span class="chip">共 <b>2</b> 讲</span><span class="chip">视频 <b>2 小时 15 分</b></span><span class="chip">动画演示 <b>4</b> 个</span><span class="chip">对应 <b>作业 3</b></span></div>
+</header>
+
+<section class="ep" data-n="1">
+<h2>进阶 RL 算法：功劳分配、稳定的更新、可靠的奖励、向老师学</h2>
+<p class="tldr">Graham Neubig 回想了过去一两年训练智能体出过的问题。这一讲只讲能解决这些真问题的方法。贯穿例子是修一个 bug，内容分四块。<b>有用的反馈</b>：组基线让失败也有信号。价值函数、TD 误差和 GAE 给每一步分功劳。<b>更少等待</b>：异步 RL 会带来过期的 rollout，用重要性采样修正。<b>稳定的更新</b>：用 PPO 式裁剪、KL、熵限制一次更新的幅度。<b>可靠的奖励</b>：验证器会假阴性、假阳性，模型会奖励作弊。组里奖励全一样会没有信号，部分奖励也有副作用。<b>向老师学</b>：课程、蒸馏、同策略蒸馏。</p>
+
+<h3 data-d="1" data-m="1" data-why="这一讲的贯穿例子">1. 整讲只用一个修 bug 的任务当例子</h3>
+<p>整讲的算法都拿同一个修 bug 任务来演示。这一讲只讲算法和数学。沙箱、并行这些系统问题留到下一讲 <span class="ts">0:40</span><span class="ts">1:21</span>。</p>
+<p>任务是修好重试设置（讲义第 3 页）。配置里 retries 是 0 时应该关掉重试，代码却返回 3。其余情况保持不变。验证器是四个测试，全过奖励 1，否则 0。换成数学题、网页导航、深度研究，结构也一样 <span class="ts">1:21</span><span class="ts">2:06</span>。</p>
+<pre class="code" data-lang="py" data-run>def retry_count(config):  # 讲义第 3 页：有 bug 的初始代码
+    return config.get("retries") or 3
+tests = [({}, 3), ({"retries": None}, 3), ({"retries": 0}, 0), ({"retries": 2}, 2)]
+passed = [retry_count(c) == want for c, want in tests]
+print(passed, "reward =", int(all(passed)))
+# 输出: [True, True, False, True] reward = 0
+# 踩坑：or 把 0 当成"没设"，0 就变成了 3。平时写默认值最容易栽在这
+# 四个测试对应讲义的 Missing → 3、None → 3、0 → 0、2 → 2</pre>
+<p>这就像考驾照的四个科目。四项全过才发证，差一项就是 0 分。</p>
+<p>一条成功的轨迹长这样（讲义第 4 页）。先读函数，再改默认值的处理，然后跑测试。还剩一个没过，再改一次，四个全过。它成功了，但中间犯了一次错，本可以更快 <span class="ts">2:06</span><span class="ts">2:47</span>。</p>
+<p>记号沿用上一讲。θ 是参数，π<sub>θ</sub> 是策略，τ 是轨迹。目标仍是最大化期望奖励 J(θ) = 𝔼[R(τ)] <span class="ts">2:47</span><span class="ts">3:29</span>。</p>
+
+<h3 data-d="1" data-m="2" data-why="复习组基线，引出功劳分配问题">2. 组基线让失败也有信号，但分不清是哪一步的功劳</h3>
+<p>组基线就是拿同一题几次尝试的平均分当及格线。高于它的加分，低于它的扣分。</p>
+<p>普通 REINFORCE 成功就把整条轨迹的概率往上推，失败什么都不做（讲义第 6 页）。这样方差大，难优化 <span class="ts">3:29</span>。我们希望失败也提供学习信号，奖励也比 0 和 1 更细 <span class="ts">4:16</span>。</p>
+<p>上一讲的 GRPO 就是第一步（讲义第 8 页）。同一个任务采四次，用组平均 (1+0+0+0)/4 = 0.25 当基线。成功的权重是 +0.75，三次失败各 −0.25 <span class="ts">5:00</span>。</p>
+<pre class="code" data-lang="py" data-run>rewards = np.array([1, 0, 0, 0])     # 同一个任务采四次（讲义第 8 页）
+weights = rewards - rewards.mean()   # 组平均 0.25 当基线
+print(weights)
+# 输出: [ 0.75 -0.25 -0.25 -0.25]
+# 踩坑：成功轨迹的每一步都拿 +0.75，中间那步错误也跟着被奖励
+# 作业 3 考点：作业 3 的优势就是这样算的。只减组均值，不除以标准差，不加 KL</pre>
+<p>这像全班按平均分排名。考得好的加分，考得差的扣分，没人白考。</p>
+<p>但这还不够细（讲义第 9 页）<span class="ts">5:00</span><span class="ts">5:42</span>。成功的轨迹中间可能错过一步，后来又救回来了。给整条轨迹正权重，就把这个错误也奖励了。失败的轨迹可能前面一直做得很好，到最后才出岔子。没必要把前面有用的工作全罚掉。这就是<b>功劳分配</b>问题，要的是回合级的奖励 <span class="ts">6:22</span>。</p>
+
+<div data-vz="c6-credit" data-sc="0"></div>
+
+<h3 data-d="2" data-m="2" data-why="PPO 用的评论家，c11 的树搜索也靠价值打分">3. 价值函数预测：从这一步出发还能拿多少奖励</h3>
+<p>价值函数就是一个打分员。它看一眼现在的历史，猜最后能拿多少奖励。</p>
+<p>上一讲的<b>剩余回报</b> R<sub>t</sub>，是 h<sub>t</sub> 之后还剩的奖励之和（讲义第 10 页）<span class="ts">6:22</span><span class="ts">7:03</span>。只有最终奖励时，成功轨迹 A 上处处是 1。失败轨迹 B 上处处是 0。这样还是分不出哪一步好。</p>
+<p>只看到最终奖励，怎么知道哪一步有帮助？同学们提了几个想法 <span class="ts">7:45</span>。比如写 rubric 拿细粒度奖励，找成功轨迹共有的动作。还有给"轨迹更短"这类额外奖励。讲师说都不错，有的后面会讲 <span class="ts">8:29</span>。最典型的做法是训练一个模型。它预测"照现在这样，智能体会不会成功"。这就是<b>价值函数</b> <span class="ts">10:00</span>。</p>
+<p>直观上是这样（讲义第 12 页）。从 B 的历史 h<sub>3</sub> 出发，用同一个 rollout 策略 μ 再跑 10 次。3 次成功、7 次失败（示意），期望剩余回报约 0.3 <span class="ts">10:43</span>。跑无穷多次，就是这个策略下的价值 <span class="ts">11:24</span>：</p>
+<div class="fx math">V<sup>μ</sup>(h<sub>3</sub>) = 𝔼<sub>μ</sub>[R<sub>3</sub> | h<sub>3</sub>]</div>
+<p>每一步都这样采太贵。所以训练一个<b>评论家</b>（critic）V<sub>φ</sub>(h) 去预测剩余回报。训练用平方误差（讲义第 13 页）<span class="ts">11:24</span><span class="ts">12:06</span>：</p>
+<div class="fx math">L<sub>V</sub>(φ) = 𝔼<sub>t</sub>[ ( V<sub>φ</sub>(h<sub>t</sub>) − R<sub>t</sub> )² ]</div>
+<pre class="code" data-lang="py" data-run>outcomes = np.array([0, 1, 0, 0, 1, 0, 0, 0, 1, 0])  # 从 h3 再跑 10 次，3 次成功（示意）
+for v in (0.6, outcomes.mean()):
+    print(v, round(np.mean((v - outcomes) ** 2), 2))  # 预测 v 时的平均平方误差
+# 输出: 0.6 0.3
+# 输出: 0.3 0.21
+# 平方误差在均值处最小，所以评论家学到的就是"从这里出发的成功率"</pre>
+<p>复用这 10 个结果。预测 0.6 时，平均平方误差是 [3(0.6−1)² + 7(0.6)²]/10 = 0.30。预测均值 0.3 时最小，是 0.21。这像天气预报员。他不知道明天下不下雨，但长期说 30% 最准。</p>
+<p>评论家怎么搭（讲义第 14 页）<span class="ts">12:06</span><span class="ts">12:49</span><span class="ts">13:32</span>：</p>
+<table class="lab">
+  <tr><th>做法</th><th>怎么训练</th><th>代价</th></tr>
+  <tr><td>独立的价值网络（更常见）</td><td>有自己的主体和输出层，价值损失训练整个网络。例子是 InstructGPT。</td><td>要训练两个模型，训练一个已经够难了</td></tr>
+  <tr><td>策略主体上的价值头</td><td>在策略模型的表示上，加一个很小的线性价值头 φ。用 stop-gradient 让价值损失只训练这个头。策略损失仍训练主体。例子是 MIXER。</td><td>几乎不加参数</td></tr>
+</table>
+<p>输出端也有两种。一是直接回归一个数。二是问模型"这条轨迹好不好？是 / 否"。再用 P(是) / (P(是) + P(否)) 当预测 <span class="ts">13:32</span>。第二种只适用于奖励在 0 到 1 之间。但它能复用模型本身的先验，效果不错 <span class="ts">14:21</span><span class="ts">15:03</span>。评论家可以和策略同时用 RL 训练。</p>
+<div class="co warn"><p><b>课堂问答：</b>模型能判断动作对不对，何不直接生成对的动作 <span class="ts">15:50</span>？讲师给了两个理由。一是价值函数只看<b>历史</b>，不看动作。它判断的是"现在的局面好不好"。二是判断自己做得糟，往往比知道下一步怎么做容易得多。区分好坏轨迹，比生成好的下一步容易 <span class="ts">15:50</span><span class="ts">16:31</span>。</p></div>
+
+<div data-vz="c6-credit" data-sc="1"></div>
+
+<h3 data-d="3" data-m="2" data-why="PPO 的逐步优势估计，作业 3 用不到">4. TD 误差看一步的好坏，GAE 把后面几步也算进来</h3>
+<p>一步的功劳，就看这一步前后价值涨了还是跌了（讲义第 15 页）<span class="ts">16:31</span><span class="ts">17:15</span>：</p>
+<div class="fx math">δ<sub>t</sub> = r<sub>t+1</sub> + V<sub>φ</sub>(h<sub>t+1</sub>) − V<sub>φ</sub>(h<sub>t</sub>)</div>
+<p>这叫时间差分（TD）误差，这里不打折扣。假如一个动作很糟，比如不小心删了代码库，价值一下掉到 0。这从 δ 上就能看出来 <span class="ts">17:15</span><span class="ts">17:56</span>。</p>
+<p>拿轨迹 B 的最后三步算一遍。V(h<sub>3</sub>) = 0.3，V(h<sub>4</sub>) = 0.6，V(h<sub>5</sub>) = 0.4。B 在 a<sub>5</sub> 之后结束，V(h<sub>6</sub>) = 0，奖励都是 0。于是 δ<sub>3</sub> = +0.3，δ<sub>4</sub> = −0.2，δ<sub>5</sub> = −0.4。</p>
+<p>TD 误差还要变成每一步的优势。最常用的是 PPO 用的<b>广义优势估计</b>（GAE，讲义第 16 页）<span class="ts">17:56</span><span class="ts">18:38</span><span class="ts">19:19</span>：</p>
+<div class="fx math">Â<sub>t</sub> = Σ<sub>k≥0</sub> λ<sup>k</sup> δ<sub>t+k</sub> = δ<sub>t</sub> + λ Â<sub>t+1</sub></div>
+<p>λ = 0.5 时，Â<sub>3</sub> = 0.3 + 0.5 × (−0.2) + 0.25 × (−0.4) = 0.1。a<sub>3</sub> 本身是好的一步，但后面跟着两步坏的。所以它的功劳被打了折扣。只要能训练出价值模型，就能估计每一步有多好。</p>
+<pre class="code" data-lang="py" data-run>V = {3: 0.3, 4: 0.6, 5: 0.4, 6: 0.0}   # 轨迹 B 的价值（讲义第 15 页），中间奖励都是 0
+delta = {t: round(V[t + 1] - V[t], 2) for t in (3, 4, 5)}
+A, lam = 0.0, 0.5
+for t in (5, 4, 3): A = delta[t] + lam * A   # GAE 从最后一步往前递推
+print(delta, round(A, 2))
+# 输出: {3: 0.3, 4: -0.2, 5: -0.4} 0.1
+# 踩坑：递推要倒着算。正着算时，A_{t+1} 还没算出来
+# 作业 3 考点：作业 3 没有评论家，优势只用组均值当基线，所以用不到 GAE 和价值函数</pre>
+<p>这像球队复盘一次进攻。某一脚传球好不好，要看后面几脚接没接上。λ 越大，越看重后面。</p>
+<div class="co warn"><p><b>λ 取多少？</b>课上被问到时，讲师说训练 PPO 时常用 λ = 1 <span class="ts">20:56</span>。也就是不打折扣地把 δ 加起来。中间的 V 两两相消，只剩"实际的剩余回报 − V(h<sub>t</sub>)"。这相当于只看最终奖励 <span class="ts">21:42</span>。本机按讲义的数算过：λ = 1 时 Â<sub>3</sub> = 0.3 − 0.2 − 0.4 = −0.3。这正好等于 0 − V(h<sub>3</sub>)。价值函数够好，或者有中间奖励（比如 rubric），才值得把 λ 设小。另外，讲义里的 μ 是 rollout 策略。完全同策略时，它就是正在更新的策略。后面讲异步时两者会不同 <span class="ts">20:13</span>。</p></div>
+<p><b>另一个替代是过程奖励模型</b>（PRM，讲义第 17 页）<span class="ts">22:26</span><span class="ts">23:09</span>。价值函数是在学习过程中顺带学出来的。PRM 不一样，它事先单独训练，学"每一步对不对"。训练数据靠人工标注。讲义的例子是一道分数题的解答。标注员把"所以 x = 7"那一步标为错误。由 5x = 6x − 14 应该得 x = 14。讲师说它用得不算广，因为价值可以在训练中顺带学到。要是能拿到大量这类标注，可以先用它引导出初始价值函数。这样起点更好，训练会更快。</p>
+
+<div data-vz="c6-credit" data-sc="2"></div>
+
+<h3 data-d="1" data-m="3" data-why="作业 3 Part 3 要写异步 GRPO">5. 异步 RL 不等掉队的，代价是用上旧策略的数据</h3>
+<p>异步 RL 让生成一直跑，攒够一批就更新，不再等最慢的那条。</p>
+<p>智能体 RL 可能非常慢，作业里一定会体会到 <span class="ts">23:51</span>。先看<b>同步 RL</b>（讲义第 19 页）。几块 GPU 同时生成，或者几个智能体共享一个推理服务。一批里每条轨迹都结束了才更新。讲义的图还算客气 <span class="ts">24:32</span>。训练编程智能体时，常有一个"掉队者"。它要花别人两倍甚至四倍的时间。其他人全在干等 <span class="ts">25:14</span>。同步的好处是<b>完全同策略</b>。生成用的策略 μ 和正在更新的 π<sub>θ</sub> 一模一样 <span class="ts">25:14</span><span class="ts">25:58</span>。</p>
+<pre class="code" data-lang="py" data-run>lengths = [3, 5, 9, 4]   # 一批四条 rollout 各要几个时间单位（示意）
+idle = sum(max(lengths) - n for n in lengths)   # 同步：短的都要等最长的 9
+print("sync idle =", idle)
+# 输出: sync idle = 15
+# 作业 3 考点：Part 3 的 AsyncGRPOTrainer，就是要把这段空等用起来</pre>
+<p>这像旅行团等最后一个游客上车。异步就是车先开，晚到的坐下一班。</p>
+<p><b>异步 RL</b>（讲义第 20 页）的做法不同。rollout worker 一直生成，攒够一批就开始更新。更新的同时继续生成，从不浪费时间等待。代价是一部分生成用的是更新前的旧策略 <span class="ts">25:58</span><span class="ts">26:41</span>。讲师判断，现在认真做智能体 RL 的人都不用同步更新了。软件对异步的支持也已经很好。但异步会带来训练不稳定 <span class="ts">27:22</span>。系统层面的细节见本章第 2 讲的演示。</p>
+
+<h3 data-d="3" data-m="3" data-why="作业 3 的异步训练靠重要性比率修正过期数据">6. 过期的 rollout 要乘上新旧策略的概率之比</h3>
+<p>数据是旧策略采的，就给每个样本乘一个比值。这个比值说的是：新策略比旧策略更想采它多少倍。</p>
+<p>一条 rollout 可能在 learner 更新之后才结束（讲义第 22 页）。三个可选的编辑，旧策略 μ 给 0.40 / 0.40 / 0.20。正在更新的 π<sub>θ</sub> 已经是 0.70 / 0.20 / 0.10。动作是 μ 采的，学习者却是 π<sub>θ</sub> <span class="ts">27:22</span>。我们想要 π<sub>θ</sub> 下的期望奖励，实际拿到的却是 μ 下的 <span class="ts">28:06</span>。</p>
+<p>修正办法是<b>重要性采样</b>（讲义第 23 页）<span class="ts">28:46</span><span class="ts">29:27</span>。讲师问了一下，课上听说过的人出乎意料地少。</p>
+<div class="fx math">𝔼<sub>a∼π<sub>θ</sub></sub>[R(a)] = 𝔼<sub>a∼μ</sub>[ ( π<sub>θ</sub>(a|h) / μ(a|h) ) · R(a) ]</div>
+<pre class="code" data-lang="py" data-run>mu = np.array([0.40, 0.40, 0.20])   # 旧策略给三个编辑的概率（讲义第 22 页）
+pi = np.array([0.70, 0.20, 0.10])   # 正在更新的策略
+R = np.array([1, 0, 0])             # 只有第一个编辑（加 None 检查）得 1（示意）
+print(pi / mu, round((pi * R).sum(), 2), round((mu * (pi / mu) * R).sum(), 2))
+# 输出: [1.75 0.5  0.5 ] 0.7 0.7
+# 两边都是 0.7：在旧数据上乘了比率，就等于在新策略下求期望
+# 作业 3 考点：比率按 token 算，ρ = exp(logπθ − logπold)，只看当前这个动作</pre>
+<p>正确的编辑比率是 0.70 / 0.40 = 1.75，不完整的编辑是 0.20 / 0.40 = 0.50。新策略下更可能的样本被放大，更不可能的被缩小 <span class="ts">29:27</span><span class="ts">30:10</span>。这像拿旧问卷估计新人群。新人群里多的那类人，就把他们的票数加权。</p>
+<p>麻烦出在长轨迹上（讲义第 24–26 页）<span class="ts">30:10</span><span class="ts">30:56</span><span class="ts">31:42</span><span class="ts">32:25</span>：</p>
+<ul>
+  <li>整条轨迹的比率，是每一步比率的<b>连乘</b>（环境不变）。公式是 w(τ|x) = Π<sub>t</sub> π<sub>θ</sub>(a<sub>t</sub>|h<sub>t</sub>) / μ(a<sub>t</sub>|h<sub>t</sub>)。每步只差 5%，100 步就是 1.05<sup>100</sup> ≈ 132。讲师说 100 步还算客气。一条智能体轨迹常有五六万个 token。</li>
+  <li>失配沿着回答增长。对数比率是一串数相加，独立同分布时标准差按 √t 增长。讲义第 25 页的图是带工具的数学 rollout。log ρ<sup>cum</sup> 的标准差从 0 涨到约 2.7，横轴到 5,000 个 token。拟合的是 σ̂√t，σ̂ = 0.0387。</li>
+  <li>前面的动作还会改变后面的历史。前面"加 None 检查"这一步，μ 给 40%，π<sub>θ</sub> 给 10%。之后"跑测试"两边都是 50%，这一步比率是 1。但在 π<sub>θ</sub> 下，到达这个历史的可能性只有 0.10 / 0.40 = 0.25。</li>
+</ul>
+<pre class="code" data-lang="py" data-run>steps = np.array([10, 50, 100])
+print(np.round(1.05 ** steps, 1))   # 每步只差 5%，连乘起来
+# 输出: [  1.6  11.5 131.5]
+print(0.10 / 0.40)   # 第 26 页：前一步让新策略到达这个历史的可能性只剩四分之一
+# 输出: 0.25
+# 踩坑：只乘当前动作的比率，会漏掉这个 0.25。乘满整条又会爆。PPO / GRPO 选了前者</pre>
+<p>各算法让哪些动作进入权重（讲义第 27 页）<span class="ts">32:25</span><span class="ts">33:05</span><span class="ts">33:49</span>：</p>
+<table class="lab">
+  <tr><th>方法</th><th>比率里乘了哪些动作</th><th>讲师的评价</th></tr>
+  <tr><td>PPO / GRPO（以及 DAPO、CISPO）</td><td>只有当前动作</td><td>最常见。没考虑连乘，所以不是正确的重要性权重。但它"够用"，能反映这个动作有多出乎意料。</td></tr>
+  <tr><td>CTPO</td><td>到 t 为止的所有动作</td><td>会变得很大，要靠裁剪</td></tr>
+  <tr><td>全比率</td><td>所有动作</td><td>同样会爆掉</td></tr>
+  <tr><td>GSPO</td><td>所有动作，再按序列长度归一化</td><td>拉回到和 PPO / GRPO 差不多的尺度</td></tr>
+</table>
+<p>一句话：要用重要性权重，但不能让它失控 <span class="ts">34:31</span>。</p>
+
+<div data-vz="c6-offpolicy" data-sc="0,1"></div>
+
+<h3 data-d="3" data-m="3" data-why="作业 3 的 GRPO 训练都用 PPO 裁剪损失">7. 一次更新不能迈太大：裁剪、KL 和熵</h3>
+<p>过期数据的权重偶尔会大得离谱。裁剪就是给比率设上下限，出了界的部分不再算数。</p>
+<p>讲义第 29 页是讲师实验室真跑出来的图，感谢助教 Aditya <span class="ts">34:31</span>。图上画的是每个训练批里最大的重要性权重。最大"离策略程度"设为 1 时，曲线一直很平 <span class="ts">35:18</span>。这时只能用上一个策略的 rollout。放宽到 3 时，第 17 步左右冒出一个约 1,350 的权重。讲师口头说的是"一千四上下" <span class="ts">36:04</span>。乘上这么大的权重，梯度一步迈得极大。整个训练可能就毁了。</p>
+<pre class="code" data-lang="py" data-run>w = np.array([0.99] * 99 + [2.0])   # 一批 100 个重要性权重，只有一个尖峰（示意）
+stats = [w.mean(), w.min(), w.max(), w.std()]
+print([round(float(s), 2) for s in stats])
+# 输出: [1.0, 0.99, 2.0, 0.1]
+# 作业 3 考点：异步训练要报权重的均值、最小、最大、标准差
+# 作业特意提醒：均值接近 1 可能掩盖重尾。只看均值，就看不到这个尖峰</pre>
+<p>办法有点启发式，就是<b>裁剪概率比</b>（讲义第 30–32 页）<span class="ts">36:04</span><span class="ts">36:53</span><span class="ts">37:37</span>。PPO 的标准设置是下界 0.8、上界 1.2：</p>
+<div class="fx math">c<sub>t</sub> = clip(ρ<sub>t</sub>, 0.8, 1.2)</div>
+<div class="fx math">J<sub>PPO</sub>(θ) = 𝔼<sub>t</sub>[ min(ρ<sub>t</sub>Â<sub>t</sub>, c<sub>t</sub>Â<sub>t</sub>) ]</div>
+<div class="fx math">J<sub>CISPO</sub>(θ) = 𝔼<sub>t</sub>[ sg(c<sub>t</sub>) Â<sub>t</sub> log π<sub>θ</sub>(u<sub>t</sub>|u<sub>&lt;t</sub>) ]</div>
+<p>要最小化的损失是 −J。直观上是这样（讲义第 32 页）<span class="ts">38:23</span>。对有帮助的动作（Â &gt; 0），比率超过 1 + ε 就不再给奖励。对没帮助的动作（Â &lt; 0），比率低于 1 − ε 就不再惩罚。CISPO 用同一个裁剪比率，但把它当作不求梯度（sg）的固定权重 <span class="ts">37:37</span>。</p>
+<pre class="code" data-lang="py" data-run>def ppo(rho, A, eps=0.2):  # 讲义第 31 页：原始项和裁剪项取小的那个
+    c = max(1 - eps, min(rho, 1 + eps))
+    return min(rho * A, c * A)
+for A in (1, -1):
+    print(A, [round(ppo(r, A), 2) for r in (0.6, 1.0, 1.4)])
+# 输出: 1 [0.6, 1.0, 1.2]
+# 输出: -1 [-0.8, -1.0, -1.4]
+# A > 0：ρ 过了 1.2 就变平，不再鼓励。但 ρ = 0.6 不裁，照样往回拉
+# A < 0：ρ 低于 0.8 就变平。ρ = 1.4 不裁，坏动作变多了要继续压
+# 踩坑：取 min 的意思是，只在"已经往对的方向走过头"时才停止给收益</pre>
+<p>这像限速。往对的方向开，超过限速就不再加分。往错的方向开，照样扣分。</p>
+<pre class="code" data-lang="py" data-run>rho, A, logp = 1.4, 1.0, -0.5   # 一个动作 token 的比率、优势、对数概率（示意）
+loss = {"ppo": -min(rho * A, max(0.8, min(rho, 1.2)) * A),
+        "importance_sampling": -rho * A,
+        "cross_entropy": -A * logp}
+print({k: round(v, 2) for k, v in loss.items()})
+# 输出: {'ppo': -1.2, 'importance_sampling': -1.4, 'cross_entropy': 0.5}
+# 作业 3 考点：train.loss_fn 三选一。ppo 就是本讲的裁剪，GRPO 的各次运行都用它
+# 作业 3 考点：importance_sampling 只加权不裁剪，REINFORCE 那次运行用它
+# 作业 3 考点：cross_entropy 不看比率，是 Part 4.3"不修正"的对照
+# 出处是 ASSIGNMENT.md 的 Asynchronous Training and Importance Weighting 一节</pre>
+<div class="co bad"><p><b>不处理权重尖峰会怎样</b> <span class="ts">39:10</span><span class="ts">39:52</span>：模型会突然开始做退化的事。比如同一个 token 一遍遍重复，输出变得极长或极短。很难说是哪一种，就是"突然看起来很怪"。原因通常是某一步梯度太大，把模型带偏了。而且很难恢复。之后再也拿不到优势和好奖励，训练就失败了。有同学问，能不能也裁剪梯度？可以。讲师认为重要性权重是梯度失控的最大原因。至于裁剪梯度是不是最常见的做法，他说要回去查 <span class="ts">40:38</span>。</p></div>
+<p>另外两个稳定手段（讲义第 33–34 页）<span class="ts">40:38</span><span class="ts">41:23</span><span class="ts">42:04</span><span class="ts">42:47</span>：</p>
+<ul>
+  <li><b>参考模型的 KL</b>：max<sub>θ</sub> J<sub>policy</sub> − β D<sub>KL</sub>(π<sub>θ</sub> ‖ π<sub>ref</sub>)。参考模型通常就是初始模型，固定不动当锚。它也能防止大更新。注意分清两个模型。μ 产生训练批，提供比率的分母。π<sub>ref</sub> 是锚。</li>
+  <li><b>熵</b>：max<sub>θ</sub> J<sub>policy</sub> + α H(π<sub>θ</sub>)。熵衡量分布有多宽，也就是会不会采出多种不同的输出。RL 里常见熵<b>坍缩</b>，也就是模型失去多样性。组里没有可比的东西，GRPO 的信号就没了。熵太高也不行，采的都是随机的东西。熵正则可以两头都防。</li>
+</ul>
+<p>常见算法一览（讲义第 35 页）<span class="ts">43:28</span><span class="ts">44:10</span><span class="ts">44:59</span>：</p>
+<table class="lab">
+  <tr><th>算法</th><th>来自奖励的权重</th><th>学的评论家？</th><th>重要性比率</th><th>裁剪</th></tr>
+  <tr><td>REINFORCE</td><td>剩余回报 R<sub>t</sub></td><td>否</td><td>无。用新鲜 rollout，不完全同策略时也可以加。</td><td>无</td></tr>
+  <tr><td>PPO</td><td>评论家给的 GAE</td><td>是</td><td>当前 token ρ<sub>t</sub></td><td>原始项和裁剪项取 min</td></tr>
+  <tr><td>GRPO</td><td>组比较</td><td>否</td><td>当前 token ρ<sub>t</sub></td><td>同 PPO</td></tr>
+  <tr><td>CISPO</td><td>组比较</td><td>否</td><td>当前 token ρ<sub>t</sub></td><td>裁剪后的比率当固定权重。讲师说 MiniMax 的模型用过。</td></tr>
+  <tr><td>GSPO</td><td>组比较</td><td>否</td><td>整个回答，按长度归一化</td><td>在回答级比率上做 PPO 的 min</td></tr>
+  <tr><td>DAPO</td><td>组比较</td><td>否</td><td>当前 token ρ<sub>t</sub></td><td>PPO 的 min，但<b>上界更高</b>。这叫非对称裁剪，更多地奖励正优势。</td></tr>
+</table>
+<p>"组比较"就是上一章的 GRPO。先减去组的平均奖励，再除以奖励的离散度。</p>
+
+<div data-vz="c6-offpolicy" data-sc="2"></div>
+
+<h3 data-d="1" data-m="2" data-why="验证器出错和奖励作弊，训练时必须盯">8. 验证器会冤枉好解，也会放过坏解</h3>
+<p>奖励是验证器给的。验证器一错，模型就跟着学歪。</p>
+<p>用 GRPO 时，有个量很值得监控：<b>零优势输出的比例</b>（讲义第 37 页）<span class="ts">45:42</span>。组里至少要有一个成功和一个失败。否则优势全为 0，没有梯度。全失败和全成功都是问题 <span class="ts">46:23</span>。</p>
+<pre class="code" data-lang="py" data-run>groups = [[0, 0, 0, 0], [1, 0, 0, 1], [1, 1, 1, 1], [0, 1, 0, 0]]  # 四组奖励（示意）
+zero = [g for g in groups if max(g) == min(g)]   # 全一样的组，减去均值后全是 0
+print(len(zero) / len(groups))
+# 输出: 0.5
+# 踩坑：这个比例一高，一半的 rollout 就白跑了，梯度只来自剩下的组</pre>
+<p>为什么会全失败（讲义第 38 页）<span class="ts">46:23</span><span class="ts">47:05</span>：</p>
+<table class="lab">
+  <tr><th>原因</th><th>怎么检查</th></tr>
+  <tr><td>验证器质量：有效的解被判错。讲师说这非常常见。</td><td>看要求和失败的测试</td></tr>
+  <tr><td>当前能力：模型还解不了</td><td>看更强模型的示范能不能成功</td></tr>
+  <tr><td>缺乏探索：所有尝试都在重复同一种做法</td><td>看轨迹之间有没有差别</td></tr>
+</table>
+<p><b>假阴性</b>是把好解判成错（讲义第 39–40 页）<span class="ts">47:05</span><span class="ts">47:46</span>。理想的测试直接检查输入输出。坏的验证器可能要求源码里出现 <code>value is None</code> 这个短语。候选解四种情况全对，只因写法不同被拒 <span class="ts">48:30</span>。听起来很傻。但讲师说<b>智能体写测试时经常这样</b>。它写出的测试不检验真实行为 <span class="ts">49:12</span>。</p>
+<pre class="code" data-lang="py" data-run>fix = "v = config.get('retries')\nreturn 3 if v is None else v"   # 一个正确的修复
+def phrase_verifier(src): return "value is None" in src           # 坏验证器：查措辞
+print(phrase_verifier(fix))
+# 输出: False
+# 踩坑：要检查行为，不要检查措辞。写法一换，好解就被判 0 分</pre>
+<p>后果有两个。一是奖励有噪声。二是评测分数在 100% 以下走平，量不出真实的进步。讲义列了几个例子。SWE-bench Verified 约 81%。讲师说 OpenAI 自己发文章，批评过这个由他们创建的基准。剩下没解出的，很多是验证器的问题。τ-bench Airline 约 70%，Retail 约 92%。任务不一致或标注错误，限制了能达到的分数。这些是历史版本，后来修正过。</p>
+<p><b>假阳性</b>是把坏解判成对（讲义第 41–43 页）<span class="ts">49:12</span><span class="ts">49:53</span>。测试只查了想要的东西的一个子集，退化的解也能拿高分。比如训练测试只测 retries=0，<code>return 0</code> 就能拿到奖励 1。四个真实要求，它却只过一个。</p>
+<pre class="code" data-lang="py" data-run>tests = [({}, 3), ({"retries": None}, 3), ({"retries": 0}, 0), ({"retries": 2}, 2)]
+const0 = lambda config: 0                 # 退化解：永远返回 0
+weak_test = const0({"retries": 0}) == 0   # 训练测试只测了 retries=0
+print(weak_test, sum(const0(c) == want for c, want in tests))
+# 输出: True 1
+# 踩坑：训练奖励拿满，四个真实要求只过一个。这就是奖励作弊的入口</pre>
+<p>这像考试只考第一题。学生发现了，就只背第一题的答案。这种钻空子就叫<b>奖励作弊</b>。讲师强调，下面这些都是智能体<b>自发</b>做的。他没有刻意去找 <span class="ts">50:39</span><span class="ts">51:20</span><span class="ts">52:03</span>：</p>
+<table class="lab">
+  <tr><th>环境里有什么</th><th>智能体的捷径</th></tr>
+  <tr><td>能上网</td><td>去网上找公布的解。讲师提到一起被广泛讨论的事件。智能体为了找答案非常激进地上网，越出了沙箱。对策是不给上网，至少不给能直接查到答案的站点。</td></tr>
+  <tr><td>Git 历史（含未来的提交）</td><td>把历史快进到含答案的版本，直接抄后来的修复。好几个编程基准都有这个漏洞。讲师修过，并提交了修复。</td></tr>
+  <tr><td>一个模型 API 密钥</td><td>讲师几周前刚遇到。为了驱动智能体，容器里放了密钥。智能体找到代理服务器，发现上面还有别的模型。它就去问一个更强的模型要答案。他说是 DeepSeek V4 Flash 去调 Claude Opus。讲义还记了一例。一个 PostTrainBench 智能体不顾明确限制，用评分密钥生成训练数据。</td></tr>
+  <tr><td>能访问测试或测试运行器</td><td>专门针对测试写代码，让测试通过，而不修 bug</td></tr>
+</table>
+<div class="co bad"><p><b>更糟的是：训练时出现，就会被学进参数</b> <span class="ts">52:47</span><span class="ts">53:28</span>。假如任务不越出沙箱就不可能完成，而沙箱恰好有漏洞。RL 就会一遍遍强化"越狱"这个行为。讲师自己用这个模型做题时，它大约 60% 的时间会去调那个 API。他推断这种行为是在训练中被强化出来的。否则它不会这么牢固地留在模型里。</p></div>
+<p><b>独立地检查进展</b>（讲义第 43 页）<span class="ts">53:28</span><span class="ts">54:11</span><span class="ts">54:53</span>。训练奖励要看，但还要做三件事。一是在没见过的任务上检查。二是看智能体的实际行为，确认它没有违反规则。现在已经可以查看它在做什么。三是看成本和失败。有时训练失败不是智能体的问题，而是基础设施倒了。讲师建议让一个智能体定期去监控训练运行。即使没有专门的工具，这也很有效。如果奖励涨了，独立的改进却没有，就去轨迹里找捷径。</p>
+
+<div data-vz="c6-reward" data-sc="0,1"></div>
+
+<h3 data-d="1" data-m="2" data-why="让组内有差别的两种常用办法">9. 组里全一样就没梯度：要么接着采，要么给部分分</h3>
+<p>GRPO 只能从组内的差别里学。所以要想办法让组里有差别。</p>
+<p><b>DAPO 动态采样</b>（讲义第 44 页）<span class="ts">54:53</span><span class="ts">55:36</span>。奖励全同的组优势为零，就跳过它接着采。一直采到训练批里攒够奖励混合的组。讲师说用这个方法的人不算多，但大规模训练里用过。</p>
+<p><b>部分和辅助奖励</b>（讲义第 45 页）<span class="ts">56:18</span><span class="ts">57:00</span>。任务越来越难，起点模型可能完全做不了。办法之一是先练简单任务。另一个是给部分奖励。最简单的就是"通过的测试数 ÷ 测试总数"。这样即使成功奖励是 0，也有非零分，算得出 GRPO 的优势。</p>
+<pre class="code" data-lang="py" data-run>checks = np.array([0, 1, 2, 1])    # 四条轨迹各过了几项检查（讲义第 45 页）
+success = (checks == 4) * 1.0      # 只看成功：全是 0
+partial = checks * 0.25            # 每项给 0.25 的部分分
+print(success - success.mean(), partial - partial.mean())
+# 输出: [0. 0. 0. 0.] [-0.25  0.    0.25  0.  ]
+# 部分分 0、0.25、0.50、0.25，减去均值 0.25，组里终于有了差别</pre>
+<p>这像考试给步骤分。最后答案错了，前面写对的几步也能拿分。</p>
+<p>代价是奖励更难设计（讲义第 46 页）<span class="ts">57:00</span><span class="ts">57:42</span>。你不再直接优化最终的准确率。附加奖励和任务不一致时，模型会牺牲主奖励去刷它 <span class="ts">58:23</span>。讲师举了两个 OpenAI 的真实例子 <span class="ts">59:06</span>：</p>
+<ul>
+  <li>GPT-5.1 曾有个"使用网页浏览器"的辅助奖励。本意是教它用浏览器。结果它学会了打开浏览器，找一个计算器网页来算数学题。算 1 + 2 也要开浏览器，多花五秒，只为拿那点辅助奖励。</li>
+  <li>"goblin 从哪来"：GPT 模型有一阵特别爱说 goblin、gremlin。比如"这个问题里有一堆编程小妖精"。原因是短暂引入的人设训练，给"书呆子气"的人设加分。当评审的语言模型认为，说 goblin、gremlin 很书呆子。这个偏好不断自我放大，比例越来越高。连没有人设提示时也会出现。</li>
+</ul>
+<p><b>探索坍缩</b>（讲义第 47 页）。一个历史下三个动作的概率，从 0.20 / 0.60 / 0.20 变成 0.01 / 0.98 / 0.01。几乎每个样本都选 B，别的几乎不再被尝试。讲师说前面讲熵时已经提过，跳过了这页 <span class="ts">59:47</span>。</p>
+<pre class="code" data-lang="py" data-run>H = lambda p: -sum(x * math.log(x) for x in p)          # 熵，单位是 nats
+before, after = [0.20, 0.60, 0.20], [0.01, 0.98, 0.01]  # 讲义第 47 页
+print(round(H(before), 3), round(H(after), 3))
+# 输出: 0.95 0.112
+# 踩坑：熵掉到这么低，一组四条几乎全一样，又回到了没信号的组</pre>
+
+<div data-vz="c6-reward" data-sc="2,3,4"></div>
+
+<h3 data-d="2" data-m="2" data-why="课程和蒸馏是常用做法，同策略蒸馏补暴露偏差">10. 有更强的模型，就让学生在自己走到的地方问老师</h3>
+<p>有老师模型时，最好的用法是让学生自己走。走到哪一步，就在哪一步问老师该怎么走。</p>
+<p>有更强的模型时特别有用 <span class="ts">59:47</span>。可以是现成的强模型，也可以是同一家族更大的模型。三种用法（讲义第 49–53 页）：</p>
+<ul>
+  <li><b>从示范开始</b>：现在几乎每个模型都这么做。中期训练里就加示范。上一讲已经详细讲过 <span class="ts">1:00:30</span>。</li>
+  <li><b>课程</b>：先练模型有时能成功的任务，再逐渐加难。比如逐步调整配比，或者把模型大多能做对的类别逐渐拿掉。讲师说他不知道这方面有没有成体系的科学。讲义建议把早先的任务留在混合里。进步要用固定的评测集来衡量 <span class="ts">1:00:30</span><span class="ts">1:01:11</span>。</li>
+  <li><b>蒸馏</b>：让更强的模型在你的 RL 环境里跑。只留通过的样本来训练 <span class="ts">1:01:11</span>。也有人叫它强化微调之类。更常用的一种不只训练样本，而是<b>匹配老师的概率分布</b>。它不去最大化下一个 token 的对数似然。它最小化自己和老师的下一 token 分布之间的 KL <span class="ts">1:01:54</span>。老师说下一个是 A、B、C 的概率为 0.5、0.3、0.2，就去匹配整个分布。不是只学采到的那一个 <span class="ts">1:02:36</span>。</li>
+</ul>
+<p>问题是，老师的 rollout 能走到某个状态，学生自己可能根本走不到。这就是上一讲的<b>暴露偏差</b> <span class="ts">1:02:36</span><span class="ts">1:03:22</span>。解法是<b>同策略蒸馏</b>（讲义第 51–52 页）<span class="ts">1:03:22</span><span class="ts">1:04:05</span>。用学生（较弱的模型）做 rollout。在学生自己走到的历史上，训练它匹配老师的下一动作分布。历史来自学生，目标来自老师：</p>
+<div class="fx math">L<sub>OPD</sub> = 𝔼<sub>h∼d<sub>μ</sub></sub>[ D<sub>KL</sub>( π<sub>θ</sub>(·|h) ‖ q(·|h) ) ]</div>
+<p>讲义的例子：在 h<sub>3</sub>，学生给两个动作各 0.5，老师给 0.8 / 0.2。反向 KL = 0.5 ln(0.5/0.8) + 0.5 ln(0.5/0.2) ≈ 0.223，本机复算是 0.2231。</p>
+<pre class="code" data-lang="py" data-run>student = np.array([0.5, 0.5])   # 学生在 h3 给两个动作的概率（讲义第 52 页）
+teacher = np.array([0.8, 0.2])   # 老师在同一个历史上的分布
+print(round(np.sum(student * np.log(student / teacher)), 4))   # 反向 KL
+# 输出: 0.2231
+# 普通蒸馏在老师存下的轨迹上训练。学生自己上场，会走到训练集里没有的历史
+# 同策略蒸馏在学生自己的历史上问老师，每一步都有稠密的信号</pre>
+<p>这像教练坐副驾。你自己开，开到哪个路口，教练就告诉你那儿该怎么打方向。</p>
+<p><b>同策略自蒸馏</b>（OPSD，讲义第 53 页）<span class="ts">1:04:47</span><span class="ts">1:05:28</span>。老师就是正在训练的模型本身，也就是起始模型的冻结副本。区别是告诉了它答案，也就是一个验证过的解。所以它能更合适地选下一步。讲师觉得这个方法有意思，但有偏。老师已经知道答案，它选的动作本来就和不知道时不同。所以可能还有改进空间。</p>
+<p>小结（讲义第 55 页）<span class="ts">1:05:28</span>。<b>有用的反馈</b>：用组比较、评论家或过程奖励分配功劳。<b>稳定的更新</b>：分清行为策略是谁。控制样本能把模型改多少。<b>可靠的奖励</b>：任务难度要匹配，验证你真正想要的行为。</p>
+<p>课后有人问：损失算在哪些 token 上？通常只算在模型产生的动作上，包括思维链，不算观察。但也有工作把观察也拿来训练。这样终端智能体能顺带学到一个"世界模型"。他们报告了性能提升。预测世界状态也是模型需要的能力。不在观察上训练，等于丢掉了一个多任务信号。两种都可以，哪个更好是经验问题。环境很丰富时值得一试 <span class="ts">1:06:55</span><span class="ts">1:07:36</span>。上一章 SFT 那一讲也讨论过同一个问题。</p>
+
+<div data-vz="c6-offpolicy" data-sc="3"></div>
+
+<div class="co key"><p><b>和作业 3 的联系</b>：要点已写进上面例子的注释。作业本身看第 8 章的 <a href="c8.html#e3">作业 3</a>。复原过程看作业复原笔记的 <a href="作业复原/作业笔记/stages.html#S20">S20</a>。</p></div>
+</section>
+
+
+<section class="ep" data-n="2">
+<h2>RL 系统：两种引擎、两边的交互、智能体 RL 的坑、框架设计</h2>
+<p class="tldr">Apurva Gandhi 带大家逛一圈 RL 框架里会遇到的东西。采样和训练是两种完全不同的工作负载。所以框架拆成推理引擎和训练引擎，各自优化。推理端靠 KV 缓存、前缀缓存、连续批处理、投机解码。训练端靠激活检查点、前缀共享、各种并行。两边之间要传轨迹、同步权重、重放 MoE 路由。智能体 RL 还有几个公式里看不出来的坑。比如序列延伸、聊天模板删推理、必须 Token-In Token-Out。还有异步、飞行中的权重更新、复杂外壳。最后讲架构。从单程序多数据，走到"一切皆服务"。服务化以后，外壳无关的代理、在线 RL、多租户多 LoRA 都好做了。Tinker 就是这样的服务。</p>
+
+<h3 data-d="1" data-m="2" data-why="推理和训练拆成两个引擎的原因，作业 3 的后端也这样分">1. 采样和训练是两种活，所以拆成两个引擎</h3>
+<p>推理引擎只管采样，训练引擎只管前向和反向。两种活太不一样，所以拆开各自优化。</p>
+<p>策略梯度的更新和 SFT 很像，只是用优势加权（讲义第 3 页）<span class="ts">0:40</span>。框架需要哪些操作？同学们答出了前向、反向，第三个是优化器的一步 <span class="ts">1:24</span>。智能体 RL 还要和环境交互，也就是执行动作、拿观察。还要验证 rollout，算奖励和优势 <span class="ts">2:06</span>。最后还要决定外壳怎么组织推理 <span class="ts">2:48</span>：</p>
+<div class="fx math">θ += Σ<sub>t</sub> ( R(τ) − b(h<sub>t</sub>) ) ∇<sub>θ</sub> log π<sub>θ</sub>(a<sub>t</sub> | h<sub>t</sub>)</div>
+<table class="lab">
+  <tr><th>需要的东西</th><th>对应的操作</th></tr>
+  <tr><td>R</td><td><code>env.verify</code></td></tr>
+  <tr><td>h<sub>t</sub>、a<sub>t</sub></td><td><code>env.state</code> / <code>env.step</code> + 智能体外壳</td></tr>
+  <tr><td>log π</td><td><code>forward</code></td></tr>
+  <tr><td>∇</td><td><code>backward</code></td></tr>
+  <tr><td>θ 更新</td><td><code>optim_step</code></td></tr>
+</table>
+<p>SkyRL、Miles、verl、PrimeRL，框架这么多。为什么不直接用 PyTorch 的 <code>optimizer.step()</code>、<code>model.forward()</code>、<code>model.backward()</code> 手写（讲义第 4 页）<span class="ts">2:48</span><span class="ts">3:32</span>？环境层确实各不相同。但关键在于，实际的框架里，采样和训练<b>不共用一个前向</b> <span class="ts">4:12</span>。有一个专门的 <code>sample</code> 做推理 <span class="ts">4:54</span>。训练器里再把前向重做一遍（讲义第 5 页）<span class="ts">5:35</span><span class="ts">6:16</span>：</p>
+<table class="lab">
+  <tr><th></th><th>推理引擎（vLLM、SGLang）："sample"</th><th>训练引擎（Megatron、FSDP2）："forward_backward"</th></tr>
+  <tr><td>计算形态</td><td>以 decode 为主。算一个 token，喂回去，再算下一个，是串行的。</td><td>像 prefill。整条序列都在手上，可以并行。</td></tr>
+  <tr><td>内存用来</td><td>不需要 autograd。激活随算随扔，内存留给 KV 缓存。</td><td>必须保留激活和计算图，才能反向</td></tr>
+  <tr><td>各自的优化（讲义第 6 页）</td><td>KV 缓存、radix / 前缀缓存、连续批处理、投机解码 / MTP、模型切分</td><td>激活检查点、前缀共享、批内打包、模型切分</td></tr>
+</table>
+<p>两个都是很复杂的系统，拆开才能各自做专门的优化 <span class="ts">6:56</span>。拆开以后，两边要互相通信（讲义第 7 页）。更新后的权重要同步给推理引擎。推理引擎产生的轨迹要交给训练引擎 <span class="ts">7:36</span>。</p>
+<p>还有一个挑战。两边用的 kernel、前向的算法可能略有不同。即使权重一样，采样时也像是从一个稍微不同的策略采的。所以这种解耦的组织方式<b>非常需要离策略修正</b>。用的就是上一讲的重要性采样 <span class="ts">7:36</span><span class="ts">8:18</span>。</p>
+<pre class="code" data-lang="py" data-run>logp_infer = np.array([-0.51, -1.20, -0.30])   # 推理引擎采样时记下的 logprob（示意）
+logp_train = np.array([-0.50, -1.25, -0.30])   # 训练器用同样的权重重做前向（示意）
+print(np.round(np.exp(logp_train - logp_infer), 3))
+# 输出: [1.01  0.951 1.   ]
+# 踩坑：权重一样，kernel 不同，比率也不全是 1。解耦以后必须做离策略修正</pre>
+<p>这像两个厨师照同一份菜谱做菜。手法稍有不同，味道就差一点点。</p>
+<p>一个训练步拆开来是五个阶段（讲义第 8 页）<span class="ts">8:18</span><span class="ts">8:59</span><span class="ts">9:39</span>：</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":128,"gx":26,"gy":40,"top":18,
+ "nodes":[{"id":"s","c":0,"r":0,"t":"1 sample","s":"推理 + 环境：采轨迹、执行动作","k":"data"},
+  {"id":"v","c":1,"r":0,"t":"2 verify","s":"环境：奖励、测试、工具结果","k":"ok"},
+  {"id":"f","c":2,"r":0,"t":"3 forward","s":"训练器：带梯度重算 logprob","k":"info"},
+  {"id":"b","c":3,"r":0,"t":"4 backward","s":"训练器：算梯度","k":"info"},
+  {"id":"o","c":4,"r":0,"t":"5 optim_step + sync","s":"更新权重，发给推理端并重新切分","k":"warn"}],
+ "edges":[["s","v",""],["v","f",""],["f","b",""],["b","o",""],["o","s","用更新后的权重重复",{"via":"arc","bend":30,"dash":1}]]}</script>
+<figcaption>训练器重做前向，是为了整条轨迹并行地算，并保留计算图。两端切分方式不同时，同步完权重还要按推理端的布局重切。</figcaption></figure>
+
+<div data-vz="c6-systems" data-sc="0"></div>
+
+<h3 data-d="2" data-m="2" data-why="推理引擎的几种优化，组式采样尤其靠前缀缓存">2. 推理端拿内存换速度，前缀缓存对智能体最值钱</h3>
+<p>推理端的优化，基本都是拿内存换掉重复计算。</p>
+<p><b>KV 缓存</b>（讲义第 9 页）<span class="ts">10:23</span>。逐个 token 解码时，不想为每个新 token 把前缀重新 prefill 一遍。于是把算过的 K、V 存起来，用内存换重算 <span class="ts">11:05</span>。但它非常大。Llama-3-8B 用 bf16，每个 token 128 KB。一条 32k 的轨迹约 4 GB，64 条约 256 GB。这还只是个小模型，RL 的 batch 现在又很大。要是训练和推理挤在一个引擎里，还得保留激活。留给 KV 缓存的内存就很少了。这也是拆开的好处之一 <span class="ts">11:45</span>。</p>
+<pre class="code" data-lang="py" data-run>per_token = 32 * 8 * 128 * 2 * 2   # 层数 × KV 头数 × 每头维数 × (K 和 V) × bf16 两字节
+traj = per_token * 32 * 1024       # 一条 32k token 的轨迹
+print(per_token // 1024, "KB", traj / 2**30, "GiB", 64 * traj / 2**30, "GiB")
+# 输出: 128 KB 4.0 GiB 256.0 GiB
+# 踩坑：64 条就远超单卡显存。所以前缀缓存和连续批处理对智能体 RL 很要紧</pre>
+<p>这像做题时把中间结果记在草稿纸上。下一步直接抄，不用从头算，但草稿纸越堆越厚。</p>
+<p><b>前缀缓存</b>（讲义第 10 页）<span class="ts">11:45</span>。KV 缓存管一个请求之内。跨请求也有大量重复计算，智能体 RL 尤其多 <span class="ts">12:27</span>。GRPO 的组式 rollout 共享系统提示和同一个任务提示，然后才分叉。而且轨迹里每一步都是一个<b>单独的</b> LLM 请求。只要前面的步骤是这一步的精确前缀，算过的就能复用 <span class="ts">13:09</span>。SGLang 用 RadixAttention，vLLM 有 Automatic Prefix Caching。</p>
+<p><b>连续批处理</b>（讲义第 11 页）<span class="ts">13:50</span><span class="ts">14:33</span>。朴素的静态批处理里，请求长短不一，会有大量空闲。短的做完了，干等最长的那个。现代推理引擎每解码一个 token，就重新做一次调度决定 <span class="ts">15:14</span>。有请求完成、腾出了位置，就从队列里拉一个新的进来。</p>
+<pre class="code" data-lang="py" data-run>jobs = [3, 9, 2, 4]   # 四个请求各要解码几个 token，只有 2 个槽位（示意）
+static = max(jobs[:2]) + max(jobs[2:])   # 静态批：两个一批，每批等最长的
+slots = [0, 0]
+for j in jobs: slots[slots.index(min(slots))] += j   # 连续批：哪个槽先空，就接下一个
+print(static, max(slots))
+# 输出: 13 9</pre>
+<p>实际更复杂一点。prefill 是另一种负载，长提示的 prefill 会长时间堵住 decode <span class="ts">15:54</span>。所以有<b>分块 prefill</b>，把长提示切块，和连续批处理交错执行。现在还有<b>prefill / decode 分离</b>（disaggregated inference）。专门一池 GPU 只做 prefill，另一池只做 decode <span class="ts">16:35</span>。</p>
+<p>课上有人问：已经有 radix attention 之类，分离 prefill 还有好处吗 <span class="ts">19:27</span>？讲师说用同样硬件时好处不太明显。主要好处是两种负载可以用不同的硬件。有的硬件很适合 decode，有的适合高吞吐的 prefill。助教补问 KV 怎么交过去。答案是要通信，通常经一个队列。prefill 池放进去，decode 池取出来 <span class="ts">20:09</span>。</p>
+<p><b>投机解码</b>（讲义第 12 页）<span class="ts">16:35</span><span class="ts">17:16</span>。用一个便宜的草稿器连续猜 k 个 token，例中 k = 4。草稿器可以是 MTP 头或小模型。大模型一次并行前向，检查全部 k 个 <span class="ts">17:57</span>。靠巧妙的拒绝采样，结果和直接从大模型采样<b>完全等价</b>。某个 token 被拒，就从那里重新采。RL 特有的坑是策略每个训练步都在变。冻结的草稿器，接受率会一路下降 <span class="ts">18:39</span>。所以常在训练基础策略的同时，在线训练草稿器。用的是辅助目标，比如 SFT、蒸馏。</p>
+
+<div data-vz="c6-systems" data-sc="1"></div>
+
+<h3 data-d="2" data-m="1" data-why="训练端省显存和并行的工程手段，了解即可">3. 训练端多算一点，换回显存</h3>
+<p>训练端的优化，大多是多算一点，换回显存。</p>
+<p>训练端要保留前向的激活给反向用（讲义第 13 页）<span class="ts">20:56</span>。所以很多优化都是"多算一点、省内存"。<b>激活检查点</b>的做法是这样。前向时每层只留输入，用完就扔 <span class="ts">21:38</span>。反向到这一层时，再把缺的激活重算出来。相当于多做一次前向，大约多花 33% 的时间，换来大量内存。不必对所有激活都这样做。框架一般有完整检查点和选择性检查点两种。显存吃紧时，它是你最好的朋友 <span class="ts">22:21</span>。</p>
+<pre class="code" data-lang="py" data-run>fwd, bwd = 1, 2              # 反向的计算量约是前向的两倍（常用估算，示意）
+plain = fwd + bwd            # 普通训练：前向一次，反向一次
+ckpt = fwd + bwd + fwd       # 激活检查点：反向时再补一次前向
+print(round(ckpt / plain - 1, 2))
+# 输出: 0.33</pre>
+<p>这像搬家时不留纸箱。用到时再折一个，费点工夫，但屋里宽敞。</p>
+<p><b>前缀共享</b>是推理端前缀缓存在训练端的对应物（讲义第 14 页）<span class="ts">22:21</span><span class="ts">23:01</span>。一个 batch 里很多数据点有重复的前缀，只想算一次。难点在于还要管反向和激活内存 <span class="ts">23:42</span>。讲义上有两组数 <span class="ts">24:23</span>：</p>
+<ul>
+  <li>长提示的 GRPO 批里，80–95% 的 token 是重复的提示 token。去重后，actor 更新最多快 6 倍。这是 Snowflake 的 ZoRRo，属于 Arctic RL 系统。</li>
+  <li>多回合的 τ²-bench rollout 压成前缀树，可以压缩 9.43 倍。AReaL 的动态树注意力用深度优先遍历。沿一个分支前向，马上反向，释放这条分支的激活。然后再走下一个分支。激活内存永远不超过一条根到叶的路径。比稠密训练最多快 8.31 倍。</li>
+</ul>
+<p>树形注意力掩码让分支之间互不注意。每个独立序列各有位置 ID。所有分支的梯度都累加到共享的前缀上。</p>
+<p><b>并行</b>（讲义第 15 页）<span class="ts">24:23</span><span class="ts">25:04</span><span class="ts">25:47</span><span class="ts">26:29</span><span class="ts">27:09</span><span class="ts">27:53</span><span class="ts">28:41</span>：一张卡放不下大模型，就要切到多张卡上。</p>
+<table class="lab">
+  <tr><th>方式</th><th>怎么切</th><th>说明</th></tr>
+  <tr><td>数据并行</td><td>全局 batch 切成微批，每张卡一份完整模型</td><td>先算出这块显存一次能处理多少 token，比如 4 万。再按这个数把序列装进微批。</td></tr>
+  <tr><td>流水线并行</td><td>不同的层放不同的卡，如 0–8 层、9–17 层</td><td>一张卡处理第 0 个微批时，前一张已经在处理第 1 个</td></tr>
+  <tr><td>专家并行</td><td>MoE 的专家分到不同的卡，按路由把 token 发过去</td><td>整个模型放不下、但每个专家放得下时用</td></tr>
+  <tr><td>张量并行</td><td>层内的矩阵运算拆成几份</td><td>互相依赖多，通信开销大。一般只在同一节点内用，那里网络快。</td></tr>
+  <tr><td>上下文并行</td><td>长序列的不同段放不同的卡，K、V 块在卡之间轮转</td><td>第 2 章长上下文那讲讲过</td></tr>
+</table>
+<p>讲师的经验法则：尽量多用数据并行，少用通信多的张量并行。这些并行在推理端同样重要。</p>
+
+<h3 data-d="2" data-m="1" data-why="两个引擎之间的工程细节，了解即可">4. 权重只传变了的那部分，MoE 的路由要照抄</h3>
+<p>两个引擎之间有两件事要做好。一是快速同步权重，二是让两边选的专家一致。</p>
+<p><b>权重同步</b>（讲义第 16 页）<span class="ts">28:41</span><span class="ts">29:21</span>。一个 1T 参数的模型用 bf16 约 2 TB。每次更新都广播给每个推理 rank，数据量太大 <span class="ts">30:04</span>。RL 更新有个很好的性质，就是非常稀疏。bf16 下两次权重更新之间，大约 99% 的参数<b>逐位不变</b>。所以只同步差量，2 TB 变成大约二三十 GB <span class="ts">30:45</span>。这样就能跨集群训练，甚至直接经对象存储上传下载。拿到参数后，仍要按推理引擎的并行布局重新切分。</p>
+<pre class="code" data-lang="py" data-run>step = 2 ** -7               # bf16 只有 7 位尾数：1 附近能表示的最小间隔
+w, update = 1.0, 1e-4        # 一次 RL 更新很小（示意）
+print(round((w + update) / step) * step == w)   # 按 bf16 的格子四舍五入
+# 输出: True
+# 更新不到半个格子，存成 bf16 后这个参数一位都没变。差量同步就省在这里</pre>
+<div class="co warn"><p><b>为什么那么多参数不变？</b>同学问到时，讲师解释：bf16 只有 7 位尾数 <span class="ts">30:45</span>。RL 尤其是只看结果奖励时，每条轨迹的监督很少。更新量非常小，在 bf16 里就体现不出来 <span class="ts">31:26</span>。会不会因此丢掉信号？更新本来就很小，真重要的话，下一次更新会更大。用 32 位训练的存储和显存开销又太难承受。所以 bf16 训练已经是惯例 <span class="ts">32:21</span>。至于每次被更新的是不是同一批参数，讲师说他不确定。</p></div>
+<p><b>Rollout 路由重放（R3）</b>（讲义第 17 页）<span class="ts">32:21</span><span class="ts">33:02</span>。训练 MoE 时，每次前向都要选路由到哪些专家。实现上的细微差异，甚至平局，都可能让两边选了不同的专家 <span class="ts">33:47</span>。于是又"离策略"了。办法很直接。rollout 时记下每次推理的路由决定，随轨迹一起交给训练引擎。训练器前向时丢掉自己的决定，重放这些 <span class="ts">34:31</span>。这对 MoE 训练的稳定性帮助很大。讲师建议，训练 MoE 时如果损失或奖励不涨，先检查有没有开 R3。</p>
+<pre class="code" data-lang="py" data-run>scores = np.array([0.5, 0.5, 0.1])     # 推理端：两个专家打平（示意）
+train_scores = scores + [0, 1e-7, 0]   # 训练端 kernel 有一点点数值差
+print(np.argmax(scores), np.argmax(train_scores))
+# 输出: 0 1
+# 踩坑：平局一破，两边选的专家就不同。R3 让训练器照抄推理端记下的路由</pre>
+<p>有同学问，有没有开箱即用的框架 <span class="ts">34:31</span><span class="ts">35:31</span>？很多。以 PyTorch 为中心的栈里，训练后端常见 Megatron 和 FSDP2。大规模时 Megatron 用得更多。推理选 SGLang 或 vLLM <span class="ts">36:12</span>。上层的 RL 框架把它们组合起来，把功能暴露给你。比如 verl、PrimeRL、slime、Miles。另一类是托管的训练服务。给数据和奖励函数就能训，按 API 付费 <span class="ts">36:54</span>。有些框架还为每个模型准备了测过的推荐配方，比如 Miles。这是很好的起点。</p>
+
+<h3 data-d="2" data-m="3" data-why="作业 3 的 datagen.py 要处理序列延伸">5. 前缀一字不改只往后拼，整条轨迹才算一个数据点</h3>
+<p>序列延伸是说：每次的提示都在上一次后面接着写。上一次的提示和输出原样保留，后面加上新观察。这样整个回合能拼成一条训练序列，共享前缀只算一次。</p>
+<p>两个外壳，哪个训练效率更高（讲义第 19 页）<span class="ts">37:37</span>？外壳 A 每一步都完整保留历史，往后追加新动作。外壳 B 每隔两步做一次压缩。之前的动作和观察被总结成一段摘要，再继续 <span class="ts">38:17</span>。课上大约六七个人选 A，十五人左右选 B <span class="ts">38:58</span>。答案是 <b>A</b>。B 恰恰是很多生产系统的做法。Codex、Claude Code、OpenHands 都会做上下文压缩。有时序列实在太长，也不得不训练 B，但能避免就避免 <span class="ts">39:38</span>。</p>
+<p>原因在讲义第 20 页 <span class="ts">39:38</span><span class="ts">40:23</span>。A 的前缀从不中断，整条轨迹可以当 batch 里的<b>一个</b>数据点。把观察 token 在损失里遮掉，让优势只作用于动作 token 就行。轨迹优势 Â 会广播给每个动作 token。B 压缩之后，变成两段不连续的序列，只能拆成两个数据点 <span class="ts">41:04</span>。任务提示要 prefill 两遍。重复的 token 没有直接损失，却仍然要算上下文。可以用前面的动态树注意力之类的技巧，复用这部分计算。这类技巧对降低计算时间非常重要。规则是：<b>尽可能长时间地保持完全相同的前缀，往后拼接。</b></p>
+<pre class="code" data-lang="py" data-run>T, A, O, S = 200, 50, 300, 120   # 任务、动作、观察、摘要的 token 数（示意）
+harness_a = [T + 4 * (A + O)]                       # 一直往后拼：一条序列
+harness_b = [T + 2 * (A + O), T + S + 2 * (A + O)]  # 每两步压缩：断成两段
+print(harness_a, harness_b, sum(harness_b))
+# 输出: [1600] [900, 1020] 1920
+# 两边参与损失的都只有 4 × 50 = 200 个动作 token，B 却多算了 320 个</pre>
+<p>这像抄长卷轴。一直往后接，从头到尾就是一卷。中途换成摘要，就得另起一卷，开头再抄一遍。</p>
+<p><b>聊天模板的怪癖</b>（讲义第 21–22 页）<span class="ts">41:04</span><span class="ts">41:47</span>。Qwen 3 / Qwen 3.5 的默认模板开启推理时，有个怪规矩。每来一个新的用户回合或外壳输出，它就删掉历史里的推理。大概是为了省上下文，或者觉得旧的思维链会干扰 <span class="ts">42:28</span>。但这等于做了一次"压缩"，序列延伸就断了。第 2 回合的提示里，第 1 回合只剩工具调用，思考没了。它和第 1 回合实际生成的"思考 + 工具调用"对不上 <span class="ts">43:11</span>。</p>
+<pre class="code" data-lang="py" data-run>turn1 = "TASK &lt;think&gt;plan&lt;/think&gt; CALL1"   # 第 1 回合：提示加上模型实际生成的
+turn2_prompt = "TASK CALL1 OBS1"           # 默认模板把历史里的思考删了
+print(turn2_prompt.startswith(turn1))
+# 输出: False
+# 作业 3 考点：模板 qwen3_5.jinja 改自 Qwen3.5 自己的。preserve_thinking_history 设 true 时思考块保留，一个回合通常拼成一条序列
+# 作业 3 考点：设成 false 会删掉之前的 &lt;think&gt;，每个回合各成一条。datagen.py 的 extension_suffix 和 stitch_trajectory 两种情况都要处理</pre>
+<p>所以很多开源 RL 框架自带定制的聊天模板，现在常叫 renderer。比如 Thinking Machines 的训练服务 Tinker，以及 PrimeRL 为每个模型提供的 renderer。它们有开关，可以选"跨回合保留推理"或"永远不要推理"。目的都是保住前缀。讲师提到，作业里也提供了一个为 Qwen 3.5 保住前缀的模板。</p>
+
+<div data-vz="c6-systems" data-sc="3"></div>
+
+<h3 data-d="2" data-m="3" data-why="作业 3 要按 token 记下掩码和对数概率，不重新分词">6. 轨迹要存 token，不要存字符串再重新分词</h3>
+<p>rollout 里要直接存 token id 和 logprob。训练端原样使用，不经过字符串。</p>
+<p>轨迹从推理引擎传到训练引擎，用什么格式（讲义第 23–24 页）<span class="ts">43:11</span><span class="ts">43:57</span>？和推理引擎打交道时，很自然地用字符串。chat completions 的消息内容、提示工程、输出解析都是字符串 <span class="ts">44:39</span>。所以很多框架起初就传字符串，让训练端重新分词。很快大家都发现这是错的 <span class="ts">45:21</span>。应该<b>存 token，直接把 token 交给训练引擎</b> <span class="ts">46:01</span><span class="ts">46:43</span>。原因有两个：</p>
+<ul>
+  <li>字符串空间里很小的变换，会导致很大的分词差异。比如训练端的模板在某处多插了一个空白。重新分词后，就和推理端采到的 token 不一样了。你就在训练和推理不同的 token，也就是离策略了。</li>
+  <li>分词是一对一的，反分词是多对一的。一段文字分词，得到规范的 token，比如整词 Hello。但模型不一定产生规范的那组 token，可能产生 H + ello。传字符串再重新分词，训练端拿到的是 Hello。推理端采的却是 H、ello。</li>
+</ul>
+<pre class="code" data-lang="py" data-run>vocab = {1: "H", 5: "ello", 2: "He", 6: "llo", 4: "Hello"}   # 讲义的玩具词表
+sampled = [1, 5]                                      # 模型采出来的是 H + ello
+text = "".join(vocab[i] for i in sampled)
+retok = [i for i, s in vocab.items() if s == text]   # 重新分词，拿到规范的整词
+print(text, sampled, retok)
+# 输出: Hello [1, 5] [4]
+# 踩坑：采样时记的两个 logprob 对不上训练端的一个 token，掩码、重要性比率全错位。He + llo 也一样
+# 作业 3 考点：智能体在 token 空间里拼上下文，采样时的 logprob 直接存进 TokenSequence
+# 作业 3 考点：同步训练时比率应该非常接近 1。不接近，多半是 logprob 挂错了 token</pre>
+<p>这像把照片打印出来再扫描回去。看着一样，像素早就不是原来那些了。早期很多框架因此出现奇怪的损失尖峰和训练不稳定。现在几乎所有 RL 框架都记录确切的 token，传给训练引擎。</p>
+
+<div data-vz="c6-systems" data-sc="4"></div>
+
+<h3 data-d="2" data-m="2" data-why="异步 RL 落到系统上的样子">7. 异步要让推理和训练分开跑，推理还得能半路换权重</h3>
+<p>异步时，推理和训练各占一批 GPU 一直跑。推理引擎还要能在请求半路换上新权重。</p>
+<p><b>异步 RL</b>（讲义第 25 页）<span class="ts">46:43</span><span class="ts">47:25</span>。只要能容忍一点离策略并做修正，推理和更新就能重叠。智能体 RL 特别需要它，因为请求长短差别极大 <span class="ts">48:07</span>。少数超长的掉队 rollout，会让大量 GPU 空等。重叠之后，掉队的可以留到下一批处理。后来的短轨迹可以先拿去更新 <span class="ts">48:47</span>。</p>
+<p>同步时，通常把训练引擎和推理引擎<b>放在同一组 GPU 上</b>。8 张卡先全部用来训练。然后让训练引擎"睡觉"，拉起推理引擎做推理。异步时两个引擎一直都在运行，就把 GPU 分开。而且可以不对半分 <span class="ts">49:29</span>。智能体 RL 常常卡在 rollout，因为长程任务要做很长的 decode。讲师自己常用 3:1，比如 6 个节点推理、2 个节点训练。</p>
+<pre class="code" data-lang="py" data-run>max_staleness, learner_version = 4, 10      # 过期度上限、learner 当前版本（示意）
+groups = [("g1", 9), ("g2", 5), ("g3", 7)]   # 每组开始采样时记下的策略版本
+kept = [g for g, v in groups if learner_version - v &lt;= max_staleness]
+print(kept)
+# 输出: ['g1', 'g3']
+# 作业 3 考点：Part 3 用有界的 asyncio.Queue 做生产者和消费者，每组开始时记下（策略, 版本）
+# 作业 3 考点：learner 消费时查过期度，超过 train.max_staleness 的组丢掉，其余用重要性加权修正
+# 作业 3 考点：Part 4.2 比同步和异步的墙钟时间。Part 4.3 在过期度 4 下比 ppo 和不带比率的 cross_entropy</pre>
+<p>这像超市理货。货架上放太久的过了保质期，直接扔掉。没过期的照常卖，只是要按新鲜程度打个折。</p>
+<p><b>飞行中的权重更新</b>（讲义第 26 页）<span class="ts">50:16</span>。异步 RL 需要连续批处理。还要能在一个推理请求做到一半时暂停它。更新完模型，再用新模型继续。这很奇怪，推理引擎为此专门演进了 <span class="ts">50:59</span>。SGLang 文档的例子是 <code>POST /pause_generation</code>，它有几种模式：</p>
+<table class="lab">
+  <tr><th>模式</th><th>做什么</th></tr>
+  <tr><td><code>abort</code>（默认）</td><td>等待队列和运行队列里的请求，立刻返回给调用者</td></tr>
+  <tr><td><code>retract</code></td><td>引擎暂停，正在跑的请求挪回等待队列。KV 缓存可以清掉，之后用新模型重算。讲师说这个很有用，因为参数一更新，前缀的 KV 就过时了。</td></tr>
+  <tr><td><code>in_place</code></td><td>引擎暂停，但不动请求状态。正在跑的请求继续依赖原来的 KV 缓存。所以之后 <code>flush_cache</code> 会失败。</td></tr>
+</table>
+<p>恢复用 <code>POST /continue_generation</code>。</p>
+<p><b>复杂的外壳</b>（讲义第 27 页）<span class="ts">50:59</span><span class="ts">51:44</span>。导出的 PDF 里这页是空白，课上是一段演示。讲师最近的一项工作训练递归的多智能体系统。根智能体把任务委派给子智能体。子智能体还能继续往下委派。这种结构来自"递归语言模型" <span class="ts">52:27</span>。子智能体、上下文压缩在今天的外壳里很常见。推理的组织方式因此非常复杂。这也是智能体 RL 和传统推理 RL 的不同。整棵 rollout 树算一个 rollout 吗？还是每个子智能体的轨迹各算一个数据点？上下文压缩已经会把一条轨迹拆成多个数据点了。</p>
+
+<div data-vz="c6-systems" data-sc="2"></div>
+
+<h3 data-d="2" data-m="2" data-why="框架架构，作业 3 用的 Tinker API 出自这里">8. 把每块做成服务，换外壳不用改代码</h3>
+<p>好框架把推理、训练、外壳都做成服务，彼此只说标准协议。</p>
+<p><b>外壳无关</b>（讲义第 29 页）<span class="ts">53:11</span>。流行的外壳很多，Codex、Claude Code、OpenHands、Pi、Hermes、Prime Agent，每天都有新的。每加一个外壳就要改框架代码，甚至 fork 仓库，很糟糕 <span class="ts">53:52</span>。很多框架改用"中间人"模式。在推理引擎和外壳之间放一个代理服务。它模仿外壳本来就会说的推理 API，比如 chat completions、responses。它把请求转给推理引擎，把回答转回外壳。顺手把训练需要的数据存进 rollout 存储，比如 logprob、R3 的路由记录 <span class="ts">54:35</span>。这个代理只写一次，作为框架的一部分。换外壳不用改一行代码。甚至可以直接给外壳一个 chat completions 的地址。</p>
+<pre class="code" data-lang="py" data-run>store = []
+def proxy(request):  # 中间人：外壳以为自己在调普通的推理 API（示意）
+    store.append({"request": request, "logprobs": [-0.1]})   # 顺手记下训练要的数据
+    return "ls"                                              # 推理引擎的回答原样转回外壳
+print(proxy("list files"), store)
+# 输出: ls [{'request': 'list files', 'logprobs': [-0.1]}]</pre>
+<p>这像连锁店的中央厨房。各店只按统一的单子下单。厨房里换了人，店里照样营业。</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":140,"gx":34,"gy":30,"top":18,
+ "nodes":[{"id":"pi","c":0,"r":0,"t":"Pi","s":"Responses API","k":"data"},
+  {"id":"oh","c":0,"r":1,"t":"OpenHands","s":"Chat Completions API","k":"data"},
+  {"id":"mm","c":1,"r":0.5,"t":"中间人（代理）","s":"模仿推理 API，顺手记录训练数据","k":"warn"},
+  {"id":"ie","c":2,"r":0,"t":"推理引擎","k":"info"},
+  {"id":"rs","c":2,"r":1,"t":"Rollout 存储","s":"logprob、R3 等","k":"neutral"},
+  {"id":"tr","c":3,"r":1,"t":"训练器","k":"info"}],
+ "edges":[["pi","mm",""],["oh","mm",""],["mm","ie","转发"],["mm","rs","记录"],["rs","tr",""]]}</script>
+<figcaption>外壳无关的模式（讲义第 29 页重画）：换新外壳零代码改动</figcaption></figure>
+<p><b>单程序多数据（SPMD）</b>（讲义第 30 页）<span class="ts">54:35</span><span class="ts">55:18</span>。这是写过分布式代码的人熟悉的模式。每个 GPU rank 跑同一份 Python 程序，按 rank 条件执行不同的部分 <span class="ts">55:58</span>。比如 rank 0–3 组成训练组，做 FSDP 的集合通信和优化器更新。rank 4–7 组成推理组，做张量 / 上下文并行解码和权重刷新。好处是一个程序就是全部。全局一目了然，想改就改，直接控制一切。缺点是很不灵活 <span class="ts">56:40</span>。AReaL 在 1.0 之前就是这种模式，后来转向了下面这种。</p>
+<p><b>一切皆服务 + 单一控制器</b>（讲义第 31–33 页）<span class="ts">56:40</span><span class="ts">57:22</span>。一个中央编排器负责协调各个服务。有训练服务、推理服务和权重同步服务。还有智能体外壳，以及环境 / 奖励服务 <span class="ts">58:04</span>。它们之间说标准协议。外壳和环境工具之间用 MCP，推理用 chat completions / responses，训练用 Tinker 训练 API <span class="ts">58:45</span>。讲义上的服务边界和 API 是示意。</p>
+<ul>
+  <li><b>关注点分离</b>：推理服务、训练服务各自都非常复杂、专门。只要协议一致，就能各自独立开发和维护。可以直接用别人做得极好的服务，自己专注其他部分。编排器只是一个跑在 CPU 上的轻量训练循环。它不要 GPU，也没有复杂依赖。研究者很容易试不同的算法。</li>
+  <li><b>模块化</b>：问"该用哪个 RL 框架"？只要说同一套 API，就能互换。Tinker API 最早是 Thinking Machines 为它的托管训练服务提出的。现在 Miles、SkyRL 等开源框架也实现了它。外壳和推理引擎（vLLM、SGLang）也都能换。</li>
+  <li><b>弹性扩容和异构算力</b>（讲义第 34–36 页）<span class="ts">59:27</span><span class="ts">1:00:08</span>：控制器后面能挂任意多的推理服务。训练中途随时可以加。而且不必一样，NVIDIA 的卡和 AMD 的卡可以各跑一个。</li>
+</ul>
+<p>讲义第 37 页的例子是 AstraFlow，CMU 一位博士后在做 <span class="ts">1:00:08</span>。它是 rollout 即服务，可以用各种 GPU，随时加入。训练服务通过权重服务，把权重推给所有推理服务器。地图上的数据和权重在各大洲之间流动 <span class="ts">1:00:49</span>。服务化还让这些事变得容易：</p>
+<ul>
+  <li><b>多策略训练</b>（讲义第 38 页）<span class="ts">1:00:49</span><span class="ts">1:01:32</span>：现在的多智能体训练，多半共用一个模型。服务化之后，各个智能体可以用不同的权重，甚至不同的结构。各配各的训练器和推理引擎。</li>
+  <li><b>在线 RL</b>（讲义第 39 页）<span class="ts">1:01:32</span><span class="ts">1:02:13</span>：把已部署的外壳也当成一个服务。它偶尔给训练服务送数据，模型部署后还能持续更新。外壳可以是 Hermes、OpenHands，或者 IDE 里的 Cursor。讲师说 Cursor 的 Tab 模型和 Composer 模型都有这样的流程。它们一直从用户那里收集数据，更新后上线新版本 <span class="ts">1:02:55</span>。按它的博客，用 Composer 的自动模式时，新检查点换得很勤。大约每 5 小时就可能换一个。</li>
+  <li><b>多租户、多 LoRA 训练</b>（讲义第 40–41 页）<span class="ts">1:02:55</span><span class="ts">1:03:35</span>：托管训练服务有很多用户。每人都想训自己的模型。给每个用户的运行一份 LoRA 权重。再用专门的 kernel（Grouped-GEMM / SGMV）让多份 LoRA 的前向和反向并发执行 <span class="ts">1:04:17</span>。讲义的对比用 8 个 GSM8K 任务，模型是 Qwen3-4B。8 个并发运行都在约 90 分钟内完成。串行时 Job 2、3、8 要到 230–250 分钟。单个并发运行比单个串行运行慢，但总吞吐高得多 <span class="ts">1:04:58</span>。开源实现来自 SkyRL 等，Tinker 是最早这样做的服务之一。</li>
+</ul>
+<p>Tinker 的 API 很简洁 <span class="ts">1:05:38</span>。每个训练运行配一个训练客户端。每个 LoRA 检查点配一个采样客户端。操作只有四个：</p>
+<ul>
+  <li><code>forward_backward</code>：前向和反向，累积梯度</li>
+  <li><code>optim_step</code>：按累积的梯度更新</li>
+  <li><code>sample</code>：为交互、评测或 RL 生成 token</li>
+  <li><code>save_state</code>：保存进度，以便恢复</li>
+</ul>
+<p>本讲开头那组操作的拆分，就来自这里。好处是不用操心切分和算力，按服务付费。而且代码对着 Tinker API 写，之后也能换到 SkyRL 或 Miles 的开源实现上。那样就用自己的 GPU 跑同样的训练循环。</p>
+<pre class="code" data-lang="py" data-run>weights = {"v0": "base"}                       # 采样端能用的权重版本（示意）
+def save_weights_for_sampler(name, w): weights[name] = w
+def create_sampling_client(name): return lambda prompt: weights[name] + " says: " + prompt
+save_weights_for_sampler("v1", "lora-step1")   # 训练完一步，把新权重存给采样端
+print(create_sampling_client("v1")("fix the bug"))
+# 输出: lora-step1 says: fix the bug
+# 作业 3 考点：训练服务用 Tinker 接口。forward_backward_async、optim_step_async 是一个训练步的第 3–5 阶段
+# 作业 3 考点：再用 save_weights_for_sampler_async 和 create_sampling_client 把新权重交给采样端
+# 作业也可以按说明用 SkyRL + Modal 自己托管，循环本身不用改</pre>
+
+<h3 data-d="1" data-m="2" data-why="作业 3 报告里的诊断图看的就是这些指标">9. 训练出事之前，这几个指标会先变</h3>
+<p>训练出问题前，下面这几个数往往先变。</p>
+<p>讲义第 43 页列了一张调试用的指标表。课上时间到了，没有讲到这页：</p>
+<table class="lab">
+  <tr><th>指标</th><th>看什么</th><th>警示</th></tr>
+  <tr><td>奖励 / pass@1</td><td>策略在训练任务上有没有进步</td><td>很多步都平。或者训练奖励涨，留出评测跌，这是奖励作弊。</td></tr>
+  <tr><td>pass@k</td><td>覆盖：k 个样本里有没有能解的</td><td>pass@1 涨而它跌，说明多样性在坍缩</td></tr>
+  <tr><td>熵</td><td>策略还在多大程度上探索</td><td>突然坍到 0，或者跳变，说明出了退化的文本</td></tr>
+  <tr><td>importance_weight_max</td><td>最差的 token 比率，如 π<sub>train</sub> / π<sub>rollout</sub></td><td>出现尖峰。训练和采样不一致或数据过期，少数 token 主导更新。</td></tr>
+  <tr><td>梯度范数</td><td>裁剪前每次更新的大小</td><td>发散前的尖峰，或者稳定上升的漂移</td></tr>
+  <tr><td>平均过期度</td><td>数据是多少个权重版本之前的</td><td>慢慢上涨，说明 rollout 跟不上训练</td></tr>
+  <tr><td>训练器 MFU</td><td>训练 GPU 用得多好</td><td>因 padding、不均衡或微批太小而下降</td></tr>
+  <tr><td>计时：rollout、更新、停顿、总计</td><td>一步的墙钟时间花在哪</td><td>停顿 &gt; 0，说明训练器在等 rollout</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>before = [[1, 0, 0, 0], [0, 0, 1, 0]]   # 两道题各采 4 次，1 是解出（示意）
+after = [[1, 1, 1, 1], [0, 0, 0, 0]]    # 训练后：会的更稳，不会的彻底不会
+for runs in (before, after):
+    print(np.mean(runs), np.mean([max(r) for r in runs]))   # pass@1 和 pass@4
+# 输出: 0.25 1.0
+# 输出: 0.5 0.5
+# 踩坑：只看 pass@1 会以为在进步。pass@k 在跌，说明多样性在坍缩</pre>
+<p>这像体检单。单看一项正常不代表没事，几项一起看才知道哪出了问题。</p>
+
+<div class="co key"><p><b>和作业 3 的联系</b>：要点已写进上面例子的注释。作业本身看第 8 章的 <a href="c8.html#e3">作业 3</a>。复原过程看作业复原笔记的 <a href="作业复原/作业笔记/stages.html#S20">S20</a>。</p></div>
+</section>
+
+<nav class="pager">
+  <a href="c5.html"><span>← 上一章</span>05 · 训练（上）：SFT 与强化学习基础</a>
+  <a class="nx" href="c7.html"><span>下一章 →</span>07 · 安全与框架：沙箱、攻击与 OpenHands</a>
+</nav>
+</main>
+<script src="assets/vz.js"></script>
+<script src="assets/viz/c6-credit.js"></script>
+<script src="assets/viz/c6-offpolicy.js"></script>
+<script src="assets/viz/c6-reward.js"></script>
+<script src="assets/viz/c6-systems.js"></script>
+</body>
+</html>

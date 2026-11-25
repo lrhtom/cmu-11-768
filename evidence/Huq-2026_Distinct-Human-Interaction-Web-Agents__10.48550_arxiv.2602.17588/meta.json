@@ -1,0 +1,31 @@
+{
+  "slug": "10.48550_arxiv.2602.17588",
+  "doi": "10.48550/arXiv.2602.17588",
+  "title": "Modeling Distinct Human Interaction in Web Agents",
+  "authors": ["Faria Huq", "Zora Zhiruo Wang", "Zhanqiu Guo", "Venu Arvind Arangarajan", "Tianyue Ou", "Frank Xu", "Shuyan Zhou", "Graham Neubig", "Jeffrey P. Bigham"],
+  "authors_note": "9 人，顺序在 arXiv API、DataCite、OpenAlex、摘要页、PDF 首页一致；前两位为共同一作",
+  "year": 2026,
+  "date": "v1 2026-02-19；v4 2026-07-07",
+  "version": "arxiv-v4",
+  "version_note": "v1 2026-02-19，v2 2026-02-27，v3 2026-05-31，v4 2026-07-07（本项目读的版本，arXiv 备注 Preprint）",
+  "venue": "arXiv preprint（cs.CL；另列 cs.HC）",
+  "venue_note": "OpenAlex 把这篇的主记录登记为 Findings of the Association for Computational Linguistics: EMNLP 2026，DOI 10.18653/2026.findings-emnlp.2029，页 43195–43212。这个会议版没有核对，本项目只引用 arXiv v4 的内容",
+  "pages": "23 页（PDF，正文 1–12 页，参考文献，附录 A 数据集、附录 B 消融）",
+  "arxiv_id": "2602.17588v4",
+  "urls": {"abs": "https://arxiv.org/abs/2602.17588v4", "pdf": "https://arxiv.org/pdf/2602.17588v4"},
+  "openalex_id": "W7130712562",
+  "course_use": "官网第 17 讲阅读 / 参考清单（第 17 讲讲义第 49 页用了它的聚类图），用于预写第 19 讲",
+  "check_8_items": {
+    "1_title": "一致：五处相同",
+    "2_authors": "一致：9 人，顺序五处相同",
+    "3_year": "2026",
+    "4_version": "arxiv-v4（截图里 this version, v4）",
+    "5_venue": "arXiv 预印本（见 venue_note）",
+    "6_pages": "23 页",
+    "7_doi": "10.48550/arXiv.2602.17588，DataCite 解析通过（version 4），摘要页同一个 DOI",
+    "8_content": "全文 23 页读完（正文、附录 A、B）。逐句判定见 summary_cn_en.md"
+  },
+  "verified_date": "2026-11-12",
+  "verified_by": "claude",
+  "verification_method": "arxiv-api+openalex+datacite+playwright-edge-screenshot+pdf-fullread"
+}

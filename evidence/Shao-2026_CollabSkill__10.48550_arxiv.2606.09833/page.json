@@ -1,0 +1,1463 @@
+{
+ "arxiv_api_atom_entry": "<ns0:entry xmlns:ns0=\"http://www.w3.org/2005/Atom\" xmlns:ns1=\"http://arxiv.org/schemas/atom\">\n    <ns0:id>http://arxiv.org/abs/2606.09833v2</ns0:id>\n    <ns0:title>CollabSkill: Evaluating Human-Agent Collaboration On Real-World Tasks</ns0:title>\n    <ns0:updated>2026-07-25T16:20:30Z</ns0:updated>\n    <ns0:link href=\"https://arxiv.org/abs/2606.09833v2\" rel=\"alternate\" type=\"text/html\" />\n    <ns0:link href=\"https://arxiv.org/pdf/2606.09833v2\" rel=\"related\" type=\"application/pdf\" title=\"pdf\" />\n    <ns0:summary>AI agents are reshaping the workspace, leading to drastic change of how humans work. Despite the considerable potential of human-agent collaboration both in preserving human agency and generating economic value, this paradigm remains largely absent from occupational task evaluation, hindered by the difficulty of gathering real human data and accounting for inter-human variability. We introduce CollabSkill, a framework for evaluating human-agent collaboration on real-world occupational tasks. CollabSkill pairs real human workers with AI agents on tasks matched to their occupational background, collecting data that capture the complexity of economically valuable tasks and the usage patterns of real workers. To account for inter-human variability, CollabSkill employs a Bayesian skill rating system to disentangle and quantify the skill contributions of both humans and AI agents. Drawing on over 1,500 prompts from 386 working sessions contributed by 93 human workers, our analysis yields insights on two fronts: on the agent side, rankings on CollabSkill diverge meaningfully from those of existing fully autonomous benchmarks where Codex leads, with Claude Code ranking first; on the human side, CollabSkill reveals that practical experience emerges as the primary driver of collaboration skill, with hands-on collaboration meaningfully shifting workers' AI literacy. Together, we hope CollabSkill enables the community to invest in systematic evaluation of human-agent collaboration and spurs development efforts aimed at building AI agents that genuinely augment human workers.</ns0:summary>\n    <ns0:category term=\"cs.HC\" scheme=\"http://arxiv.org/schemas/atom\" />\n    <ns0:category term=\"cs.AI\" scheme=\"http://arxiv.org/schemas/atom\" />\n    <ns0:category term=\"cs.CY\" scheme=\"http://arxiv.org/schemas/atom\" />\n    <ns0:published>2026-04-20T03:03:25Z</ns0:published>\n    <ns1:comment>10 pages of main paper, COLM 2026</ns1:comment>\n    <ns1:primary_category term=\"cs.HC\" />\n    <ns0:author>\n      <ns0:name>Yijia Shao</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Zora Zhiruo Wang</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Neel Ahuja</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Yicheng Wang</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Bowen Liu</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Diyi Yang</ns0:name>\n    </ns0:author>\n  </ns0:entry>\n  ",
+ "arxiv_api_query": "https://export.arxiv.org/api/query?id_list=2606.09833,2609.04141,2501.16609,2608.12355,2602.17588,2511.02208&max_results=10（2026-11-12，一次取 6 篇候选）",
+ "openalex": {
+  "id": "https://openalex.org/W7164193491",
+  "doi": "https://doi.org/10.48550/arxiv.2606.09833",
+  "title": "CollabSkill: Evaluating Human-Agent Collaboration On Real-World Tasks",
+  "display_name": "CollabSkill: Evaluating Human-Agent Collaboration On Real-World Tasks",
+  "publication_year": 2026,
+  "publication_date": "2026-04-20",
+  "ids": {
+   "openalex": "https://openalex.org/W7164193491",
+   "doi": "https://doi.org/10.48550/arxiv.2606.09833"
+  },
+  "language": "en",
+  "primary_location": {
+   "id": "pmh:oai:arXiv.org:2606.09833",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "https://arxiv.org/abs/2606.09833",
+   "pdf_url": "https://arxiv.org/pdf/2606.09833",
+   "source": {
+    "id": "https://openalex.org/S4306400194",
+    "display_name": "arXiv (Cornell University)",
+    "issn_l": "2331-8422",
+    "issn": [
+     "2331-8422"
+    ],
+    "is_oa": true,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/I205783295",
+    "host_organization_name": "Cornell University",
+    "host_organization_lineage": [
+     "https://openalex.org/I205783295"
+    ],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": "cc-by-nc-sa",
+   "license_id": "https://openalex.org/licenses/cc-by-nc-sa",
+   "version": "submittedVersion",
+   "is_accepted": false,
+   "is_published": false,
+   "raw_source_name": null,
+   "raw_type": "text"
+  },
+  "volume": null,
+  "type": "preprint",
+  "is_traditional": true,
+  "indexed_in": [
+   "arxiv",
+   "datacite"
+  ],
+  "open_access": {
+   "is_oa": true,
+   "oa_status": "green",
+   "oa_url": "https://arxiv.org/pdf/2606.09833",
+   "any_repository_has_fulltext": true
+  },
+  "authorships": [
+   {
+    "author_position": "first",
+    "author": {
+     "id": "https://openalex.org/A5138288518",
+     "display_name": "Yijia Shao",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I97018004",
+      "display_name": "Stanford University",
+      "ror": "https://ror.org/00f54p054",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Shao, Yijia",
+    "raw_affiliation_strings": [
+     "Stanford University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Stanford University",
+      "institution_ids": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5041297063",
+     "display_name": "Zora Zhiruo Wang",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Wang, Zora Zhiruo",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5067123890",
+     "display_name": "Neel Ahuja",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I97018004",
+      "display_name": "Stanford University",
+      "ror": "https://ror.org/00f54p054",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Ahuja, Neel",
+    "raw_affiliation_strings": [
+     "Stanford University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Stanford University",
+      "institution_ids": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5100411051",
+     "display_name": "Yicheng Wang",
+     "orcid": "https://orcid.org/0000-0002-8744-9972",
+     "observed_orcids": [
+      "https://orcid.org/0000-0002-8744-9972",
+      "https://orcid.org/0000-0002-4412-5556",
+      "https://orcid.org/0000-0001-5375-2802"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I5388228",
+      "display_name": "University of Rochester",
+      "ror": "https://ror.org/022kthw22",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I5388228"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Wang, Yicheng",
+    "raw_affiliation_strings": [
+     "University of Rochester"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "University of Rochester",
+      "institution_ids": [
+       "https://openalex.org/I5388228"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5100427695",
+     "display_name": "Bowen Liu",
+     "orcid": "https://orcid.org/0000-0002-4194-8119",
+     "observed_orcids": [
+      "https://orcid.org/0000-0002-4194-8119",
+      "https://orcid.org/0009-0007-1061-9703",
+      "https://orcid.org/0009-0001-7105-1775"
+     ]
+    },
+    "institutions": [],
+    "countries": [],
+    "is_corresponding": false,
+    "raw_author_name": "Liu, Bowen",
+    "raw_affiliation_strings": [
+     "Individual Researcher"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Individual Researcher",
+      "institution_ids": []
+     }
+    ]
+   },
+   {
+    "author_position": "last",
+    "author": {
+     "id": "https://openalex.org/A5089413311",
+     "display_name": "Diyi Yang",
+     "orcid": "https://orcid.org/0000-0003-1220-3983",
+     "observed_orcids": [
+      "https://orcid.org/0000-0003-1220-3983"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I97018004",
+      "display_name": "Stanford University",
+      "ror": "https://ror.org/00f54p054",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Yang, Diyi",
+    "raw_affiliation_strings": [
+     "Stanford University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Stanford University",
+      "institution_ids": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ]
+   }
+  ],
+  "institutions": [],
+  "countries_distinct_count": 1,
+  "institutions_distinct_count": 3,
+  "corresponding_author_ids": [],
+  "corresponding_institution_ids": [],
+  "apc_list": null,
+  "apc_paid": null,
+  "fwci": null,
+  "has_fulltext": true,
+  "cited_by_count": 7,
+  "citation_normalized_percentile": null,
+  "cited_by_percentile_year": null,
+  "biblio": {
+   "volume": null,
+   "issue": null,
+   "first_page": null,
+   "last_page": null
+  },
+  "is_retracted": false,
+  "is_paratext": false,
+  "is_xpac": false,
+  "primary_topic": {
+   "id": "https://openalex.org/T10525",
+   "display_name": "Human-Automation Interaction and Safety",
+   "score": 0.2930000126361847,
+   "subfield": {
+    "id": "https://openalex.org/subfields/3307",
+    "display_name": "Human Factors and Ergonomics"
+   },
+   "field": {
+    "id": "https://openalex.org/fields/33",
+    "display_name": "Social Sciences"
+   },
+   "domain": {
+    "id": "https://openalex.org/domains/2",
+    "display_name": "Social Sciences"
+   }
+  },
+  "topics": [
+   {
+    "id": "https://openalex.org/T10525",
+    "display_name": "Human-Automation Interaction and Safety",
+    "score": 0.2930000126361847,
+    "subfield": {
+     "id": "https://openalex.org/subfields/3307",
+     "display_name": "Human Factors and Ergonomics"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/33",
+     "display_name": "Social Sciences"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/2",
+     "display_name": "Social Sciences"
+    }
+   },
+   {
+    "id": "https://openalex.org/T13812",
+    "display_name": "AI and HR Technologies",
+    "score": 0.2890999913215637,
+    "subfield": {
+     "id": "https://openalex.org/subfields/1407",
+     "display_name": "Organizational Behavior and Human Resource Management"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/14",
+     "display_name": "Business, Management and Accounting"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/2",
+     "display_name": "Social Sciences"
+    }
+   },
+   {
+    "id": "https://openalex.org/T10653",
+    "display_name": "Robot Manipulation and Learning",
+    "score": 0.09059999883174896,
+    "subfield": {
+     "id": "https://openalex.org/subfields/2207",
+     "display_name": "Control and Systems Engineering"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/22",
+     "display_name": "Engineering"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/3",
+     "display_name": "Physical Sciences"
+    }
+   }
+  ],
+  "keywords": [
+   {
+    "id": "https://openalex.org/keywords/human-agent-collaboration",
+    "display_name": "human-agent collaboration",
+    "score": 0.9629999995231628
+   },
+   {
+    "id": "https://openalex.org/keywords/ai-agents",
+    "display_name": "AI agents",
+    "score": 0.7609999775886536
+   },
+   {
+    "id": "https://openalex.org/keywords/occupational-tasks",
+    "display_name": "occupational tasks",
+    "score": 0.902999997138977
+   },
+   {
+    "id": "https://openalex.org/keywords/skill-assessment",
+    "display_name": "skill assessment",
+    "score": 0.5550000071525574
+   },
+   {
+    "id": "https://openalex.org/keywords/ai-literacy",
+    "display_name": "AI literacy",
+    "score": 0.7689999938011169
+   },
+   {
+    "id": "https://openalex.org/keywords/practical-experience",
+    "display_name": "practical experience",
+    "score": 0.8169999718666077
+   },
+   {
+    "id": "https://openalex.org/keywords/large-language-models",
+    "display_name": "large language models",
+    "score": 0.6230000257492065
+   },
+   {
+    "id": "https://openalex.org/keywords/human-ai-augmentation",
+    "display_name": "human-AI augmentation",
+    "score": 0.40400001406669617
+   }
+  ],
+  "concepts": [
+   {
+    "id": "https://openalex.org/C2780451532",
+    "wikidata": "https://www.wikidata.org/wiki/Q759676",
+    "display_name": "Task (project management)",
+    "level": 2,
+    "score": 0.6654000282287598
+   },
+   {
+    "id": "https://openalex.org/C189430467",
+    "wikidata": "https://www.wikidata.org/wiki/Q7293293",
+    "display_name": "Ranking (information retrieval)",
+    "level": 2,
+    "score": 0.6455000042915344
+   },
+   {
+    "id": "https://openalex.org/C108170787",
+    "wikidata": "https://www.wikidata.org/wiki/Q3951828",
+    "display_name": "Agency (philosophy)",
+    "level": 2,
+    "score": 0.6169999837875366
+   },
+   {
+    "id": "https://openalex.org/C41008148",
+    "wikidata": "https://www.wikidata.org/wiki/Q21198",
+    "display_name": "Computer science",
+    "level": 0,
+    "score": 0.5756999850273132
+   },
+   {
+    "id": "https://openalex.org/C56739046",
+    "wikidata": "https://www.wikidata.org/wiki/Q192060",
+    "display_name": "Knowledge management",
+    "level": 1,
+    "score": 0.4765999913215637
+   },
+   {
+    "id": "https://openalex.org/C2522767166",
+    "wikidata": "https://www.wikidata.org/wiki/Q2374463",
+    "display_name": "Data science",
+    "level": 1,
+    "score": 0.45750001072883606
+   },
+   {
+    "id": "https://openalex.org/C107457646",
+    "wikidata": "https://www.wikidata.org/wiki/Q207434",
+    "display_name": "Human–computer interaction",
+    "level": 1,
+    "score": 0.4108999967575073
+   },
+   {
+    "id": "https://openalex.org/C154945302",
+    "wikidata": "https://www.wikidata.org/wiki/Q11660",
+    "display_name": "Artificial intelligence",
+    "level": 1,
+    "score": 0.32749998569488525
+   },
+   {
+    "id": "https://openalex.org/C175154964",
+    "wikidata": "https://www.wikidata.org/wiki/Q380077",
+    "display_name": "Task analysis",
+    "level": 3,
+    "score": 0.30820000171661377
+   },
+   {
+    "id": "https://openalex.org/C133462117",
+    "wikidata": "https://www.wikidata.org/wiki/Q4929239",
+    "display_name": "Data collection",
+    "level": 2,
+    "score": 0.30559998750686646
+   },
+   {
+    "id": "https://openalex.org/C33724603",
+    "wikidata": "https://www.wikidata.org/wiki/Q812540",
+    "display_name": "Bayesian network",
+    "level": 2,
+    "score": 0.2879999876022339
+   },
+   {
+    "id": "https://openalex.org/C2776760102",
+    "wikidata": "https://www.wikidata.org/wiki/Q5139990",
+    "display_name": "Code (set theory)",
+    "level": 3,
+    "score": 0.28619998693466187
+   },
+   {
+    "id": "https://openalex.org/C112930515",
+    "wikidata": "https://www.wikidata.org/wiki/Q4389547",
+    "display_name": "Risk analysis (engineering)",
+    "level": 1,
+    "score": 0.2581999897956848
+   },
+   {
+    "id": "https://openalex.org/C2775847012",
+    "wikidata": "https://www.wikidata.org/wiki/Q7075810",
+    "display_name": "Occupational science",
+    "level": 3,
+    "score": 0.2535000145435333
+   },
+   {
+    "id": "https://openalex.org/C107673813",
+    "wikidata": "https://www.wikidata.org/wiki/Q812534",
+    "display_name": "Bayesian probability",
+    "level": 2,
+    "score": 0.25029999017715454
+   }
+  ],
+  "mesh": [],
+  "locations_count": 2,
+  "locations": [
+   {
+    "id": "pmh:oai:arXiv.org:2606.09833",
+    "doi": null,
+    "is_oa": true,
+    "landing_page_url": "https://arxiv.org/abs/2606.09833",
+    "pdf_url": "https://arxiv.org/pdf/2606.09833",
+    "source": {
+     "id": "https://openalex.org/S4306400194",
+     "display_name": "arXiv (Cornell University)",
+     "issn_l": "2331-8422",
+     "issn": [
+      "2331-8422"
+     ],
+     "is_oa": true,
+     "is_in_doaj": false,
+     "is_core": false,
+     "listed_in": [],
+     "host_organization": "https://openalex.org/I205783295",
+     "host_organization_name": "Cornell University",
+     "host_organization_lineage": [
+      "https://openalex.org/I205783295"
+     ],
+     "host_organization_lineage_names": [],
+     "type": "repository"
+    },
+    "license": "cc-by-nc-sa",
+    "license_id": "https://openalex.org/licenses/cc-by-nc-sa",
+    "version": "submittedVersion",
+    "is_accepted": false,
+    "is_published": false,
+    "raw_source_name": null,
+    "raw_type": "text"
+   },
+   {
+    "id": "doi:10.48550/arxiv.2606.09833",
+    "doi": "https://doi.org/10.48550/arxiv.2606.09833",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.48550/arxiv.2606.09833",
+    "pdf_url": null,
+    "source": {
+     "id": "https://openalex.org/S4306400194",
+     "display_name": "arXiv (Cornell University)",
+     "issn_l": "2331-8422",
+     "issn": [
+      "2331-8422"
+     ],
+     "is_oa": true,
+     "is_in_doaj": false,
+     "is_core": false,
+     "listed_in": [],
+     "host_organization": "https://openalex.org/I205783295",
+     "host_organization_name": "Cornell University",
+     "host_organization_lineage": [
+      "https://openalex.org/I205783295"
+     ],
+     "host_organization_lineage_names": [],
+     "type": "repository"
+    },
+    "license": null,
+    "license_id": null,
+    "version": null,
+    "is_accepted": false,
+    "is_published": false,
+    "raw_source_name": null,
+    "raw_type": "Preprint"
+   }
+  ],
+  "best_oa_location": {
+   "id": "pmh:oai:arXiv.org:2606.09833",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "https://arxiv.org/abs/2606.09833",
+   "pdf_url": "https://arxiv.org/pdf/2606.09833",
+   "source": {
+    "id": "https://openalex.org/S4306400194",
+    "display_name": "arXiv (Cornell University)",
+    "issn_l": "2331-8422",
+    "issn": [
+     "2331-8422"
+    ],
+    "is_oa": true,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/I205783295",
+    "host_organization_name": "Cornell University",
+    "host_organization_lineage": [
+     "https://openalex.org/I205783295"
+    ],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": "cc-by-nc-sa",
+   "license_id": "https://openalex.org/licenses/cc-by-nc-sa",
+   "version": "submittedVersion",
+   "is_accepted": false,
+   "is_published": false,
+   "raw_source_name": null,
+   "raw_type": "text"
+  },
+  "sustainable_development_goals": [],
+  "study_designs": [],
+  "awards": [
+   {
+    "id": "https://openalex.org/G2749129067",
+    "display_name": "CAREER: Socially-Aware Language Technologies To Support People in Supporting Others for Better Online Communities",
+    "funder_award_id": "2247357",
+    "funder_id": "https://openalex.org/F4320306076",
+    "funder_display_name": "National Science Foundation"
+   }
+  ],
+  "funders": [
+   {
+    "id": "https://openalex.org/F4320306076",
+    "display_name": "National Science Foundation",
+    "ror": "https://ror.org/021nxhr62"
+   },
+   {
+    "id": "https://openalex.org/F4320315389",
+    "display_name": "Open Philanthropy Project",
+    "ror": "https://ror.org/004d1k391"
+   },
+   {
+    "id": "https://openalex.org/F4320337345",
+    "display_name": "Office of Naval Research",
+    "ror": "https://ror.org/00rk2pe57"
+   }
+  ],
+  "has_content": {
+   "pdf": true,
+   "grobid_xml": true
+  },
+  "content_urls": {
+   "pdf": "https://content.openalex.org/works/W7164193491.pdf",
+   "grobid_xml": "https://content.openalex.org/works/W7164193491.grobid-xml"
+  },
+  "referenced_works_count": 28,
+  "referenced_works": [
+   "https://openalex.org/W1990457366",
+   "https://openalex.org/W2105934661",
+   "https://openalex.org/W2108214478",
+   "https://openalex.org/W4223908421",
+   "https://openalex.org/W4320003957",
+   "https://openalex.org/W4391835799",
+   "https://openalex.org/W4392781346",
+   "https://openalex.org/W4399836817",
+   "https://openalex.org/W4404341075",
+   "https://openalex.org/W4405469679",
+   "https://openalex.org/W4405714974",
+   "https://openalex.org/W4415130479",
+   "https://openalex.org/W4415164160",
+   "https://openalex.org/W4415251111",
+   "https://openalex.org/W4416259239",
+   "https://openalex.org/W4416268557",
+   "https://openalex.org/W4417086463",
+   "https://openalex.org/W4417119099",
+   "https://openalex.org/W6892014898",
+   "https://openalex.org/W6948350236",
+   "https://openalex.org/W6948557715",
+   "https://openalex.org/W7102657001",
+   "https://openalex.org/W7103153711",
+   "https://openalex.org/W7117991286",
+   "https://openalex.org/W7125134911",
+   "https://openalex.org/W7125508931",
+   "https://openalex.org/W7125527264",
+   "https://openalex.org/W7135169797"
+  ],
+  "related_works": [
+   "https://openalex.org/W7222473886",
+   "https://openalex.org/W4405714974",
+   "https://openalex.org/W4416544319",
+   "https://openalex.org/W7133121249",
+   "https://openalex.org/W4416268557",
+   "https://openalex.org/W7102657001",
+   "https://openalex.org/W4416354552",
+   "https://openalex.org/W7143354891",
+   "https://openalex.org/W4405035693",
+   "https://openalex.org/W4409455078"
+  ],
+  "abstract_inverted_index": {
+   "AI": [
+    0,
+    72,
+    121,
+    191,
+    215
+   ],
+   "agents": [
+    1,
+    73,
+    216
+   ],
+   "are": [
+    2
+   ],
+   "reshaping": [
+    3
+   ],
+   "the": [
+    4,
+    15,
+    41,
+    85,
+    92,
+    114,
+    145,
+    169,
+    179,
+    198
+   ],
+   "workspace,": [
+    5
+   ],
+   "leading": [
+    6
+   ],
+   "to": [
+    7,
+    77,
+    110,
+    200
+   ],
+   "drastic": [
+    8
+   ],
+   "change": [
+    9
+   ],
+   "of": [
+    10,
+    18,
+    43,
+    87,
+    95,
+    117,
+    155,
+    182,
+    205
+   ],
+   "how": [
+    11
+   ],
+   "humans": [
+    12,
+    119
+   ],
+   "work.": [
+    13
+   ],
+   "Despite": [
+    14
+   ],
+   "considerable": [
+    16
+   ],
+   "potential": [
+    17
+   ],
+   "human-agent": [
+    19,
+    60,
+    206
+   ],
+   "collaboration": [
+    20,
+    61,
+    183,
+    187,
+    207
+   ],
+   "both": [
+    21,
+    118
+   ],
+   "in": [
+    22,
+    202
+   ],
+   "preserving": [
+    23
+   ],
+   "human": [
+    24,
+    46,
+    69,
+    135,
+    170,
+    220
+   ],
+   "agency": [
+    25
+   ],
+   "and": [
+    26,
+    48,
+    91,
+    112,
+    120,
+    208
+   ],
+   "generating": [
+    27
+   ],
+   "economic": [
+    28
+   ],
+   "value,": [
+    29
+   ],
+   "this": [
+    30
+   ],
+   "paradigm": [
+    31
+   ],
+   "remains": [
+    32
+   ],
+   "largely": [
+    33
+   ],
+   "absent": [
+    34
+   ],
+   "from": [
+    35,
+    128,
+    153
+   ],
+   "occupational": [
+    36,
+    64,
+    79
+   ],
+   "task": [
+    37
+   ],
+   "evaluation,": [
+    38
+   ],
+   "hindered": [
+    39
+   ],
+   "by": [
+    40,
+    133
+   ],
+   "difficulty": [
+    42
+   ],
+   "gathering": [
+    44
+   ],
+   "real": [
+    45,
+    68,
+    96
+   ],
+   "data": [
+    47,
+    82
+   ],
+   "accounting": [
+    49
+   ],
+   "for": [
+    50,
+    58,
+    100
+   ],
+   "inter-human": [
+    51,
+    101
+   ],
+   "variability.": [
+    52
+   ],
+   "We": [
+    53
+   ],
+   "introduce": [
+    54
+   ],
+   "CollabSkill,": [
+    55
+   ],
+   "a": [
+    56,
+    105
+   ],
+   "framework": [
+    57
+   ],
+   "evaluating": [
+    59
+   ],
+   "on": [
+    62,
+    74,
+    124,
+    141,
+    144,
+    149,
+    168
+   ],
+   "real-world": [
+    63
+   ],
+   "tasks.": [
+    65
+   ],
+   "CollabSkill": [
+    66,
+    103,
+    150,
+    172,
+    196
+   ],
+   "pairs": [
+    67
+   ],
+   "workers": [
+    70
+   ],
+   "with": [
+    71,
+    163,
+    185
+   ],
+   "tasks": [
+    75,
+    90
+   ],
+   "matched": [
+    76
+   ],
+   "their": [
+    78
+   ],
+   "background,": [
+    80
+   ],
+   "collecting": [
+    81
+   ],
+   "that": [
+    83,
+    174,
+    217
+   ],
+   "capture": [
+    84
+   ],
+   "complexity": [
+    86
+   ],
+   "economically": [
+    88
+   ],
+   "valuable": [
+    89
+   ],
+   "usage": [
+    93
+   ],
+   "patterns": [
+    94
+   ],
+   "workers.": [
+    97,
+    221
+   ],
+   "To": [
+    98
+   ],
+   "account": [
+    99
+   ],
+   "variability,": [
+    102
+   ],
+   "employs": [
+    104
+   ],
+   "Bayesian": [
+    106
+   ],
+   "skill": [
+    107,
+    115
+   ],
+   "rating": [
+    108
+   ],
+   "system": [
+    109
+   ],
+   "disentangle": [
+    111
+   ],
+   "quantify": [
+    113
+   ],
+   "contributions": [
+    116
+   ],
+   "agents.": [
+    122
+   ],
+   "Drawing": [
+    123
+   ],
+   "over": [
+    125
+   ],
+   "1,500": [
+    126
+   ],
+   "prompts": [
+    127
+   ],
+   "386": [
+    129
+   ],
+   "working": [
+    130
+   ],
+   "sessions": [
+    131
+   ],
+   "contributed": [
+    132
+   ],
+   "93": [
+    134
+   ],
+   "workers,": [
+    136
+   ],
+   "our": [
+    137
+   ],
+   "analysis": [
+    138
+   ],
+   "yields": [
+    139
+   ],
+   "insights": [
+    140
+   ],
+   "two": [
+    142
+   ],
+   "fronts:": [
+    143
+   ],
+   "agent": [
+    146
+   ],
+   "side,": [
+    147,
+    171
+   ],
+   "rankings": [
+    148
+   ],
+   "diverge": [
+    151
+   ],
+   "meaningfully": [
+    152,
+    188
+   ],
+   "those": [
+    154
+   ],
+   "existing": [
+    156
+   ],
+   "fully": [
+    157
+   ],
+   "autonomous": [
+    158
+   ],
+   "benchmarks": [
+    159
+   ],
+   "where": [
+    160
+   ],
+   "Codex": [
+    161
+   ],
+   "leads,": [
+    162
+   ],
+   "Claude": [
+    164
+   ],
+   "Code": [
+    165
+   ],
+   "ranking": [
+    166
+   ],
+   "first;": [
+    167
+   ],
+   "reveals": [
+    173
+   ],
+   "practical": [
+    175
+   ],
+   "experience": [
+    176
+   ],
+   "emerges": [
+    177
+   ],
+   "as": [
+    178
+   ],
+   "primary": [
+    180
+   ],
+   "driver": [
+    181
+   ],
+   "skill,": [
+    184
+   ],
+   "hands-on": [
+    186
+   ],
+   "shifting": [
+    189
+   ],
+   "workers'": [
+    190
+   ],
+   "literacy.": [
+    192
+   ],
+   "Together,": [
+    193
+   ],
+   "we": [
+    194
+   ],
+   "hope": [
+    195
+   ],
+   "enables": [
+    197
+   ],
+   "community": [
+    199
+   ],
+   "invest": [
+    201
+   ],
+   "systematic": [
+    203
+   ],
+   "evaluation": [
+    204
+   ],
+   "spurs": [
+    209
+   ],
+   "development": [
+    210
+   ],
+   "efforts": [
+    211
+   ],
+   "aimed": [
+    212
+   ],
+   "at": [
+    213
+   ],
+   "building": [
+    214
+   ],
+   "genuinely": [
+    218
+   ],
+   "augment": [
+    219
+   ]
+  },
+  "counts_by_year": [
+   {
+    "year": 2026,
+    "cited_by_count": 7
+   }
+  ],
+  "updated_date": "2026-11-12T12:28:57.059296",
+  "created_date": "2026-06-11T00:00:00"
+ },
+ "datacite": {
+  "data": {
+   "id": "10.48550/arxiv.2606.09833",
+   "type": "dois",
+   "attributes": {
+    "doi": "10.48550/arxiv.2606.09833",
+    "prefix": "10.48550",
+    "suffix": "arxiv.2606.09833",
+    "identifiers": [
+     {
+      "identifier": "2606.09833",
+      "identifierType": "arXiv"
+     }
+    ],
+    "alternateIdentifiers": [
+     {
+      "alternateIdentifierType": "arXiv",
+      "alternateIdentifier": "2606.09833"
+     }
+    ],
+    "creators": [
+     {
+      "name": "Shao, Yijia",
+      "nameType": "Personal",
+      "givenName": "Yijia",
+      "familyName": "Shao",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Wang, Zora Zhiruo",
+      "nameType": "Personal",
+      "givenName": "Zora Zhiruo",
+      "familyName": "Wang",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Ahuja, Neel",
+      "nameType": "Personal",
+      "givenName": "Neel",
+      "familyName": "Ahuja",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Wang, Yicheng",
+      "nameType": "Personal",
+      "givenName": "Yicheng",
+      "familyName": "Wang",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Liu, Bowen",
+      "nameType": "Personal",
+      "givenName": "Bowen",
+      "familyName": "Liu",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Yang, Diyi",
+      "nameType": "Personal",
+      "givenName": "Diyi",
+      "familyName": "Yang",
+      "affiliation": [],
+      "nameIdentifiers": []
+     }
+    ],
+    "titles": [
+     {
+      "title": "CollabSkill: Evaluating Human-Agent Collaboration On Real-World Tasks"
+     }
+    ],
+    "publisher": "arXiv",
+    "container": {},
+    "publicationYear": 2026,
+    "subjects": [
+     {
+      "lang": "en",
+      "subject": "Human-Computer Interaction (cs.HC)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "lang": "en",
+      "subject": "Artificial Intelligence (cs.AI)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "lang": "en",
+      "subject": "Computers and Society (cs.CY)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "subject": "FOS: Computer and information sciences",
+      "subjectScheme": "Fields of Science and Technology (FOS)"
+     }
+    ],
+    "contributors": [],
+    "dates": [
+     {
+      "date": "2026-04-20T03:03:25Z",
+      "dateType": "Submitted",
+      "dateInformation": "v1"
+     },
+     {
+      "date": "2026-06-10T00:00:10Z",
+      "dateType": "Updated",
+      "dateInformation": "v1"
+     },
+     {
+      "date": "2026-07-25T16:20:30Z",
+      "dateType": "Submitted",
+      "dateInformation": "v2"
+     },
+     {
+      "date": "2026-07-28T00:33:44Z",
+      "dateType": "Updated",
+      "dateInformation": "v2"
+     },
+     {
+      "date": "2026-06",
+      "dateType": "Available",
+      "dateInformation": "v1"
+     }
+    ],
+    "language": null,
+    "types": {
+     "ris": "GEN",
+     "bibtex": "misc",
+     "citeproc": "article",
+     "schemaOrg": "CreativeWork",
+     "resourceType": "Article",
+     "resourceTypeGeneral": "Preprint"
+    },
+    "relatedIdentifiers": [],
+    "relatedItems": [],
+    "sizes": [],
+    "formats": [],
+    "version": "2",
+    "rightsList": [
+     {
+      "rights": "Creative Commons Attribution Non Commercial Share Alike 4.0 International",
+      "rightsUri": "https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode",
+      "schemeUri": "https://spdx.org/licenses/",
+      "rightsIdentifier": "cc-by-nc-sa-4.0",
+      "rightsIdentifierScheme": "SPDX"
+     }
+    ],
+    "descriptions": [
+     {
+      "description": "AI agents are reshaping the workspace, leading to drastic change of how humans work. Despite the considerable potential of human-agent collaboration both in preserving human agency and generating economic value, this paradigm remains largely absent from occupational task evaluation, hindered by the difficulty of gathering real human data and accounting for inter-human variability. We introduce CollabSkill, a framework for evaluating human-agent collaboration on real-world occupational tasks. CollabSkill pairs real human workers with AI agents on tasks matched to their occupational background, collecting data that capture the complexity of economically valuable tasks and the usage patterns of real workers. To account for inter-human variability, CollabSkill employs a Bayesian skill rating system to disentangle and quantify the skill contributions of both humans and AI agents. Drawing on over 1,500 prompts from 386 working sessions contributed by 93 human workers, our analysis yields insights on two fronts: on the agent side, rankings on CollabSkill diverge meaningfully from those of existing fully autonomous benchmarks where Codex leads, with Claude Code ranking first; on the human side, CollabSkill reveals that practical experience emerges as the primary driver of collaboration skill, with hands-on collaboration meaningfully shifting workers' AI literacy. Together, we hope CollabSkill enables the community to invest in systematic evaluation of human-agent collaboration and spurs development efforts aimed at building AI agents that genuinely augment human workers.",
+      "descriptionType": "Abstract"
+     },
+     {
+      "description": "10 pages of main paper, COLM 2026",
+      "descriptionType": "Other"
+     }
+    ],
+    "geoLocations": [],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlc291cmNlIHhtbG5zPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeHNpOnNjaGVtYUxvY2F0aW9uPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCBodHRwOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00LjMvbWV0YWRhdGEueHNkIj4KICA8aWRlbnRpZmllciBpZGVudGlmaWVyVHlwZT0iRE9JIj4xMC40ODU1MC9BUlhJVi4yNjA2LjA5ODMzPC9pZGVudGlmaWVyPgogIDxhbHRlcm5hdGVJZGVudGlmaWVycz4KICAgIDxhbHRlcm5hdGVJZGVudGlmaWVyIGFsdGVybmF0ZUlkZW50aWZpZXJUeXBlPSJhclhpdiI+MjYwNi4wOTgzMzwvYWx0ZXJuYXRlSWRlbnRpZmllcj4KICA8L2FsdGVybmF0ZUlkZW50aWZpZXJzPgogIDxjcmVhdG9ycz4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5TaGFvLCBZaWppYTwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+WWlqaWE8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+U2hhbzwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5XYW5nLCBab3JhIFpoaXJ1bzwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+Wm9yYSBaaGlydW88L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+V2FuZzwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5BaHVqYSwgTmVlbDwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+TmVlbDwvZ2l2ZW5OYW1lPgogICAgICA8ZmFtaWx5TmFtZT5BaHVqYTwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5XYW5nLCBZaWNoZW5nPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5ZaWNoZW5nPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPldhbmc8L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+TGl1LCBCb3dlbjwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+Qm93ZW48L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+TGl1PC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSBuYW1lVHlwZT0iUGVyc29uYWwiPllhbmcsIERpeWk8L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPkRpeWk8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+WWFuZzwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICA8L2NyZWF0b3JzPgogIDx0aXRsZXM+CiAgICA8dGl0bGU+Q29sbGFiU2tpbGw6IEV2YWx1YXRpbmcgSHVtYW4tQWdlbnQgQ29sbGFib3JhdGlvbiBPbiBSZWFsLVdvcmxkIFRhc2tzPC90aXRsZT4KICA8L3RpdGxlcz4KICA8cHVibGlzaGVyPmFyWGl2PC9wdWJsaXNoZXI+CiAgPHB1YmxpY2F0aW9uWWVhcj4yMDI2PC9wdWJsaWNhdGlvblllYXI+CiAgPHN1YmplY3RzPgogICAgPHN1YmplY3QgeG1sOmxhbmc9ImVuIiBzdWJqZWN0U2NoZW1lPSJhclhpdiI+SHVtYW4tQ29tcHV0ZXIgSW50ZXJhY3Rpb24gKGNzLkhDKTwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJlbiIgc3ViamVjdFNjaGVtZT0iYXJYaXYiPkFydGlmaWNpYWwgSW50ZWxsaWdlbmNlIChjcy5BSSk8L3N1YmplY3Q+CiAgICA8c3ViamVjdCB4bWw6bGFuZz0iZW4iIHN1YmplY3RTY2hlbWU9ImFyWGl2Ij5Db21wdXRlcnMgYW5kIFNvY2lldHkgKGNzLkNZKTwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9IkZpZWxkcyBvZiBTY2llbmNlIGFuZCBUZWNobm9sb2d5IChGT1MpIj5GT1M6IENvbXB1dGVyIGFuZCBpbmZvcm1hdGlvbiBzY2llbmNlczwvc3ViamVjdD4KICA8L3N1YmplY3RzPgogIDxkYXRlcz4KICAgIDxkYXRlIGRhdGVUeXBlPSJTdWJtaXR0ZWQiIGRhdGVJbmZvcm1hdGlvbj0idjEiPjIwMjYtMDQtMjBUMDM6MDM6MjVaPC9kYXRlPgogICAgPGRhdGUgZGF0ZVR5cGU9IlVwZGF0ZWQiIGRhdGVJbmZvcm1hdGlvbj0idjEiPjIwMjYtMDYtMTBUMDA6MDA6MTBaPC9kYXRlPgogICAgPGRhdGUgZGF0ZVR5cGU9IlN1Ym1pdHRlZCIgZGF0ZUluZm9ybWF0aW9uPSJ2MiI+MjAyNi0wNy0yNVQxNjoyMDozMFo8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iVXBkYXRlZCIgZGF0ZUluZm9ybWF0aW9uPSJ2MiI+MjAyNi0wNy0yOFQwMDozMzo0NFo8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iQXZhaWxhYmxlIiBkYXRlSW5mb3JtYXRpb249InYxIj4yMDI2LTA2PC9kYXRlPgogIDwvZGF0ZXM+CiAgPHJlc291cmNlVHlwZSByZXNvdXJjZVR5cGVHZW5lcmFsPSJQcmVwcmludCI+QXJ0aWNsZTwvcmVzb3VyY2VUeXBlPgogIDx2ZXJzaW9uPjI8L3ZlcnNpb24+CiAgPHJpZ2h0c0xpc3Q+CiAgICA8cmlnaHRzIHJpZ2h0c1VSST0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbGljZW5zZXMvYnktbmMtc2EvNC4wLyIgcmlnaHRzSWRlbnRpZmllclNjaGVtZT0iU1BEWCIgcmlnaHRzSWRlbnRpZmllcj0iQ0MtQlktTkMtU0EtNC4wIj5DcmVhdGl2ZSBDb21tb25zIEF0dHJpYnV0aW9uIE5vbiBDb21tZXJjaWFsIFNoYXJlIEFsaWtlIDQuMCBJbnRlcm5hdGlvbmFsPC9yaWdodHM+CiAgPC9yaWdodHNMaXN0PgogIDxkZXNjcmlwdGlvbnM+CiAgICA8ZGVzY3JpcHRpb24gZGVzY3JpcHRpb25UeXBlPSJBYnN0cmFjdCI+QUkgYWdlbnRzIGFyZSByZXNoYXBpbmcgdGhlIHdvcmtzcGFjZSwgbGVhZGluZyB0byBkcmFzdGljIGNoYW5nZSBvZiBob3cgaHVtYW5zIHdvcmsuIERlc3BpdGUgdGhlIGNvbnNpZGVyYWJsZSBwb3RlbnRpYWwgb2YgaHVtYW4tYWdlbnQgY29sbGFib3JhdGlvbiBib3RoIGluIHByZXNlcnZpbmcgaHVtYW4gYWdlbmN5IGFuZCBnZW5lcmF0aW5nIGVjb25vbWljIHZhbHVlLCB0aGlzIHBhcmFkaWdtIHJlbWFpbnMgbGFyZ2VseSBhYnNlbnQgZnJvbSBvY2N1cGF0aW9uYWwgdGFzayBldmFsdWF0aW9uLCBoaW5kZXJlZCBieSB0aGUgZGlmZmljdWx0eSBvZiBnYXRoZXJpbmcgcmVhbCBodW1hbiBkYXRhIGFuZCBhY2NvdW50aW5nIGZvciBpbnRlci1odW1hbiB2YXJpYWJpbGl0eS4gV2UgaW50cm9kdWNlIENvbGxhYlNraWxsLCBhIGZyYW1ld29yayBmb3IgZXZhbHVhdGluZyBodW1hbi1hZ2VudCBjb2xsYWJvcmF0aW9uIG9uIHJlYWwtd29ybGQgb2NjdXBhdGlvbmFsIHRhc2tzLiBDb2xsYWJTa2lsbCBwYWlycyByZWFsIGh1bWFuIHdvcmtlcnMgd2l0aCBBSSBhZ2VudHMgb24gdGFza3MgbWF0Y2hlZCB0byB0aGVpciBvY2N1cGF0aW9uYWwgYmFja2dyb3VuZCwgY29sbGVjdGluZyBkYXRhIHRoYXQgY2FwdHVyZSB0aGUgY29tcGxleGl0eSBvZiBlY29ub21pY2FsbHkgdmFsdWFibGUgdGFza3MgYW5kIHRoZSB1c2FnZSBwYXR0ZXJucyBvZiByZWFsIHdvcmtlcnMuIFRvIGFjY291bnQgZm9yIGludGVyLWh1bWFuIHZhcmlhYmlsaXR5LCBDb2xsYWJTa2lsbCBlbXBsb3lzIGEgQmF5ZXNpYW4gc2tpbGwgcmF0aW5nIHN5c3RlbSB0byBkaXNlbnRhbmdsZSBhbmQgcXVhbnRpZnkgdGhlIHNraWxsIGNvbnRyaWJ1dGlvbnMgb2YgYm90aCBodW1hbnMgYW5kIEFJIGFnZW50cy4gRHJhd2luZyBvbiBvdmVyIDEsNTAwIHByb21wdHMgZnJvbSAzODYgd29ya2luZyBzZXNzaW9ucyBjb250cmlidXRlZCBieSA5MyBodW1hbiB3b3JrZXJzLCBvdXIgYW5hbHlzaXMgeWllbGRzIGluc2lnaHRzIG9uIHR3byBmcm9udHM6IG9uIHRoZSBhZ2VudCBzaWRlLCByYW5raW5ncyBvbiBDb2xsYWJTa2lsbCBkaXZlcmdlIG1lYW5pbmdmdWxseSBmcm9tIHRob3NlIG9mIGV4aXN0aW5nIGZ1bGx5IGF1dG9ub21vdXMgYmVuY2htYXJrcyB3aGVyZSBDb2RleCBsZWFkcywgd2l0aCBDbGF1ZGUgQ29kZSByYW5raW5nIGZpcnN0OyBvbiB0aGUgaHVtYW4gc2lkZSwgQ29sbGFiU2tpbGwgcmV2ZWFscyB0aGF0IHByYWN0aWNhbCBleHBlcmllbmNlIGVtZXJnZXMgYXMgdGhlIHByaW1hcnkgZHJpdmVyIG9mIGNvbGxhYm9yYXRpb24gc2tpbGwsIHdpdGggaGFuZHMtb24gY29sbGFib3JhdGlvbiBtZWFuaW5nZnVsbHkgc2hpZnRpbmcgd29ya2VycycgQUkgbGl0ZXJhY3kuIFRvZ2V0aGVyLCB3ZSBob3BlIENvbGxhYlNraWxsIGVuYWJsZXMgdGhlIGNvbW11bml0eSB0byBpbnZlc3QgaW4gc3lzdGVtYXRpYyBldmFsdWF0aW9uIG9mIGh1bWFuLWFnZW50IGNvbGxhYm9yYXRpb24gYW5kIHNwdXJzIGRldmVsb3BtZW50IGVmZm9ydHMgYWltZWQgYXQgYnVpbGRpbmcgQUkgYWdlbnRzIHRoYXQgZ2VudWluZWx5IGF1Z21lbnQgaHVtYW4gd29ya2Vycy48L2Rlc2NyaXB0aW9uPgogICAgPGRlc2NyaXB0aW9uIGRlc2NyaXB0aW9uVHlwZT0iT3RoZXIiPjEwIHBhZ2VzIG9mIG1haW4gcGFwZXIsIENPTE0gMjAyNjwvZGVzY3JpcHRpb24+CiAgPC9kZXNjcmlwdGlvbnM+CjwvcmVzb3VyY2U+",
+    "url": "https://arxiv.org/abs/2606.09833",
+    "contentUrl": null,
+    "metadataVersion": 1,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "mds",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 0,
+    "viewsOverTime": [],
+    "downloadCount": 0,
+    "downloadsOverTime": [],
+    "referenceCount": 0,
+    "citationCount": 0,
+    "citationsOverTime": [],
+    "partCount": 0,
+    "partOfCount": 0,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2026-06-10T01:51:56.000Z",
+    "registered": "2026-06-10T01:51:57.000Z",
+    "published": "2026",
+    "updated": "2026-07-28T04:00:45.000Z"
+   },
+   "relationships": {
+    "client": {
+     "data": {
+      "id": "arxiv.content",
+      "type": "clients"
+     }
+    },
+    "provider": {
+     "data": {
+      "id": "arxiv",
+      "type": "providers"
+     }
+    },
+    "media": {
+     "data": {
+      "id": "10.48550/arxiv.2606.09833",
+      "type": "media"
+     }
+    },
+    "references": {
+     "data": []
+    },
+    "citations": {
+     "data": []
+    },
+    "parts": {
+     "data": []
+    },
+    "partOf": {
+     "data": []
+    },
+    "versions": {
+     "data": []
+    },
+    "versionOf": {
+     "data": []
+    }
+   }
+  }
+ },
+ "arxiv_abs_page_fields": "200\ntitle | CollabSkill: Evaluating Human-Agent Collaboration On Real-World Tasks\nauthors | Yijia Shao, Zora Zhiruo Wang, Neel Ahuja, Yicheng Wang, Bowen Liu, Diyi Yang\ndateline | [Submitted on 20 Apr 2026 (v1), last revised 25 Jul 2026 (this version, v2)]\ndoi | https://doi.org/10.48550/arXiv.2606.09833\nhistory | Submission history\nFrom: Yijia Shao [view email]\n[v1] Mon, 20 Apr 2026 03:03:25 UTC (954 KB)\n[v2] Sat, 25 Jul 2026 16:20:30 UTC (957 KB)\n\ncomments | 10 pages of main paper, COLM 2026\n",
+ "fetched": "2026-11-12，curl（OpenAlex、DataCite、PDF）+ 本机 Python playwright 驱动 Edge（摘要页截图），每次请求间隔 4–9 秒"
+}

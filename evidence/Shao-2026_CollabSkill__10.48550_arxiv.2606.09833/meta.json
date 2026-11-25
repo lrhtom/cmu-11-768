@@ -1,0 +1,43 @@
+{
+  "slug": "10.48550_arxiv.2606.09833",
+  "doi": "10.48550/arXiv.2606.09833",
+  "title": "CollabSkill: Evaluating Human-Agent Collaboration On Real-World Tasks",
+  "authors": [
+    "Yijia Shao",
+    "Zora Zhiruo Wang",
+    "Neel Ahuja",
+    "Yicheng Wang",
+    "Bowen Liu",
+    "Diyi Yang"
+  ],
+  "authors_note": "6 人，顺序在 arXiv API、DataCite、OpenAlex、摘要页、PDF 首页一致；PDF 首页把第二作者写作 Zora Z. Wang",
+  "year": 2026,
+  "date": "v1 2026-04-20；v2 2026-07-25",
+  "version": "arxiv-v2",
+  "version_note": "v1 2026-04-20（954 KB），v2 2026-07-25（957 KB，本项目读的版本）。注：arXiv 号 2606 的年月和 v1 提交日期 4 月对不上，各来源都这么记，属 arXiv 一侧数据。附录 C.1 提到'initial version of this paper in March 2026'",
+  "venue": "COLM 2026（PDF 每页页眉 'Published as a conference paper at COLM 2026'；arXiv 备注 '10 pages of main paper, COLM 2026'）",
+  "venue_note": "OpenAlex 和 DataCite 只记为 arXiv 预印本，没有会议 DOI；会议名取自 PDF 页眉和 arXiv 备注",
+  "pages": "28 页（PDF，正文 1–10 页，伦理声明、参考文献，附录 A–J）",
+  "arxiv_id": "2606.09833v2",
+  "urls": {
+    "abs": "https://arxiv.org/abs/2606.09833v2",
+    "pdf": "https://arxiv.org/pdf/2606.09833v2",
+    "project": "https://cogym.saltlab.stanford.edu"
+  },
+  "openalex_id": "W7164193491",
+  "course_use": "官网第 17 讲参考清单（第 17 讲讲义第 39 页用了它的 rubric 生成提示），用于预写第 19 讲；第 20 讲第 8 节站内引用了第 19 讲里对它的描述",
+  "check_8_items": {
+    "1_title": "一致：五处相同",
+    "2_authors": "一致：6 人，顺序五处相同",
+    "3_year": "2026",
+    "4_version": "arxiv-v2（截图里 this version, v2）",
+    "5_venue": "COLM 2026（PDF 页眉）",
+    "6_pages": "28 页",
+    "7_doi": "10.48550/arXiv.2606.09833，DataCite 解析通过（version 2），摘要页同一个 DOI",
+    "8_content": "全文 28 页读完（正文、附录 A–J 的提示词、推导、评分验证、AI 熟练度分析）。逐句判定见 summary_cn_en.md"
+  },
+  "internal_inconsistency": "LLM 熟悉度与协作技能的相关：引言写 ρ = 0.297, p = 0.041；第 6.2 节写 ρ = 0.297, p = 0.010（另有授权舒适度 ρ = 0.238, p = 0.041）。笔记两处 p 值都写出并注明原文不一致",
+  "verified_date": "2026-11-12",
+  "verified_by": "claude",
+  "verification_method": "arxiv-api+openalex+datacite+playwright-edge-screenshot+pdf-fullread"
+}

@@ -1,0 +1,44 @@
+出处：Huq, Wang, Guo, Arangarajan, Ou, Xu, Zhou, Neubig, Bigham. Modeling Distinct Human Interaction in Web Agents. arXiv:2602.17588v4 (2026).
+用途：CMU 11-768 笔记第 10 章第 3 讲（第 19 讲 Human-Agent Interaction，预写）第 4、5 节。
+
+【claim 1】（第 4 节）CowPilot：Chrome 扩展；智能体提议 UI 动作并高亮；用户可放行、暂停、接管；任意时刻、不限次数；全程记录；研究里底座是 GPT-4o。
+p.17 附录 A.2："an open-sourced Chrome extension for collaborative web navigation between a human and an LLM-powered agent" "The system offers a suggest-then-execute workflow where the AI agent proposes UI actions (e.g., clicking buttons, filling text boxes, going to a specific URL) that are visually highlighted for user approval. Users can allow the agent to proceed, pause its execution, or intervene in the agent and take over control. Users can intervene at arbitrary times and for an unlimited number of times if they wish. The entire interaction between the user and the agent, as well as the web environment information, can be logged in detail" "we used GPT-4o in our study for consistency across annotators."
+（笔记只写"放行、暂停、插手接管"三种，照附录 A.2 的 allow / pause / intervene and take over。CowPilot 原论文没有在本项目核验，不引用它的说法。）
+
+【claim 2】（第 5 节）CowCorpus：20 位用户（20–30 岁），每人 20 个任务（10 个 Mind2Web 标准 + 10 个自选），400 条轨迹，2,748 个智能体步骤、1,476 个人的步骤；人的动作占比标准 21.63%、自选 16.06%。
+p.2："a real-user corpus of 400 human-agent collaborative task execution trajectories ... over 2,748 agent action steps and 1,476 human action steps"
+p.4 §3.1："(1) 10 standard tasks from the Mind2Web dataset ... and (2) 10 free-form tasks of the participants' own choice. We recruited 20 human users"
+p.5 表 3："Standard 21.63% ... Free-form 16.06%"（intervention intensity: percentage of human actions across all trajectories）
+p.17 附录 A.1："Our participants are aged between 20–30"
+
+【claim 3】（第 5 节）为什么插手：纠错（选错、太早、卡住绕圈）、偏好不符（漏要求如 under $100、in Pittsburgh；描述不清如牙膏牌子）、帮忙应付复杂环境（下拉框、验证码、动态布局、资源没加载、为防不可逆错误先停下）。
+p.6–7 §3.2.2："Incorrect or premature actions ... before completing a product search, the agent prematurely selected a location filter" "Agent stuck or looping" "such as price (shoes "under $100") or location ... (e.g., weather "in Pittsburgh")" "such as the brand when asking the agent to buy toothpaste" "dropdowns, captchas, dynamic layouts" "Missing resources" "Users may preemptively stop agent execution to avoid mistakes (especially unrecoverable ones)"
+
+【claim 4】（第 5 节）四个特征（频率、强度、位置、交还率）；k-means k=4；四种风格及人数。
+p.6 §3.2.1 公式 (2)–(5)：frequency = 插手事件数 / 总动作数；intensity = 人的步数 / 智能体步数；pos = 人的动作的平均归一化位置；handback = 插手后智能体还接着做的事件比例。
+p.7 §3.3："we cluster users by interaction behavior with k-means (k=4)"
+p.7 图 3：Takeover [P10, P13, P18]；Hands-on [P3, P7-8]；Hands-off [P1-2, P15]；Collaborative [P4-6, P9, P11-12, P14, P16-17, P19-20] → 3 / 3 / 3 / 11 人。
+图 3 描述：Takeover "Occasional interventions, but almost exclusively at the very end of the task, and once they step in, they do not hand the control back"；Hands-on "Frequent and substantial interventions, often later, balancing between taking over and giving control back"；Hands-off "Never intervenes"；Collaborative "Rare, modest interventions ... with a strong tendency to hand control back"。
+（笔记代码里的轨迹和位置从 1 数是示意；原文没说位置从 0 还是 1 数。）
+
+【claim 5】（第 5 节）预测任务：输入历史、截图和无障碍树、提议动作；输出 <ask_user> / <agent_continue>；SFT；约 1:7；训练 1,247 步、测试 251 步；Hands-off 不参与。
+p.3 §2："The model is fine-tuned to generate designated tokens: <ask_user> or <agent_continue>"
+p.8 §4.1："approximately 1:7 for intervention and non-intervention steps ... We exclude the Hands-off cluster ... 1,247 training steps and 251 test steps."
+
+【claim 6】（第 5 节）PTS 公式与图 2 例子（α=0.2，Z=σ(1)，d1=4、d2=2）。
+p.3："PTS = 1/Z · σ(Icorrect − Σi∈E α·d_i²) ... We set α = 0.2 by default ... normalized to [0, 1] using sigmoid σ(·) and a factor Z = σ(1)"；图 2："Early Prediction d1 = 6 − 2 = 4, d2 = 6 − 4 = 2 ... Intervention Reward I = 1"。
+（笔记里 0.065 是本机按公式算的。）
+
+【claim 7】（第 5 节）表 4 的数；永不插手基线准确率 0.853、PTS 0；GPT-4o 不插手 F1 0.846、插手 F1 0.198、PTS 0.147；Gemma 27B SFT PTS 0.303；LLaVA 8B SFT 0.201；61.4–63.4 是步准确率的百分点提升。
+p.9 表 4：Always Interv 0.147/0.257/0.000/0.151；Always No Interv 0.853/0.000/0.920/0.000；Claude 4 Sonnet 0.681/0.231/0.799/0.293；GPT-4o 0.741/0.198/0.846/0.147；Gemini 2.5 Pro 0.681/0.286/0.795/0.262；Gemma 27B 0.239/0.264/0.214/0.187；Llava 8B 0.183/0.000/0.343/0.017；Gemma 27B (SFT) 0.853/0.302/0.918/0.303；Llava 8B (SFT) 0.817/0.296/0.897/0.201。
+摘要："yielding a 61.4–63.4% improvement in intervention prediction accuracy over base LMs"（0.853 − 0.239 = 0.614，0.817 − 0.183 = 0.634，本机核对。）
+
+【claim 8】（第 5 节）按风格微调：对角线占优；接管型例外，131 步里 11 个插手步，动手型模型最好；借高频用户的模型。
+p.10 §4.3："The only exception is for Takeover group, where the Hands-on model yields the best performance ... the Takeover cluster contains only 11 intervention steps (out of 131 total), compared to 37 intervention steps (out of 296) for Hands-on" "users with sparse feedback could benefit from models trained on high intervention frequency user group"
+
+【claim 9】（第 5 节）消融：推理降低 PTS；人的动作历史 76.27% → 81.36%；截图+无障碍树 74.9%，只截图 72.9%，只无障碍树 69.7%。
+p.20–21 附录 B.2："explicit reasoning tends to lower the Perfect Timing Score (PTS) across models ... strengthens the models' bias toward staying silent"；B.3："increasing Step Accuracy from 76.27% to 81.36%"（Claude 2 shot w/o reasoning）；B.4："Screenshot-only and AXTree-only approaches yield Step Accuracies of 72.9% and 69.7% ... multimodal baseline (74.9%)"。
+
+【claim 10】（第 5 节）PlowPilot：执行智能体不变，只在预测会插手时停下确认；4 位回访 + 12 位新人 = 16 人；六项 7 分量表平均高 36.8%；初步结果。
+p.10–11 §5："PLOWPILOT now prompts for intervention only at moments where the model predicts a high likelihood of user intervention." "Four participants responded" "we additionally recruited 12 participants" "combined sample of n=16 participants" "Across all six measures, preliminary results from our user study show that PLOWPILOT outperforms the existing collaborative web agent ..., with an average improvement of 36.8%" "the underlying execution agent remains unchanged from COWPILOT"
+（笔记 co ext 框里"样本小、和之前的打分比、准确率没拉开"是笔记的看法，已标明。）

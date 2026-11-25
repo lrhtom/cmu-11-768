@@ -1,0 +1,1675 @@
+{
+ "arxiv_api_atom_entry": "<ns0:entry xmlns:ns0=\"http://www.w3.org/2005/Atom\" xmlns:ns1=\"http://arxiv.org/schemas/atom\">\n    <ns0:id>http://arxiv.org/abs/2608.12355v1</ns0:id>\n    <ns0:title>Humans are Missing from AI Coding Agent Research</ns0:title>\n    <ns0:updated>2026-07-04T01:24:03Z</ns0:updated>\n    <ns0:link href=\"https://arxiv.org/abs/2608.12355v1\" rel=\"alternate\" type=\"text/html\" />\n    <ns0:link href=\"https://arxiv.org/pdf/2608.12355v1\" rel=\"related\" type=\"application/pdf\" title=\"pdf\" />\n    <ns0:summary>Recent progress in AI coding agent research has led to rapid improvements in agents' ability to autonomously perform complex software engineering tasks, from editing large codebases to executing long-horizon development workflows. As these systems make strides, however, the primary bottleneck to practical usefulness increasingly shifts away from pure task-solving capability, and toward challenges in how users communicate with, supervise, and trust agents. In this position paper, we argue for a reorientation from autonomous to human-centered coding agents: systems designed not only to complete tasks, but to collaborate effectively with people. We identify four core interaction-level dimensions that characterize the human-agent task-solving loop: task alignment, verifiability, steerability, and adaptability. Finally, we outline concrete research directions to advance these dimensions, including user-involved coding environments, comprehensive verification mechanisms, and principled measures of human-agent interaction quality.</ns0:summary>\n    <ns0:category term=\"cs.HC\" scheme=\"http://arxiv.org/schemas/atom\" />\n    <ns0:category term=\"cs.AI\" scheme=\"http://arxiv.org/schemas/atom\" />\n    <ns0:category term=\"cs.SE\" scheme=\"http://arxiv.org/schemas/atom\" />\n    <ns0:published>2026-07-04T01:24:03Z</ns0:published>\n    <ns1:primary_category term=\"cs.HC\" />\n    <ns0:author>\n      <ns0:name>Zora Z. Wang</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>John Yang</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Kilian Lieret</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Alexa Tartaglini</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Valerie Chen</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Yuxiang Wei</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Zijian Wang</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Lingming Zhang</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Karthik Narasimhan</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Ludwig Schmidt</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Graham Neubig</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Daniel Fried</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Diyi Yang</ns0:name>\n    </ns0:author>\n  </ns0:entry>\n  ",
+ "arxiv_api_query": "https://export.arxiv.org/api/query?id_list=2606.09833,2609.04141,2501.16609,2608.12355,2602.17588,2511.02208&max_results=10（2026-11-12，一次取 6 篇候选）",
+ "openalex": {
+  "id": "https://openalex.org/W7203443502",
+  "doi": "https://doi.org/10.48550/arxiv.2608.12355",
+  "title": "Humans are Missing from AI Coding Agent Research",
+  "display_name": "Humans are Missing from AI Coding Agent Research",
+  "publication_year": 2026,
+  "publication_date": "2026-07-04",
+  "ids": {
+   "openalex": "https://openalex.org/W7203443502",
+   "doi": "https://doi.org/10.48550/arxiv.2608.12355"
+  },
+  "language": "en",
+  "primary_location": {
+   "id": "pmh:oai:arXiv.org:2608.12355",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "https://arxiv.org/abs/2608.12355",
+   "pdf_url": "https://arxiv.org/pdf/2608.12355",
+   "source": {
+    "id": "https://openalex.org/S4306400194",
+    "display_name": "arXiv (Cornell University)",
+    "issn_l": "2331-8422",
+    "issn": [
+     "2331-8422"
+    ],
+    "is_oa": true,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/I205783295",
+    "host_organization_name": "Cornell University",
+    "host_organization_lineage": [
+     "https://openalex.org/I205783295"
+    ],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": "cc-by",
+   "license_id": "https://openalex.org/licenses/cc-by",
+   "version": "submittedVersion",
+   "is_accepted": false,
+   "is_published": false,
+   "raw_source_name": null,
+   "raw_type": "text"
+  },
+  "volume": null,
+  "type": "preprint",
+  "is_traditional": true,
+  "indexed_in": [
+   "arxiv",
+   "datacite"
+  ],
+  "open_access": {
+   "is_oa": true,
+   "oa_status": "green",
+   "oa_url": "https://arxiv.org/pdf/2608.12355",
+   "any_repository_has_fulltext": true
+  },
+  "authorships": [
+   {
+    "author_position": "first",
+    "author": {
+     "id": "https://openalex.org/A5147145283",
+     "display_name": "Zora Z. Wang",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Wang, Zora Z.",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5135479297",
+     "display_name": "John Yang",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I97018004",
+      "display_name": "Stanford University",
+      "ror": "https://ror.org/00f54p054",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Yang, John",
+    "raw_affiliation_strings": [
+     "Stanford University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Stanford University",
+      "institution_ids": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5085951731",
+     "display_name": "K. Lieret",
+     "orcid": "https://orcid.org/0000-0003-2792-7511",
+     "observed_orcids": [
+      "https://orcid.org/0000-0003-2792-7511"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I20089843",
+      "display_name": "Princeton University",
+      "ror": "https://ror.org/00hx57361",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I20089843"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Lieret, Kilian",
+    "raw_affiliation_strings": [
+     "Princeton University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Princeton University",
+      "institution_ids": [
+       "https://openalex.org/I20089843"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5012137120",
+     "display_name": "Alexa R. Tartaglini",
+     "orcid": "https://orcid.org/0000-0002-6152-1323",
+     "observed_orcids": [
+      "https://orcid.org/0000-0002-6152-1323"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I97018004",
+      "display_name": "Stanford University",
+      "ror": "https://ror.org/00f54p054",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Tartaglini, Alexa",
+    "raw_affiliation_strings": [
+     "Stanford University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Stanford University",
+      "institution_ids": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5088847857",
+     "display_name": "Valerie Chen",
+     "orcid": "https://orcid.org/0009-0007-2783-0265",
+     "observed_orcids": [
+      "https://orcid.org/0009-0007-2783-0265"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Chen, Valerie",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5147228461",
+     "display_name": "Yuxiang Wei",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I157725225",
+      "display_name": "University of Illinois Urbana-Champaign",
+      "ror": "https://ror.org/047426m28",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I157725225"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Wei, Yuxiang",
+    "raw_affiliation_strings": [
+     "University of Illinois Urbana-Champaign"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "University of Illinois Urbana-Champaign",
+      "institution_ids": [
+       "https://openalex.org/I157725225"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5147172300",
+     "display_name": "Zijian Wang",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Wang, Zijian",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5147163334",
+     "display_name": "Lingming Zhang",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I157725225",
+      "display_name": "University of Illinois Urbana-Champaign",
+      "ror": "https://ror.org/047426m28",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I157725225"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Zhang, Lingming",
+    "raw_affiliation_strings": [
+     "University of Illinois Urbana-Champaign"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "University of Illinois Urbana-Champaign",
+      "institution_ids": [
+       "https://openalex.org/I157725225"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5025205227",
+     "display_name": "Karthik Narasimhan",
+     "orcid": "https://orcid.org/0000-0001-9894-9983",
+     "observed_orcids": [
+      "https://orcid.org/0000-0001-9894-9983"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I20089843",
+      "display_name": "Princeton University",
+      "ror": "https://ror.org/00hx57361",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I20089843"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Narasimhan, Karthik",
+    "raw_affiliation_strings": [
+     "Princeton University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Princeton University",
+      "institution_ids": [
+       "https://openalex.org/I20089843"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5110578233",
+     "display_name": "Ludwig Schmidt",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I97018004",
+      "display_name": "Stanford University",
+      "ror": "https://ror.org/00f54p054",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Schmidt, Ludwig",
+    "raw_affiliation_strings": [
+     "Stanford University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Stanford University",
+      "institution_ids": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5068811427",
+     "display_name": "Graham Neubig",
+     "orcid": "https://orcid.org/0000-0002-2072-3789",
+     "observed_orcids": [
+      "https://orcid.org/0000-0002-2072-3789"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Neubig, Graham",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5094348418",
+     "display_name": "Daniel Fried",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Fried, Daniel",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "last",
+    "author": {
+     "id": "https://openalex.org/A5089413311",
+     "display_name": "Diyi Yang",
+     "orcid": "https://orcid.org/0000-0003-1220-3983",
+     "observed_orcids": [
+      "https://orcid.org/0000-0003-1220-3983"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I97018004",
+      "display_name": "Stanford University",
+      "ror": "https://ror.org/00f54p054",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Yang, Diyi",
+    "raw_affiliation_strings": [
+     "Stanford University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Stanford University",
+      "institution_ids": [
+       "https://openalex.org/I97018004"
+      ]
+     }
+    ]
+   }
+  ],
+  "institutions": [],
+  "countries_distinct_count": 1,
+  "institutions_distinct_count": 4,
+  "corresponding_author_ids": [],
+  "corresponding_institution_ids": [],
+  "apc_list": null,
+  "apc_paid": null,
+  "fwci": null,
+  "has_fulltext": true,
+  "cited_by_count": 2,
+  "citation_normalized_percentile": null,
+  "cited_by_percentile_year": null,
+  "biblio": {
+   "volume": null,
+   "issue": null,
+   "first_page": null,
+   "last_page": null
+  },
+  "is_retracted": false,
+  "is_paratext": false,
+  "is_xpac": false,
+  "primary_topic": {
+   "id": "https://openalex.org/T10260",
+   "display_name": "Software Engineering Research",
+   "score": 0.7773000001907349,
+   "subfield": {
+    "id": "https://openalex.org/subfields/1710",
+    "display_name": "Information Systems"
+   },
+   "field": {
+    "id": "https://openalex.org/fields/17",
+    "display_name": "Computer Science"
+   },
+   "domain": {
+    "id": "https://openalex.org/domains/3",
+    "display_name": "Physical Sciences"
+   }
+  },
+  "topics": [
+   {
+    "id": "https://openalex.org/T10260",
+    "display_name": "Software Engineering Research",
+    "score": 0.7773000001907349,
+    "subfield": {
+     "id": "https://openalex.org/subfields/1710",
+     "display_name": "Information Systems"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/17",
+     "display_name": "Computer Science"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/3",
+     "display_name": "Physical Sciences"
+    }
+   },
+   {
+    "id": "https://openalex.org/T10430",
+    "display_name": "Software Engineering Techniques and Practices",
+    "score": 0.18619999289512634,
+    "subfield": {
+     "id": "https://openalex.org/subfields/1710",
+     "display_name": "Information Systems"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/17",
+     "display_name": "Computer Science"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/3",
+     "display_name": "Physical Sciences"
+    }
+   },
+   {
+    "id": "https://openalex.org/T10470",
+    "display_name": "Usability and User Interface Design",
+    "score": 0.007000000216066837,
+    "subfield": {
+     "id": "https://openalex.org/subfields/1709",
+     "display_name": "Human-Computer Interaction"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/17",
+     "display_name": "Computer Science"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/3",
+     "display_name": "Physical Sciences"
+    }
+   }
+  ],
+  "keywords": [
+   {
+    "id": "https://openalex.org/keywords/ai-coding-agents",
+    "display_name": "coding agents",
+    "score": 0.9940000176429749
+   },
+   {
+    "id": "https://openalex.org/keywords/human-agent-interaction",
+    "display_name": "human-agent interaction",
+    "score": 0.7480000257492065
+   },
+   {
+    "id": "https://openalex.org/keywords/human-centered-ai",
+    "display_name": "human-centered AI",
+    "score": 0.8220000267028809
+   },
+   {
+    "id": "https://openalex.org/keywords/task-alignment",
+    "display_name": "task alignment",
+    "score": 0.8429999947547913
+   },
+   {
+    "id": "https://openalex.org/keywords/verifiability",
+    "display_name": "verifiability",
+    "score": 0.921999990940094
+   },
+   {
+    "id": "https://openalex.org/keywords/steerability",
+    "display_name": "steerability",
+    "score": 0.9980000257492065
+   },
+   {
+    "id": "https://openalex.org/keywords/adaptability",
+    "display_name": "adaptability",
+    "score": 0.9950000047683716
+   },
+   {
+    "id": "https://openalex.org/keywords/verification-methods",
+    "display_name": "verification methods",
+    "score": 0.6610000133514404
+   },
+   {
+    "id": "https://openalex.org/keywords/trust-in-ai-agents",
+    "display_name": "trust in AI agents",
+    "score": 0.7419999837875366
+   }
+  ],
+  "concepts": [
+   {
+    "id": "https://openalex.org/C2780513914",
+    "wikidata": "https://www.wikidata.org/wiki/Q18210350",
+    "display_name": "Bottleneck",
+    "level": 2,
+    "score": 0.79830002784729
+   },
+   {
+    "id": "https://openalex.org/C41008148",
+    "wikidata": "https://www.wikidata.org/wiki/Q21198",
+    "display_name": "Computer science",
+    "level": 0,
+    "score": 0.7831000089645386
+   },
+   {
+    "id": "https://openalex.org/C179518139",
+    "wikidata": "https://www.wikidata.org/wiki/Q5140297",
+    "display_name": "Coding (social sciences)",
+    "level": 2,
+    "score": 0.7027999758720398
+   },
+   {
+    "id": "https://openalex.org/C2780451532",
+    "wikidata": "https://www.wikidata.org/wiki/Q759676",
+    "display_name": "Task (project management)",
+    "level": 2,
+    "score": 0.491100013256073
+   },
+   {
+    "id": "https://openalex.org/C2777904410",
+    "wikidata": "https://www.wikidata.org/wiki/Q7397",
+    "display_name": "Software",
+    "level": 2,
+    "score": 0.44909998774528503
+   },
+   {
+    "id": "https://openalex.org/C78780964",
+    "wikidata": "https://www.wikidata.org/wiki/Q7233193",
+    "display_name": "Position paper",
+    "level": 2,
+    "score": 0.41830000281333923
+   },
+   {
+    "id": "https://openalex.org/C154945302",
+    "wikidata": "https://www.wikidata.org/wiki/Q11660",
+    "display_name": "Artificial intelligence",
+    "level": 1,
+    "score": 0.41029998660087585
+   },
+   {
+    "id": "https://openalex.org/C107457646",
+    "wikidata": "https://www.wikidata.org/wiki/Q207434",
+    "display_name": "Human–computer interaction",
+    "level": 1,
+    "score": 0.3587999939918518
+   },
+   {
+    "id": "https://openalex.org/C2522767166",
+    "wikidata": "https://www.wikidata.org/wiki/Q2374463",
+    "display_name": "Data science",
+    "level": 1,
+    "score": 0.35679998993873596
+   },
+   {
+    "id": "https://openalex.org/C2164484",
+    "wikidata": "https://www.wikidata.org/wiki/Q5170150",
+    "display_name": "Core (optical fiber)",
+    "level": 2,
+    "score": 0.3504999876022339
+   },
+   {
+    "id": "https://openalex.org/C115903868",
+    "wikidata": "https://www.wikidata.org/wiki/Q80993",
+    "display_name": "Software engineering",
+    "level": 1,
+    "score": 0.29760000109672546
+   },
+   {
+    "id": "https://openalex.org/C175154964",
+    "wikidata": "https://www.wikidata.org/wiki/Q380077",
+    "display_name": "Task analysis",
+    "level": 3,
+    "score": 0.2750999927520752
+   },
+   {
+    "id": "https://openalex.org/C26517878",
+    "wikidata": "https://www.wikidata.org/wiki/Q228039",
+    "display_name": "Key (lock)",
+    "level": 2,
+    "score": 0.26350000500679016
+   },
+   {
+    "id": "https://openalex.org/C153083717",
+    "wikidata": "https://www.wikidata.org/wiki/Q6535263",
+    "display_name": "Leverage (statistics)",
+    "level": 2,
+    "score": 0.26190000772476196
+   },
+   {
+    "id": "https://openalex.org/C119857082",
+    "wikidata": "https://www.wikidata.org/wiki/Q2539",
+    "display_name": "Machine learning",
+    "level": 1,
+    "score": 0.2614000141620636
+   },
+   {
+    "id": "https://openalex.org/C5894958",
+    "wikidata": "https://www.wikidata.org/wiki/Q2297769",
+    "display_name": "Software agent",
+    "level": 2,
+    "score": 0.26109999418258667
+   }
+  ],
+  "mesh": [],
+  "locations_count": 2,
+  "locations": [
+   {
+    "id": "pmh:oai:arXiv.org:2608.12355",
+    "doi": null,
+    "is_oa": true,
+    "landing_page_url": "https://arxiv.org/abs/2608.12355",
+    "pdf_url": "https://arxiv.org/pdf/2608.12355",
+    "source": {
+     "id": "https://openalex.org/S4306400194",
+     "display_name": "arXiv (Cornell University)",
+     "issn_l": "2331-8422",
+     "issn": [
+      "2331-8422"
+     ],
+     "is_oa": true,
+     "is_in_doaj": false,
+     "is_core": false,
+     "listed_in": [],
+     "host_organization": "https://openalex.org/I205783295",
+     "host_organization_name": "Cornell University",
+     "host_organization_lineage": [
+      "https://openalex.org/I205783295"
+     ],
+     "host_organization_lineage_names": [],
+     "type": "repository"
+    },
+    "license": "cc-by",
+    "license_id": "https://openalex.org/licenses/cc-by",
+    "version": "submittedVersion",
+    "is_accepted": false,
+    "is_published": false,
+    "raw_source_name": null,
+    "raw_type": "text"
+   },
+   {
+    "id": "doi:10.48550/arxiv.2608.12355",
+    "doi": "https://doi.org/10.48550/arxiv.2608.12355",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.48550/arxiv.2608.12355",
+    "pdf_url": null,
+    "source": {
+     "id": "https://openalex.org/S4306400194",
+     "display_name": "arXiv (Cornell University)",
+     "issn_l": "2331-8422",
+     "issn": [
+      "2331-8422"
+     ],
+     "is_oa": true,
+     "is_in_doaj": false,
+     "is_core": false,
+     "listed_in": [],
+     "host_organization": "https://openalex.org/I205783295",
+     "host_organization_name": "Cornell University",
+     "host_organization_lineage": [
+      "https://openalex.org/I205783295"
+     ],
+     "host_organization_lineage_names": [],
+     "type": "repository"
+    },
+    "license": "cc-by",
+    "license_id": "https://openalex.org/licenses/cc-by",
+    "version": null,
+    "is_accepted": false,
+    "is_published": false,
+    "raw_source_name": null,
+    "raw_type": "Preprint"
+   }
+  ],
+  "best_oa_location": {
+   "id": "pmh:oai:arXiv.org:2608.12355",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "https://arxiv.org/abs/2608.12355",
+   "pdf_url": "https://arxiv.org/pdf/2608.12355",
+   "source": {
+    "id": "https://openalex.org/S4306400194",
+    "display_name": "arXiv (Cornell University)",
+    "issn_l": "2331-8422",
+    "issn": [
+     "2331-8422"
+    ],
+    "is_oa": true,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/I205783295",
+    "host_organization_name": "Cornell University",
+    "host_organization_lineage": [
+     "https://openalex.org/I205783295"
+    ],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": "cc-by",
+   "license_id": "https://openalex.org/licenses/cc-by",
+   "version": "submittedVersion",
+   "is_accepted": false,
+   "is_published": false,
+   "raw_source_name": null,
+   "raw_type": "text"
+  },
+  "sustainable_development_goals": [],
+  "study_designs": [],
+  "awards": [
+   {
+    "id": "https://openalex.org/G2749129067",
+    "display_name": "CAREER: Socially-Aware Language Technologies To Support People in Supporting Others for Better Online Communities",
+    "funder_award_id": "2247357",
+    "funder_id": "https://openalex.org/F4320306076",
+    "funder_display_name": "National Science Foundation"
+   },
+   {
+    "id": "https://openalex.org/G4353487559",
+    "display_name": null,
+    "funder_award_id": "ONR-N00014",
+    "funder_id": "https://openalex.org/F4320337345",
+    "funder_display_name": "Office of Naval Research"
+   },
+   {
+    "id": "https://openalex.org/G6671297155",
+    "display_name": null,
+    "funder_award_id": "CAREER",
+    "funder_id": "https://openalex.org/F4320306076",
+    "funder_display_name": "National Science Foundation"
+   },
+   {
+    "id": "https://openalex.org/G8876996369",
+    "display_name": null,
+    "funder_award_id": "N00014",
+    "funder_id": "https://openalex.org/F4320337345",
+    "funder_display_name": "Office of Naval Research"
+   }
+  ],
+  "funders": [
+   {
+    "id": "https://openalex.org/F4320306076",
+    "display_name": "National Science Foundation",
+    "ror": "https://ror.org/021nxhr62"
+   },
+   {
+    "id": "https://openalex.org/F4320315389",
+    "display_name": "Open Philanthropy Project",
+    "ror": "https://ror.org/004d1k391"
+   },
+   {
+    "id": "https://openalex.org/F4320337345",
+    "display_name": "Office of Naval Research",
+    "ror": "https://ror.org/00rk2pe57"
+   }
+  ],
+  "has_content": {
+   "pdf": true,
+   "grobid_xml": true
+  },
+  "content_urls": {
+   "pdf": "https://content.openalex.org/works/W7203443502.pdf",
+   "grobid_xml": "https://content.openalex.org/works/W7203443502.grobid-xml"
+  },
+  "referenced_works_count": 48,
+  "referenced_works": [
+   "https://openalex.org/W2571927164",
+   "https://openalex.org/W3037013468",
+   "https://openalex.org/W3109862485",
+   "https://openalex.org/W4220962633",
+   "https://openalex.org/W4286750487",
+   "https://openalex.org/W4302797994",
+   "https://openalex.org/W4365205411",
+   "https://openalex.org/W4385963839",
+   "https://openalex.org/W4391212748",
+   "https://openalex.org/W4392822190",
+   "https://openalex.org/W4392825180",
+   "https://openalex.org/W4393213222",
+   "https://openalex.org/W4393969224",
+   "https://openalex.org/W4396651342",
+   "https://openalex.org/W4399836817",
+   "https://openalex.org/W4403345800",
+   "https://openalex.org/W4403821382",
+   "https://openalex.org/W4403885061",
+   "https://openalex.org/W4405035083",
+   "https://openalex.org/W4405957747",
+   "https://openalex.org/W4406325768",
+   "https://openalex.org/W4407576310",
+   "https://openalex.org/W4407759984",
+   "https://openalex.org/W4411449940",
+   "https://openalex.org/W4412703980",
+   "https://openalex.org/W4414586252",
+   "https://openalex.org/W4415252687",
+   "https://openalex.org/W4415315853",
+   "https://openalex.org/W4416026389",
+   "https://openalex.org/W4416268557",
+   "https://openalex.org/W4416364042",
+   "https://openalex.org/W4416436435",
+   "https://openalex.org/W4416617056",
+   "https://openalex.org/W4417119099",
+   "https://openalex.org/W4417142368",
+   "https://openalex.org/W4417247857",
+   "https://openalex.org/W4417448067",
+   "https://openalex.org/W4417525566",
+   "https://openalex.org/W6948350236",
+   "https://openalex.org/W6966659450",
+   "https://openalex.org/W7090771873",
+   "https://openalex.org/W7102657001",
+   "https://openalex.org/W7103754783",
+   "https://openalex.org/W7125905084",
+   "https://openalex.org/W7125968247",
+   "https://openalex.org/W7140093760",
+   "https://openalex.org/W7154182599",
+   "https://openalex.org/W7166802094"
+  ],
+  "related_works": [
+   "https://openalex.org/W7171815031",
+   "https://openalex.org/W7165485740",
+   "https://openalex.org/W7162791705",
+   "https://openalex.org/W7154182599",
+   "https://openalex.org/W7166724480",
+   "https://openalex.org/W7204904914",
+   "https://openalex.org/W7155376357",
+   "https://openalex.org/W7223402385",
+   "https://openalex.org/W7202416400",
+   "https://openalex.org/W7215037966"
+  ],
+  "abstract_inverted_index": {
+   "Recent": [
+    0
+   ],
+   "progress": [
+    1
+   ],
+   "in": [
+    2,
+    12,
+    53
+   ],
+   "AI": [
+    3
+   ],
+   "coding": [
+    4,
+    75,
+    120
+   ],
+   "agent": [
+    5
+   ],
+   "research": [
+    6,
+    112
+   ],
+   "has": [
+    7
+   ],
+   "led": [
+    8
+   ],
+   "to": [
+    9,
+    15,
+    26,
+    40,
+    73,
+    81,
+    85,
+    114
+   ],
+   "rapid": [
+    10
+   ],
+   "improvements": [
+    11
+   ],
+   "agents'": [
+    13
+   ],
+   "ability": [
+    14
+   ],
+   "autonomously": [
+    16
+   ],
+   "perform": [
+    17
+   ],
+   "complex": [
+    18
+   ],
+   "software": [
+    19
+   ],
+   "engineering": [
+    20
+   ],
+   "tasks,": [
+    21,
+    83
+   ],
+   "from": [
+    22,
+    46,
+    71
+   ],
+   "editing": [
+    23
+   ],
+   "large": [
+    24
+   ],
+   "codebases": [
+    25
+   ],
+   "executing": [
+    27
+   ],
+   "long-horizon": [
+    28
+   ],
+   "development": [
+    29
+   ],
+   "workflows.": [
+    30
+   ],
+   "As": [
+    31
+   ],
+   "these": [
+    32,
+    116
+   ],
+   "systems": [
+    33,
+    77
+   ],
+   "make": [
+    34
+   ],
+   "strides,": [
+    35
+   ],
+   "however,": [
+    36
+   ],
+   "the": [
+    37,
+    98
+   ],
+   "primary": [
+    38
+   ],
+   "bottleneck": [
+    39
+   ],
+   "practical": [
+    41
+   ],
+   "usefulness": [
+    42
+   ],
+   "increasingly": [
+    43
+   ],
+   "shifts": [
+    44
+   ],
+   "away": [
+    45
+   ],
+   "pure": [
+    47
+   ],
+   "task-solving": [
+    48,
+    100
+   ],
+   "capability,": [
+    49
+   ],
+   "and": [
+    50,
+    59,
+    106,
+    125
+   ],
+   "toward": [
+    51
+   ],
+   "challenges": [
+    52
+   ],
+   "how": [
+    54
+   ],
+   "users": [
+    55
+   ],
+   "communicate": [
+    56
+   ],
+   "with,": [
+    57
+   ],
+   "supervise,": [
+    58
+   ],
+   "trust": [
+    60
+   ],
+   "agents.": [
+    61
+   ],
+   "In": [
+    62
+   ],
+   "this": [
+    63
+   ],
+   "position": [
+    64
+   ],
+   "paper,": [
+    65
+   ],
+   "we": [
+    66,
+    109
+   ],
+   "argue": [
+    67
+   ],
+   "for": [
+    68
+   ],
+   "a": [
+    69
+   ],
+   "reorientation": [
+    70
+   ],
+   "autonomous": [
+    72
+   ],
+   "human-centered": [
+    74
+   ],
+   "agents:": [
+    76
+   ],
+   "designed": [
+    78
+   ],
+   "not": [
+    79
+   ],
+   "only": [
+    80
+   ],
+   "complete": [
+    82
+   ],
+   "but": [
+    84
+   ],
+   "collaborate": [
+    86
+   ],
+   "effectively": [
+    87
+   ],
+   "with": [
+    88
+   ],
+   "people.": [
+    89
+   ],
+   "We": [
+    90
+   ],
+   "identify": [
+    91
+   ],
+   "four": [
+    92
+   ],
+   "core": [
+    93
+   ],
+   "interaction-level": [
+    94
+   ],
+   "dimensions": [
+    95
+   ],
+   "that": [
+    96
+   ],
+   "characterize": [
+    97
+   ],
+   "human-agent": [
+    99,
+    129
+   ],
+   "loop:": [
+    101
+   ],
+   "task": [
+    102
+   ],
+   "alignment,": [
+    103
+   ],
+   "verifiability,": [
+    104
+   ],
+   "steerability,": [
+    105
+   ],
+   "adaptability.": [
+    107
+   ],
+   "Finally,": [
+    108
+   ],
+   "outline": [
+    110
+   ],
+   "concrete": [
+    111
+   ],
+   "directions": [
+    113
+   ],
+   "advance": [
+    115
+   ],
+   "dimensions,": [
+    117
+   ],
+   "including": [
+    118
+   ],
+   "user-involved": [
+    119
+   ],
+   "environments,": [
+    121
+   ],
+   "comprehensive": [
+    122
+   ],
+   "verification": [
+    123
+   ],
+   "mechanisms,": [
+    124
+   ],
+   "principled": [
+    126
+   ],
+   "measures": [
+    127
+   ],
+   "of": [
+    128
+   ],
+   "interaction": [
+    130
+   ],
+   "quality.": [
+    131
+   ]
+  },
+  "counts_by_year": [
+   {
+    "year": 2026,
+    "cited_by_count": 2
+   }
+  ],
+  "updated_date": "2026-11-07T11:25:07.637180",
+  "created_date": "2026-08-15T00:00:00"
+ },
+ "datacite": {
+  "data": {
+   "id": "10.48550/arxiv.2608.12355",
+   "type": "dois",
+   "attributes": {
+    "doi": "10.48550/arxiv.2608.12355",
+    "prefix": "10.48550",
+    "suffix": "arxiv.2608.12355",
+    "identifiers": [
+     {
+      "identifier": "2608.12355",
+      "identifierType": "arXiv"
+     }
+    ],
+    "alternateIdentifiers": [
+     {
+      "alternateIdentifierType": "arXiv",
+      "alternateIdentifier": "2608.12355"
+     }
+    ],
+    "creators": [
+     {
+      "name": "Wang, Zora Z.",
+      "nameType": "Personal",
+      "givenName": "Zora Z.",
+      "familyName": "Wang",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Yang, John",
+      "nameType": "Personal",
+      "givenName": "John",
+      "familyName": "Yang",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Lieret, Kilian",
+      "nameType": "Personal",
+      "givenName": "Kilian",
+      "familyName": "Lieret",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Tartaglini, Alexa",
+      "nameType": "Personal",
+      "givenName": "Alexa",
+      "familyName": "Tartaglini",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Chen, Valerie",
+      "nameType": "Personal",
+      "givenName": "Valerie",
+      "familyName": "Chen",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Wei, Yuxiang",
+      "nameType": "Personal",
+      "givenName": "Yuxiang",
+      "familyName": "Wei",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Wang, Zijian",
+      "nameType": "Personal",
+      "givenName": "Zijian",
+      "familyName": "Wang",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Zhang, Lingming",
+      "nameType": "Personal",
+      "givenName": "Lingming",
+      "familyName": "Zhang",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Narasimhan, Karthik",
+      "nameType": "Personal",
+      "givenName": "Karthik",
+      "familyName": "Narasimhan",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Schmidt, Ludwig",
+      "nameType": "Personal",
+      "givenName": "Ludwig",
+      "familyName": "Schmidt",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Neubig, Graham",
+      "nameType": "Personal",
+      "givenName": "Graham",
+      "familyName": "Neubig",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Fried, Daniel",
+      "nameType": "Personal",
+      "givenName": "Daniel",
+      "familyName": "Fried",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Yang, Diyi",
+      "nameType": "Personal",
+      "givenName": "Diyi",
+      "familyName": "Yang",
+      "affiliation": [],
+      "nameIdentifiers": []
+     }
+    ],
+    "titles": [
+     {
+      "title": "Humans are Missing from AI Coding Agent Research"
+     }
+    ],
+    "publisher": "arXiv",
+    "container": {},
+    "publicationYear": 2026,
+    "subjects": [
+     {
+      "lang": "en",
+      "subject": "Human-Computer Interaction (cs.HC)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "lang": "en",
+      "subject": "Artificial Intelligence (cs.AI)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "lang": "en",
+      "subject": "Software Engineering (cs.SE)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "subject": "FOS: Computer and information sciences",
+      "subjectScheme": "Fields of Science and Technology (FOS)"
+     }
+    ],
+    "contributors": [],
+    "dates": [
+     {
+      "date": "2026-07-04T01:24:03Z",
+      "dateType": "Submitted",
+      "dateInformation": "v1"
+     },
+     {
+      "date": "2026-08-14T00:00:38Z",
+      "dateType": "Updated",
+      "dateInformation": "v1"
+     },
+     {
+      "date": "2026-08",
+      "dateType": "Available",
+      "dateInformation": "v1"
+     }
+    ],
+    "language": null,
+    "types": {
+     "ris": "GEN",
+     "bibtex": "misc",
+     "citeproc": "article",
+     "schemaOrg": "CreativeWork",
+     "resourceType": "Article",
+     "resourceTypeGeneral": "Preprint"
+    },
+    "relatedIdentifiers": [],
+    "relatedItems": [],
+    "sizes": [],
+    "formats": [],
+    "version": "1",
+    "rightsList": [
+     {
+      "rights": "Creative Commons Attribution 4.0 International",
+      "rightsUri": "https://creativecommons.org/licenses/by/4.0/legalcode",
+      "schemeUri": "https://spdx.org/licenses/",
+      "rightsIdentifier": "cc-by-4.0",
+      "rightsIdentifierScheme": "SPDX"
+     }
+    ],
+    "descriptions": [
+     {
+      "description": "Recent progress in AI coding agent research has led to rapid improvements in agents' ability to autonomously perform complex software engineering tasks, from editing large codebases to executing long-horizon development workflows. As these systems make strides, however, the primary bottleneck to practical usefulness increasingly shifts away from pure task-solving capability, and toward challenges in how users communicate with, supervise, and trust agents. In this position paper, we argue for a reorientation from autonomous to human-centered coding agents: systems designed not only to complete tasks, but to collaborate effectively with people. We identify four core interaction-level dimensions that characterize the human-agent task-solving loop: task alignment, verifiability, steerability, and adaptability. Finally, we outline concrete research directions to advance these dimensions, including user-involved coding environments, comprehensive verification mechanisms, and principled measures of human-agent interaction quality.",
+      "descriptionType": "Abstract"
+     }
+    ],
+    "geoLocations": [],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlc291cmNlIHhtbG5zPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeHNpOnNjaGVtYUxvY2F0aW9uPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCBodHRwOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00LjMvbWV0YWRhdGEueHNkIj4KICA8aWRlbnRpZmllciBpZGVudGlmaWVyVHlwZT0iRE9JIj4xMC40ODU1MC9BUlhJVi4yNjA4LjEyMzU1PC9pZGVudGlmaWVyPgogIDxhbHRlcm5hdGVJZGVudGlmaWVycz4KICAgIDxhbHRlcm5hdGVJZGVudGlmaWVyIGFsdGVybmF0ZUlkZW50aWZpZXJUeXBlPSJhclhpdiI+MjYwOC4xMjM1NTwvYWx0ZXJuYXRlSWRlbnRpZmllcj4KICA8L2FsdGVybmF0ZUlkZW50aWZpZXJzPgogIDxjcmVhdG9ycz4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5XYW5nLCBab3JhIFouPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5ab3JhIFouPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPldhbmc8L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+WWFuZywgSm9objwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+Sm9objwvZ2l2ZW5OYW1lPgogICAgICA8ZmFtaWx5TmFtZT5ZYW5nPC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSBuYW1lVHlwZT0iUGVyc29uYWwiPkxpZXJldCwgS2lsaWFuPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5LaWxpYW48L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+TGllcmV0PC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSBuYW1lVHlwZT0iUGVyc29uYWwiPlRhcnRhZ2xpbmksIEFsZXhhPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5BbGV4YTwvZ2l2ZW5OYW1lPgogICAgICA8ZmFtaWx5TmFtZT5UYXJ0YWdsaW5pPC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSBuYW1lVHlwZT0iUGVyc29uYWwiPkNoZW4sIFZhbGVyaWU8L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPlZhbGVyaWU8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+Q2hlbjwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5XZWksIFl1eGlhbmc8L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPll1eGlhbmc8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+V2VpPC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSBuYW1lVHlwZT0iUGVyc29uYWwiPldhbmcsIFppamlhbjwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+WmlqaWFuPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPldhbmc8L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+WmhhbmcsIExpbmdtaW5nPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5MaW5nbWluZzwvZ2l2ZW5OYW1lPgogICAgICA8ZmFtaWx5TmFtZT5aaGFuZzwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5OYXJhc2ltaGFuLCBLYXJ0aGlrPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5LYXJ0aGlrPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPk5hcmFzaW1oYW48L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+U2NobWlkdCwgTHVkd2lnPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5MdWR3aWc8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+U2NobWlkdDwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5OZXViaWcsIEdyYWhhbTwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+R3JhaGFtPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPk5ldWJpZzwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5GcmllZCwgRGFuaWVsPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5EYW5pZWw8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+RnJpZWQ8L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+WWFuZywgRGl5aTwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+RGl5aTwvZ2l2ZW5OYW1lPgogICAgICA8ZmFtaWx5TmFtZT5ZYW5nPC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogIDwvY3JlYXRvcnM+CiAgPHRpdGxlcz4KICAgIDx0aXRsZT5IdW1hbnMgYXJlIE1pc3NpbmcgZnJvbSBBSSBDb2RpbmcgQWdlbnQgUmVzZWFyY2g8L3RpdGxlPgogIDwvdGl0bGVzPgogIDxwdWJsaXNoZXI+YXJYaXY8L3B1Ymxpc2hlcj4KICA8cHVibGljYXRpb25ZZWFyPjIwMjY8L3B1YmxpY2F0aW9uWWVhcj4KICA8c3ViamVjdHM+CiAgICA8c3ViamVjdCB4bWw6bGFuZz0iZW4iIHN1YmplY3RTY2hlbWU9ImFyWGl2Ij5IdW1hbi1Db21wdXRlciBJbnRlcmFjdGlvbiAoY3MuSEMpPC9zdWJqZWN0PgogICAgPHN1YmplY3QgeG1sOmxhbmc9ImVuIiBzdWJqZWN0U2NoZW1lPSJhclhpdiI+QXJ0aWZpY2lhbCBJbnRlbGxpZ2VuY2UgKGNzLkFJKTwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJlbiIgc3ViamVjdFNjaGVtZT0iYXJYaXYiPlNvZnR3YXJlIEVuZ2luZWVyaW5nIChjcy5TRSk8L3N1YmplY3Q+CiAgICA8c3ViamVjdCBzdWJqZWN0U2NoZW1lPSJGaWVsZHMgb2YgU2NpZW5jZSBhbmQgVGVjaG5vbG9neSAoRk9TKSI+Rk9TOiBDb21wdXRlciBhbmQgaW5mb3JtYXRpb24gc2NpZW5jZXM8L3N1YmplY3Q+CiAgPC9zdWJqZWN0cz4KICA8ZGF0ZXM+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iU3VibWl0dGVkIiBkYXRlSW5mb3JtYXRpb249InYxIj4yMDI2LTA3LTA0VDAxOjI0OjAzWjwvZGF0ZT4KICAgIDxkYXRlIGRhdGVUeXBlPSJVcGRhdGVkIiBkYXRlSW5mb3JtYXRpb249InYxIj4yMDI2LTA4LTE0VDAwOjAwOjM4WjwvZGF0ZT4KICAgIDxkYXRlIGRhdGVUeXBlPSJBdmFpbGFibGUiIGRhdGVJbmZvcm1hdGlvbj0idjEiPjIwMjYtMDg8L2RhdGU+CiAgPC9kYXRlcz4KICA8cmVzb3VyY2VUeXBlIHJlc291cmNlVHlwZUdlbmVyYWw9IlByZXByaW50Ij5BcnRpY2xlPC9yZXNvdXJjZVR5cGU+CiAgPHZlcnNpb24+MTwvdmVyc2lvbj4KICA8cmlnaHRzTGlzdD4KICAgIDxyaWdodHMgcmlnaHRzVVJJPSJodHRwOi8vY3JlYXRpdmVjb21tb25zLm9yZy9saWNlbnNlcy9ieS80LjAvIiByaWdodHNJZGVudGlmaWVyU2NoZW1lPSJTUERYIiByaWdodHNJZGVudGlmaWVyPSJDQy1CWS00LjAiPkNyZWF0aXZlIENvbW1vbnMgQXR0cmlidXRpb24gNC4wIEludGVybmF0aW9uYWw8L3JpZ2h0cz4KICA8L3JpZ2h0c0xpc3Q+CiAgPGRlc2NyaXB0aW9ucz4KICAgIDxkZXNjcmlwdGlvbiBkZXNjcmlwdGlvblR5cGU9IkFic3RyYWN0Ij5SZWNlbnQgcHJvZ3Jlc3MgaW4gQUkgY29kaW5nIGFnZW50IHJlc2VhcmNoIGhhcyBsZWQgdG8gcmFwaWQgaW1wcm92ZW1lbnRzIGluIGFnZW50cycgYWJpbGl0eSB0byBhdXRvbm9tb3VzbHkgcGVyZm9ybSBjb21wbGV4IHNvZnR3YXJlIGVuZ2luZWVyaW5nIHRhc2tzLCBmcm9tIGVkaXRpbmcgbGFyZ2UgY29kZWJhc2VzIHRvIGV4ZWN1dGluZyBsb25nLWhvcml6b24gZGV2ZWxvcG1lbnQgd29ya2Zsb3dzLiBBcyB0aGVzZSBzeXN0ZW1zIG1ha2Ugc3RyaWRlcywgaG93ZXZlciwgdGhlIHByaW1hcnkgYm90dGxlbmVjayB0byBwcmFjdGljYWwgdXNlZnVsbmVzcyBpbmNyZWFzaW5nbHkgc2hpZnRzIGF3YXkgZnJvbSBwdXJlIHRhc2stc29sdmluZyBjYXBhYmlsaXR5LCBhbmQgdG93YXJkIGNoYWxsZW5nZXMgaW4gaG93IHVzZXJzIGNvbW11bmljYXRlIHdpdGgsIHN1cGVydmlzZSwgYW5kIHRydXN0IGFnZW50cy4gSW4gdGhpcyBwb3NpdGlvbiBwYXBlciwgd2UgYXJndWUgZm9yIGEgcmVvcmllbnRhdGlvbiBmcm9tIGF1dG9ub21vdXMgdG8gaHVtYW4tY2VudGVyZWQgY29kaW5nIGFnZW50czogc3lzdGVtcyBkZXNpZ25lZCBub3Qgb25seSB0byBjb21wbGV0ZSB0YXNrcywgYnV0IHRvIGNvbGxhYm9yYXRlIGVmZmVjdGl2ZWx5IHdpdGggcGVvcGxlLiBXZSBpZGVudGlmeSBmb3VyIGNvcmUgaW50ZXJhY3Rpb24tbGV2ZWwgZGltZW5zaW9ucyB0aGF0IGNoYXJhY3Rlcml6ZSB0aGUgaHVtYW4tYWdlbnQgdGFzay1zb2x2aW5nIGxvb3A6IHRhc2sgYWxpZ25tZW50LCB2ZXJpZmlhYmlsaXR5LCBzdGVlcmFiaWxpdHksIGFuZCBhZGFwdGFiaWxpdHkuIEZpbmFsbHksIHdlIG91dGxpbmUgY29uY3JldGUgcmVzZWFyY2ggZGlyZWN0aW9ucyB0byBhZHZhbmNlIHRoZXNlIGRpbWVuc2lvbnMsIGluY2x1ZGluZyB1c2VyLWludm9sdmVkIGNvZGluZyBlbnZpcm9ubWVudHMsIGNvbXByZWhlbnNpdmUgdmVyaWZpY2F0aW9uIG1lY2hhbmlzbXMsIGFuZCBwcmluY2lwbGVkIG1lYXN1cmVzIG9mIGh1bWFuLWFnZW50IGludGVyYWN0aW9uIHF1YWxpdHkuPC9kZXNjcmlwdGlvbj4KICA8L2Rlc2NyaXB0aW9ucz4KPC9yZXNvdXJjZT4=",
+    "url": "https://arxiv.org/abs/2608.12355",
+    "contentUrl": null,
+    "metadataVersion": 0,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "mds",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 0,
+    "viewsOverTime": [],
+    "downloadCount": 0,
+    "downloadsOverTime": [],
+    "referenceCount": 0,
+    "citationCount": 0,
+    "citationsOverTime": [],
+    "partCount": 0,
+    "partOfCount": 0,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2026-08-14T01:49:08.000Z",
+    "registered": "2026-08-14T01:49:09.000Z",
+    "published": "2026",
+    "updated": "2026-08-14T01:49:09.000Z"
+   },
+   "relationships": {
+    "client": {
+     "data": {
+      "id": "arxiv.content",
+      "type": "clients"
+     }
+    },
+    "provider": {
+     "data": {
+      "id": "arxiv",
+      "type": "providers"
+     }
+    },
+    "media": {
+     "data": {
+      "id": "10.48550/arxiv.2608.12355",
+      "type": "media"
+     }
+    },
+    "references": {
+     "data": []
+    },
+    "citations": {
+     "data": []
+    },
+    "parts": {
+     "data": []
+    },
+    "partOf": {
+     "data": []
+    },
+    "versions": {
+     "data": []
+    },
+    "versionOf": {
+     "data": []
+    }
+   }
+  }
+ },
+ "arxiv_abs_page_fields": "200\ntitle | Humans are Missing from AI Coding Agent Research\nauthors | Zora Z. Wang, John Yang, Kilian Lieret, Alexa Tartaglini, Valerie Chen, Yuxiang Wei, Zijian Wang, Lingming Zhang, Karthik Narasimhan, Ludwig Schmidt, Graham Neubig, Daniel Fried, Diyi Yang\ndateline | [Submitted on 4 Jul 2026]\ndoi | https://doi.org/10.48550/arXiv.2608.12355\nhistory | Submission history\nFrom: John Yang B [view email]\n[v1] Sat, 4 Jul 2026 01:24:03 UTC (2,321 KB)\n\ncomments | None\n",
+ "fetched": "2026-11-12，curl（OpenAlex、DataCite、PDF）+ 本机 Python playwright 驱动 Edge（摘要页截图），每次请求间隔 4–9 秒"
+}

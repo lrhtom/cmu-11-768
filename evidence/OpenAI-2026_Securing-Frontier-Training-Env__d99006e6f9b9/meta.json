@@ -1,0 +1,34 @@
+{
+  "slug": "d99006e6f9b9",
+  "slug_rule": "没有 DOI：sha1('OpenAI' + '2026' + 'Securing our frontier model training environment') 的前 12 位",
+  "doi": null,
+  "title": "Securing our frontier model training environment",
+  "authors": ["OpenAI"],
+  "authors_note": "页面底部 Author 一栏只写 OpenAI，没有署个人",
+  "year": 2026,
+  "date": "2026-10-23",
+  "version": "web-archived-2026-11-09",
+  "version_note": "openai.com 直连返回 403（Cloudflare 'Just a moment...'），按规定放弃直连。读的是 Internet Archive 存档 http://web.archive.org/web/20261109204244/https://openai.com/index/securing-our-frontier-model-training-environment/（2026-11-09 20:42:44 UTC 抓取，Wayback 显示该网址 2026-10-23 至 11-09 有 39 次抓取）",
+  "venue": "OpenAI 官网博客（openai.com/index），栏目 Security / Publication，标签 2026、Cybersecurity、Alignment",
+  "pages": "单页网文；正文约 22,700 字符（fulltext.txt）",
+  "url": "https://openai.com/index/securing-our-frontier-model-training-environment/",
+  "archive_url": "http://web.archive.org/web/20261109204244/https://openai.com/index/securing-our-frontier-model-training-environment/",
+  "course_use": "CMU 11-768 官网课表给第 16 讲（Safety 2: Observability and Monitoring，Eric Wallace，10/22）列的唯一阅读",
+  "check_8_items": {
+    "1_title": "一致：存档页 <title>、页面 H1、截图 page.png",
+    "2_authors": "页面 Author 栏为 OpenAI（截图 page_author.png），无个人署名",
+    "3_year": "2026（页面日期 October 23, 2026）",
+    "4_version": "网文没有版本号；用的是 2026-11-09 的存档",
+    "5_venue": "OpenAI 官网博客",
+    "6_pages": "单页",
+    "7_doi": "无 DOI；URL 逐字符和课程官网给的一致",
+    "8_content": "全文已读完（fulltext.txt）。笔记里每句主张的出处见 excerpt.txt 和 summary_cn_en.md 的逐句判定表"
+  },
+  "caveats": [
+    "博客中一张图（红队累计发现数 vs token 数）的具体数值没有出现在文字里，笔记不引用图上的数",
+    "博客正文末尾有两段 canary 字符串，要求不要进入模型训练语料；本证据只作本地核验用"
+  ],
+  "verified_date": "2026-11-12",
+  "verified_by": "claude",
+  "verification_method": "wayback-availability-api+archived-page-fulltext+playwright-edge-screenshot（openai.com 直连 403，未绕过）"
+}

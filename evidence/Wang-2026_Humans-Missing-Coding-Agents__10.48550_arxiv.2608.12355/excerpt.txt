@@ -1,0 +1,44 @@
+出处：Wang, Yang, Lieret, Tartaglini, Chen, Wei, Wang, Zhang, Narasimhan, Schmidt, Neubig, Fried, Yang. Humans are Missing from AI Coding Agent Research. arXiv:2608.12355v1 (2026).
+用途：CMU 11-768 笔记第 10 章第 3 讲（第 19 讲 Human-Agent Interaction，预写）。
+
+【claim 1】（第 1 节）研究盯着自主完成任务、把基准难度当价值；真实编程是反复交互、部分委派、目标会变、持续监督；可能在收益递减方向上使劲；人机交互不是给不成熟模型的临时补丁，能一起摸索出新工作方式。
+p.1 Position："AI coding agent research is fixated on autonomous task completion, treating benchmark difficulty as a proxy for practical value."
+p.2："Yet real-world programming is rarely a one-shot activity. Instead, it unfolds through iterative interaction, partial delegation, evolving goals, and continuous human oversight." "human-centered interaction is not a temporary workaround for immature models: it enables new forms of collaboration in which agents and users jointly discover emerging workflows."
+p.4："the field may be optimizing in a direction of diminishing returns, pursuing ever-harder tasks while marginal utility gains shrink"
+p.3 §2：更难的基准、复杂框架、训练环境三个方向。
+
+【claim 2】（第 1 节）补丁臃肿：只算解决的题；去掉新增文件、非 Python 文件、测试文件改动；字符长度比；所有模型臃肿比例（>1.5）超过 15%；与成功率基本不相关；越新越长；原因：啰嗦约 60%、范围蔓延 50–65%、过度防御 20–30%；功能差异两评审都标才算，所有模型 >50%。
+p.2 图 1 说明；p.22 附录 A.1："(i) all newly added files ... (ii) all non-Python files ... (iii) changes to all test files" "All models show a bloated patch fraction of more than 15%" "largely uncorrelated with the task solving ability" "positive trend with model release date"
+p.22 A.2："verbose implementation ... affecting around 60% of bloated resolved patches. Next most prevalent is scope creep (50–65%) and overly defensive code (20–30%)."
+p.25 A.3："we only consider a submitted patch as functionally discrepant if both models flag at least one functional discrepancy ... The discrepancy is higher than 50% for all models."
+（笔记例子里的 retry 补丁和 2.39 的比值是笔记的示意，不是论文数据。）
+
+【claim 3】（第 1 节）Stack Overflow 2025：84% 开发者用 AI 编程工具，近一半不信任输出，三分之二说半成品让调试更重。
+p.7："of the 84% of developers now using AI coding tools, nearly half do not trust outputs while two-thirds report that half-baked solutions lead to heavier debugging burdens (Stack Overflow, 2025)."
+
+【claim 4】（第 2 节）四个维度和量法；图 2 的作品集网站例子；附录 B.1 安全、主动性、可定制、编排的定位。
+p.4 §3.1："Task alignment measures distance between the user-intended specification zH and the agent's inferred zC, G(H, C; qH) = simZ(zH, zC)"
+p.6 §3.2："S(H, C) = E(m,um)[simτ(τ′, τ∗um)]" "structural steerability as Sstruct(C) = sim(GC(τ), G∗)"
+p.7 §3.3："V(H, C) = E(o,zH)[A(sH, y∗(o, zH))]"
+p.8 §3.4："A(Ck) = Eτ∼T[Perf(Ck) − Perf(C0)]"
+p.5 图 2："Build me a portfolio website" "Dark or light mode?" "Dark mode, and minimal" "Create React Project" "Tailwind or CSS?" "CSS, also make it reusable" "Render preview; run tests" "Home page is good, About needs work..." "User uses vanilla CSS, prefers dark mode."
+p.29 B.1："a file deletion gone wrong due to insufficient steerability (no checkpoint before an irreversible action), while a corrupted codebase may reflect insufficient verification (output not assessed before commit)" "Effective proactivity emerges naturally from adaptability." "Steerability concerns in-the-moment control during task execution, while customizability involves adding persistent configuration that spans sessions." "Our position focuses on the fundamental dyad of a single human and a single coding agent."
+
+【claim 5】（第 3 节）对齐任务定义；澄清螺旋；用户在迁就智能体；编程对话比订酒店难；缺开放对话数据；pass@k 压成一个比特。
+p.4："users must externalize intent through NL instructions, relevant contexts, or constraints; while agents must infer latent goals, resolve under-specification, surface assumptions, and signal uncertainty." "A significant pain point is the "clarification spiral." Given a task, models launch into implementation without inferring unstated constraints and make incorrect assumptions. Users then reject results and relay additional asks, only to watch new misunderstandings emerge." "Today, users largely adapt to agents"
+p.5："Whereas a basic request like hotel booking simply requires satisfying a fixed schema of options ..." "pass@k collapses all signal about communicative quality into a single bit"
+
+【claim 6】（第 4 节）可引导定义、控制点、两种量法、粒度需求、全局开关不行、"全自主"与"时时盯着"的二分。
+p.6 §3.2："steerable agents must recognize meaningful decision points in a task, operate at appropriate levels of abstraction, and structure execution to expose decision boundaries" "control point cm ∈ C (e.g., branching choices, confirmation prompts)" "these needs cannot be met by systems that treat autonomy as a single global setting" "a false dichotomy between full agent autonomy and constant human supervision"
+
+【claim 7】（第 6 节）可验证定义与量法；测试和代码都由 AI 写时测试不是独立证据；非技术用户与非软件任务；老手看实现、新手看解释；新手提升最多复查最吃力；变形的验证（图 4）；.md 总结；开放问题。
+p.7："When AI is producing both, the tests no longer serve as independent evidence for building trust ... a lateral shift, not reduction, in cognitive load." "experienced developers prefer to inspect low-level implementation details, novice programmers may rely on higher-level natural language explanations and observable artifacts" "less experienced developers reporting both the highest productivity gains and greatest struggle to review"
+p.10–11 §4.2 与图 4："A data pipeline implementation might warrant a .md file summarizing key steps (e.g., how were missing values handled)." 图 4：Model Training → Loss Curves；Home Automation → Simulated Timeline；Personal Website → Browser Render；CLI Tool → asciinema Recording。"How should we evaluate the quality of verification approaches themselves? What communicative cost can users bear ... when should agents self-verify versus surface as artifacts for human review?"
+
+【claim 8】（第 7 节）会适应定义；提示疲劳；记忆和技能多是 markdown；Django 850 题；只量任务成功；logging 与 print 的例子；AGENTS.md；模拟用户同质、过度配合；建模偏好、专业、失败方式；GitHub PR 历史参数化；Copilot Arena。
+p.8："prompt fatigue" "Today's agent "memory" and "skills" are often little more than indexed markdown files" "850 SWE-bench tasks from Django" "the metric remains squarely on task success, with no notion of whether or how a human copilot might benefit" "A developer tells an agent to use logging instead of print. Does the lesson persist to next week"
+p.9："practitioners are already improvising solutions (AGENTS.md file, custom rule sets) with promising results." §4.1："current simulators prompted to "act like a human" behave homogeneously and overly cooperative ... faithful simulation requires modeling personal preferences, expertise, and realistic failure modes"
+p.10 图 3："parameterize user simulators along dimensions like clarity, consistency, and expertise." "Copilot Arena ... gathers large-scale preference signals ... that substantially diverge from model rankings from static benchmarks"
+
+【claim 9】（第 8 节）交互指标：CUPS 12 种状态；Cursor Tab 在线 RL，每天 4 亿多次接受/拒绝，什么时候建议和建议什么一样重要。
+p.11 §4.3："CUPS taxonomy, a categorization of programmer-AI interaction into 12 discrete states (e.g., "Prompt Crafting", "Editing Recent Suggestions") ... measure the distribution of time and transitions" "by mining 400M+ daily accept/reject decisions, they discovered that when to suggest matters as much as what to suggest."

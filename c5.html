@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>05 训练（上）：SFT 与强化学习基础 · 11-768</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/site.css">
+<script>window.PAGE = { key: 'c5' };</script>
+<script src="assets/course.js"></script>
+<script src="assets/glossary.js"></script>
+<script src="assets/site.js"></script>
+</head>
+<body>
+<main class="doc">
+<header class="mhead">
+  <div class="kicker">05 · Training · SFT &amp; RL Basics</div>
+  <h1>训练智能体（上）：先在录好的轨迹上做 SFT，再按奖励学</h1>
+  <p class="lede">前几章改的是上下文和外部产物，这一章开始改权重。第 8 讲讲监督微调。轨迹怎么变成带掩码的 token 序列，轨迹从哪来、怎么挑。再看真实的训练配置，以及 SFT 为什么是 RL 的冷启动。第 9 讲讲强化学习的基础。先说 SFT 的三个问题和 ReST。再推导、实现策略梯度，说白了就是给 SFT 损失加掩码、乘奖励。基线为什么不引入偏差、却能降方差。最后是用组均值当基线的 GRPO，和它的修正版 DrGRPO。两讲都直接连到作业 3。</p>
+  <div class="chips"><span class="chip">共 <b>2</b> 讲</span><span class="chip">视频 <b>2 小时 23 分</b></span><span class="chip">动画演示 <b>3</b> 个</span><span class="chip">对应 <b>作业 3</b></span></div>
+</header>
+
+<section class="ep" data-n="1">
+<h2>监督微调（SFT）</h2>
+<p class="tldr">前面几讲改的是上下文和外部产物，这一讲开始改<b>权重</b>。SFT 就是在录好的智能体轨迹上做下一个 token 预测。但只在 assistant 自己写的 token 上算损失，这叫掩码。讲师（Yueqi Song）按一条数据的生命周期走了一遍。先讲轨迹怎么变成 token 序列和掩码。再讲轨迹从哪来、怎么过滤、选哪个老师和哪些任务。然后是怎么统一不同格式的数据。这是她和 Graham Neubig 的 Agent Data Protocol。接着是真实的训练配置、打包和模板漂移。还有怎么知道训练成功了。最后说明 SFT 在今天的流水线里是 RL 的"冷启动"。</p>
+
+<h3 data-d="1" data-m="1" data-why="回顾三种更新办法，引出改权重">1. 第三种更新办法是改权重，改一次以后每次调用都带上</h3>
+<p>SFT 改的是权重。改一次，之后每次调用都带上新行为，提示里什么都不用加。</p>
+<pre class="code" data-lang="py" data-run>traj = ["system", "user", "assistant", "observation", "assistant", "observation", "assistant"]
+trained = [role for role in traj if role == "assistant"]   # SFT 只学这些
+print(len(traj), len(trained))
+# 输出: 7 3
+# 踩坑：轨迹很长，真正教模型"怎么做"的只有这三条 assistant 消息</pre>
+<p>改上下文像给厨师递纸条，改权重像送他去进修。进修一次，以后每道菜都带着新手艺。可进修贵，学了什么也没法拆开看。</p>
+<p>开场先看一条 SWE-Gym 采到的轨迹（讲义第 3 页）<span class="ts">0:43</span>。消息依次是 system（外壳提示）、user（issue 文本）、assistant（思考 + bash）。再往后是 observation（测试输出）、assistant（思考 + 编辑）、observation（diff）……最后 assistant 提交。智能体拿到一个 issue，还有沙箱里的两个工具。工具是 bash 和文件编辑器。它产生思考和命令，读命令返回的观察。最后由<b>仓库自己的测试</b>决定成败 <span class="ts">1:23</span>。讲师特别指出，这么长一条轨迹里，assistant 的消息只有三条。</p>
+<p>第 4 讲列过三种更新智能体的办法（讲义第 4 页）<span class="ts">2:04</span><span class="ts">2:46</span>。前两种是上下文窗口和外部产物，这一讲是第三种：模型权重。</p>
+<table class="lab">
+  <tr><th>更新哪里</th><th>好处</th><th>代价</th></tr>
+  <tr><td>上下文窗口</td><td>对发生过的事保真度最高</td><td>贵、嘈杂，自己不会判断什么重要</td></tr>
+  <tr><td>外部产物（记忆、技能）</td><td>可检查、可编辑、可检索、可移植，人也读得懂</td><td>要归纳、挑选、一路维护</td></tr>
+  <tr><td><b>模型权重</b>（今天）</td><td>推理更快、行为变化更广。改一次，之后每次调用都带上新行为。提示里什么都不用加</td><td>前两种几秒钟就能改，这个每改一次都要训练一次。打不开权重看改了什么。也不能把改动搬到另一个模型</td></tr>
+</table>
+<p>训练要用轨迹。一条轨迹到底教了模型什么（讲义第 5 页）<span class="ts">3:28</span>？</p>
+<ul>
+  <li>怎么写出<b>这个外壳真能执行</b>的工具调用。</li>
+  <li>对话变长时怎么继续，因为学的轨迹本来就长。</li>
+  <li>工具结果长什么样。所以它会<b>等</b>工具返回，而不是自己编一个结果。</li>
+  <li>还有数据里的其他一切。比如多余的评论、重复的命令。多种解法里，它也只学到一种。好的坏的一起学，这是后面"过滤"那部分的伏笔。</li>
+</ul>
+
+<h3 data-d="1" data-m="2" data-why="SFT 是 RL 的冷启动，后训练流水线的全貌">2. SFT 是 RL 的冷启动，先学会调工具，RL 才有东西可练</h3>
+<p>SFT 是 RL 的冷启动。先让模型学会调工具、做长任务，RL 再从这个检查点接着练。</p>
+<pre class="code" data-lang="py" data-run>p_valid_call = {"base": 0.0, "after_sft": 0.6}   # 示意：写出能执行的工具调用的概率
+for name, p in p_valid_call.items():
+    rewards = [1 if random.random() &lt; p else 0 for _ in range(8)]   # 每个起点采 8 条 rollout
+    print(name, sum(rewards))
+# 输出: base 0
+# 输出: after_sft 5
+# 踩坑：起点太弱，8 条全拿 0 分。RL 没有信号可学，这就是要先做 SFT 的原因</pre>
+<p>这像学开车。先在教练车上照着示范开，这是 SFT。会上路了再自己练技术，这是 RL。连油门都不会踩，上路练多少圈也没用。</p>
+<p>前沿实验室的完整流水线是这样的（讲义第 6 页，按 token 量画）<span class="ts">4:08</span>：</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":150,"gx":34,"gy":40,"top":18,
+ "nodes":[{"id":"pt","c":0,"r":0,"t":"预训练","s":"20T token（Nemotron 3 Ultra）","k":"neutral"},
+  {"id":"mt","c":1,"r":0,"t":"中期训练","s":"1.43T（K2 Horizon）","k":"data"},
+  {"id":"sft","c":2,"r":0,"t":"SFT（今天）","s":"332B（K2 Horizon）","k":"ok"},
+  {"id":"rl","c":3,"r":0,"t":"RL","s":"rollout + 奖励，没有固定语料","k":"warn"}],
+ "edges":[["pt","mt",""],["mt","sft",""],["sft","rl","冷启动"]]}</script>
+<figcaption>每往右一步 token 更少、筛选更重（讲义第 6 页的数字）</figcaption></figure>
+<p>预训练学下一个 token 预测，量最大。"中期训练"各家定义不同，大致是预训练和后训练之间的一切。有人甚至把 SFT 也算进去，但一般把 SFT 算后训练 <span class="ts">4:08</span>。区别在于这一点。预训练、中期训练、SFT 都有<b>固定语料</b>可以训。RL 没有，它从模型自己的 rollout 里学 <span class="ts">4:50</span>。</p>
+<p>今天最常见的后训练流水线，取自 Kimi K3 的报告（讲义第 7 页）<span class="ts">5:31</span>。SFT 初始化基础的智能体能力。RL 培养不同推理强度的领域专家。同策略蒸馏把专家合成一个模型。后两步是第 9、11 讲的内容。Kimi K3 在 SFT 阶段就学会了调工具、做长任务。那时还没做任何 RL。所以 SFT 常被叫作 RL 的<b>冷启动</b>（cold start）。RL 从它产出的检查点开始 <span class="ts">4:50</span>。</p>
+<div class="co warn"><p><b>为什么不直接上 RL？</b>DeepSeek-R1-Zero 试过，直接在基座模型上做 RL，完全没有 SFT。它的下一个模型 R1 就把 SFT 加了回来，从几千条精选例子开始。因为 R1-Zero 的回答会混杂多种语言，很难读 <span class="ts">6:14</span><span class="ts">6:54</span>。结论是，SFT 给后面的 RL 提供一个高质量的起点策略。</p></div>
+<p>SFT 和 RL 并排比较（讲义第 8 页）<span class="ts">6:54</span><span class="ts">7:37</span>：</p>
+<table class="lab">
+  <tr><th></th><th>SFT</th><th>RL</th></tr>
+  <tr><td>从什么学</td><td>录好的轨迹，不管是谁产生的（更强的模型，甚至它自己）</td><td>它自己的 rollout，由为这个领域设计的奖励打分</td></tr>
+  <tr><td>信号</td><td>每个 token 一个目标</td><td>每条（很长的）rollout 一个数</td></tr>
+  <tr><td>需要</td><td>数据和 GPU</td><td>活的环境、沙箱、可检查的奖励</td></tr>
+  <tr><td>擅长</td><td>学工具调用、格式、长任务</td><td>把模型已经会尝试的事做得更好</td></tr>
+  <tr><td>卡住的时候</td><td>示范错了、太窄，或者用完了</td><td>起点太弱，或奖励没法检查 <span class="ts">8:18</span></td></tr>
+</table>
+
+<h3 data-d="2" data-m="3" data-why="作业 3 Part 1 要把轨迹拼成带掩码的序列">3. 整条轨迹拼成一条 token 序列，只有 assistant 写的位置算损失</h3>
+<p>聊天模板把整条轨迹拼成一条 token 序列。损失只算 assistant 自己写的那些位置。</p>
+<pre class="code" data-lang="py" data-run>segments = [("system", 4), ("user", 3), ("assistant", 5), ("tool", 4), ("assistant", 2)]   # (角色, token 数)，示意
+mask = [1 if role == "assistant" else 0 for role, n in segments for _ in range(n)]
+print("".join(map(str, mask)), sum(mask), len(mask))
+# 输出: 000000011111000011 7 18
+# 观察只当上下文。把它也算进损失，模型学会的是预测环境，而不是行动
+# 作业 3 考点：stitch_trajectory 把一个回合里的多次模型调用拼成一条训练序列
+# 只有模型生成（completion）的 token 记 1，提示和环境观察记 0</pre>
+<p>这像批改作文。题目和材料是老师给的，不打分。只给学生自己写的那几段打分。</p>
+<p>聊天模板把每个角色边界都写成模板 token（讲义第 11 页，以 Qwen 的模板为例）<span class="ts">8:18</span><span class="ts">9:03</span>：</p>
+<pre class="code">&lt;|im_start|&gt;tool
+3 failed, 41 passed
+&lt;|im_end|&gt;
+&lt;|im_start|&gt;assistant
+The test compares floats. Fix it.
+&lt;tool_call&gt;
+str_replace(...)
+&lt;/tool_call&gt;
+&lt;|im_end|&gt;</pre>
+<p><code>&lt;|…|&gt;</code> 是单个特殊 token，其余是智能体写的和看到的。不管中间走了多少次工具调用，最后都是一个字符串。这个字符串喂给训练框架 <span class="ts">9:03</span>。</p>
+<p>和普通语言模型训练不同，智能体 SFT <b>不在整条轨迹上算损失</b>（讲义第 12 页）<span class="ts">9:44</span><span class="ts">10:27</span>：</p>
+<div class="fx math">L(θ) = − Σ<sub>t : m<sub>t</sub> = 1</sub> log p<sub>θ</sub>(x<sub>t</sub> | x<sub>&lt;t</sub>)</div>
+<ul>
+  <li>掩码 m<sub>t</sub> 是每个 token 一位，表示这个 token 的预测算不算进损失。只有 assistant 写的 token 记 1，包括思考 + bash、思考 + 编辑、提交。system、user、observation 只当上下文。</li>
+  <li>最小化它，就是提高每个记录下来的动作的概率。条件是"给定之前全部内容"。这就是让智能体模仿轨迹里已有的做法。</li>
+  <li><b>观察是条件上下文，不是预测目标。</b></li>
+</ul>
+<pre class="code" data-lang="py" data-run>p_correct = np.array([0.9] * 7 + [0.5] * 5 + [0.9] * 4 + [0.5] * 2)   # 示意：模型在每个位置给正确 token 的概率
+mask = np.array([0] * 7 + [1] * 5 + [0] * 4 + [1] * 2)                # 上面那条掩码
+loss = -(np.log(p_correct) * mask).sum()                               # 只把 mask = 1 的位置加起来
+print(round(loss, 3))
+# 输出: 4.852
+# 作业 3 考点：tinker_adapter.py 的 cross_entropy 损失是 −A·log π。A 全取 1，形式上就是这条 SFT 损失</pre>
+<p>课上有同学问：为什么不连观察也一起训？讲师说只训 assistant 消息是智能体 SFT 的经验法则。因为观察和用户消息来自用户或环境，不是 assistant 预测出来的。不过也确实有论文在观察上训练，发现对预测世界状态有用。这里讲的是通用配方，具体场景可以自己做消融 <span class="ts">11:17</span>。</p>
+<p>掩码是怎么造出来的（讲义第 13 页）<span class="ts">12:55</span>：</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":160,"gx":36,"gy":40,"top":18,
+ "nodes":[{"id":"r","c":0,"r":0,"t":"渲染","s":"模板写出整段字符串，记下每段 assistant 的起止","k":"data"},
+  {"id":"t","c":1,"r":0,"t":"切 token","s":"字符位置 → token 位置","k":"info"},
+  {"id":"m","c":2,"r":0,"t":"掩码","s":"assistant 段里记 1，其余记 0","k":"ok"},
+  {"id":"tr","c":3,"r":0,"t":"训练器","s":"只看到字符串和这些位","k":"neutral"}],
+ "edges":[["r","t",""],["t","m",""],["m","tr",""]]}</script>
+<figcaption>记账的是模板：assistant 从哪开始、到哪结束。训练开始时，system、user、observation 这些角色已经不存在了 <span class="ts">13:39</span></figcaption></figure>
+<p>写成代码时，最容易错的是掩码和 token 错开一位：</p>
+<pre class="code" data-lang="py" data-run>L, c = 5, 3                                   # 示意：长 5 的上下文后面跟 3 个生成的 token
+tokens = list(range(L + c))
+mask = [1 if L - 1 &lt;= j &lt; L - 1 + c else 0 for j in range(len(tokens) - 1)]   # mask[j] 管的是 tokens[j+1]
+print(len(mask), mask)
+# 输出: 7 [0, 0, 0, 0, 1, 1, 1]
+# 作业 3 考点：n 个 token 只有 n−1 个预测目标，mask[j] 描述的是 tokens[j+1]
+# 长 L 的上下文后面跟一段长 c 的生成，它在掩码里的位置是 L-1 : L-1+c</pre>
+
+<div data-vz="c5-sft" data-sc="0"></div>
+
+<h3 data-d="2" data-m="2" data-why="回合结束 token 要算损失，推理块怎么处理">4. 停止 token 必须算损失，角色头不算，推理块要不要训看各家</h3>
+<p>停止 token 是模型自己写的，必须算损失。角色头是外壳写的，永远不算。</p>
+<pre class="code" data-lang="py" data-run>tokens = ["&lt;|im_start|&gt;assistant", "Fix", "it", "&lt;|im_end|&gt;"]
+mask = [0, 1, 1, 1]          # 角色头推理时外壳会写，不训。停止 token 模型自己写，必须训
+print([t for t, m in zip(tokens, mask) if m])
+# 输出: ['Fix', 'it', '&lt;|im_end|&gt;']
+# 踩坑：把 &lt;|im_end|&gt; 也遮掉，模型可能学不会停，一直往下写</pre>
+<p>这像教小孩写作文。题目是老师写的，不用学。可写完要点句号收尾，这得他自己点。</p>
+<p>三个常用框架做的是同一个决定，只是放的地方不同（讲义第 14、49 页）<span class="ts">13:39</span>。讲师自己常用 LLaMA-Factory。把生成的 rollout 或合成轨迹放进去，指定模型就能训。还能设定只训到某个位置，要不要连上下文一起训 <span class="ts">14:31</span>。</p>
+<table class="lab">
+  <tr><th>框架</th><th>开关</th><th>怎么找 assistant 段</th></tr>
+  <tr><td>TRL</td><td><code>assistant_only_loss=True</code>，模板里需要 <code>{% generation %}</code> 标记。<code>completion_only_loss</code> 在 prompt–completion 数据集上默认开</td><td>模板渲染时直接标出来。三者里只有它放在模板里</td></tr>
+  <tr><td>Axolotl</td><td><code>roles_to_train: ["assistant"]</code>（默认）。<code>train_on_eos: turn</code></td><td>在渲染好的字符串里找每个回合的角色头</td></tr>
+  <tr><td>LLaMA-Factory</td><td><code>train_on_prompt: false</code>（默认）。<code>mask_history: true</code> 只训最后一回合</td><td>编码时把整回合标成训练或忽略</td></tr>
+</table>
+<p><b>回合结束 token 必须在掩码里</b>（讲义第 15 页）<span class="ts">15:14</span><span class="ts">15:54</span>。不同模型的回合结束 token 不同，Qwen 是 <code>&lt;|im_end|&gt;</code>。训练前要看清它的模板，免得把模型搞糊涂。常见的错误是分不清哪些算损失、哪些只是上下文：</p>
+<ul>
+  <li>角色头（<code>&lt;|im_start|&gt;assistant</code>）推理时由外壳提供，<b>永远不是目标</b>。</li>
+  <li>停止 token 是模型自己产生的，所以<b>必须</b>算损失。否则模型可能学不会停下来。</li>
+</ul>
+<p>"回合结束"其实是三件事。结束这条消息，把控制交给工具，完成整个任务。Kimi K3 的模板用不同的 token 把它们分开。这样模型更好学会什么时候停 <span class="ts">16:36</span>。</p>
+<p><b>推理块</b>有两个独立的开关（讲义第 16 页）<span class="ts">16:36</span><span class="ts">17:19</span>。一是推理留不留在上下文里，二是推理要不要训练。留在上下文里，推理就解释了后面的动作。训练它，它就变成模型自己写的风格。例子是 Nemotron 3 Ultra。它把按预算截断的推理留在上下文里。人为截断的地方，则移出损失。这些都是各家实验室自己的决定。</p>
+<p>为什么有时要遮掉推理？推理可能比真正的工具调用长得多，会主导损失。而真正要做对的，是那段短短的工具调用（讲义第 17 页）<span class="ts">18:02</span><span class="ts">18:43</span><span class="ts">19:24</span>。BalanceSFT 的做法是学一组权重平衡两者（SSB），再重采样难例（HDR）：</p>
+<table class="lab">
+  <tr><th>BFCL 单轮 / 多轮</th><th>都不加</th><th>+SSB</th><th>+HDR</th><th>两个都加</th></tr>
+  <tr><td>Qwen2.5-Coder-Inst + SFT</td><td>81.73 / 38.25</td><td>82.20 / 41.62</td><td>83.85 / 43.12</td><td>84.00 / <b>47.00</b></td></tr>
+  <tr><td>Llama-3.2-3B-Inst + SFT</td><td>73.67 / 33.25</td><td>76.82 / 34.62</td><td>78.28 / 35.75</td><td>78.99 / <b>36.12</b></td></tr>
+</table>
+<p>重新平衡在多轮上帮得更多。同样的问题也出现在<b>数据配比</b>上（讲义第 18 页，MAI-Thinking-1）<span class="ts">20:04</span><span class="ts">20:45</span>。按样本条数配好了比例。可 STEM 和编程的轨迹长得多，几乎吃掉了全部 token。</p>
+<pre class="code" data-lang="py" data-run>samples = {"stem_code": 56, "agentic": 11, "general": 33}       # 讲义第 18 页的样本占比 %
+rel_len = {"stem_code": 26.2, "agentic": 13.5, "general": 1.0}  # 平均长度，以 general 为 1，本机按两组占比反推
+tokens = {k: samples[k] * rel_len[k] for k in samples}
+print({k: round(100 * v / sum(tokens.values())) for k, v in tokens.items()})
+# 输出: {'stem_code': 89, 'agentic': 9, 'general': 2}
+# 踩坑：按条数配平不等于按 token 配平。通用和安全占 33% 的样本，却只剩 2% 的 token</pre>
+<figure class="dg"><script type="application/json">{"type":"bars","title":"MAI-Thinking-1 合并 SFT 的配比：样本占比 vs token 占比（%）","max":100,"fmt":0,"lw":170,"rows":[["STEM 和编程 · 样本",56,"data"],["STEM 和编程 · token",89,"warn"],["智能体能力 · 样本",11,"data"],["智能体能力 · token",9,"warn"],["通用有用和安全 · 样本",33,"data"],["通用有用和安全 · token",2,"warn"]]}</script>
+<figcaption>讲义第 18 页（MAI-Thinking-1 表 10）。按条数配平之后，一定要再看它变成 token 后是什么样</figcaption></figure>
+<p>讲师列了几个<b>开放问题</b>（讲义第 19 页）<span class="ts">21:27</span><span class="ts">22:09</span>。找不到一个公开实验，专门改变智能体 SFT 的掩码、再度量后果。仔细的掩码实验，都做在单轮指令微调上。只有一种情形下，"不遮提示"反而有帮助。那就是提示长、回答短、数据少。智能体轨迹三条全相反。8B 规模上这个实验并不贵，却没人做过。</p>
+
+<div data-vz="c5-sft" data-sc="1"></div>
+
+<h3 data-d="1" data-m="2" data-why="轨迹来源的两个维度，只留通过验证的最常见">5. 大多数智能体 SFT 数据：强模型来跑，只留通过测试的</h3>
+<p>大多数智能体 SFT 数据由更强的模型来跑。跑完只留通过验证的那些。</p>
+<pre class="code" data-lang="py" data-run>runs = [{"by": "gpt-4o", "tests_pass": True}, {"by": "claude", "tests_pass": False}, {"by": "claude", "tests_pass": True}]   # 示意
+keep = [r for r in runs if r["tests_pass"]]   # 任务自带测试，"只留好的"很便宜
+print(len(keep), "of", len(runs))
+# 输出: 2 of 3
+# 踩坑：通过测试只说明结果对，中间的做法没人查过（下一节）</pre>
+<p>这像请学霸做题，只收他做对的卷子当范文。</p>
+<p>两个维度：谁跑的任务，和留下哪些（讲义第 21 页）<span class="ts">22:09</span><span class="ts">22:49</span><span class="ts">23:31</span>：</p>
+<table class="lab">
+  <tr><th>谁跑的</th><th>全部留下</th><th>只留通过验证的</th></tr>
+  <tr><td>更强的模型</td><td>普通蒸馏</td><td><b>SWE-Gym、Nemotron、OT-Agent</b>。大多数智能体 SFT 数据在这一格</td></tr>
+  <tr><td>要训的模型自己</td><td>MAI（在它自己的推理运行上）</td><td>专家迭代（第 9 讲）</td></tr>
+</table>
+<p>为什么大多数在右上格？更强的模型写的轨迹，比学生自己能写的好。任务自带测试，"只留好的"很便宜 <span class="ts">24:12</span>。下面一行是模型自己造训练数据，反复循环就是专家迭代。</p>
+<p>右上格的效果（讲义第 22 页，SWE-Gym）<span class="ts">24:12</span><span class="ts">24:52</span>。GPT-4o 和 Claude 跑 SWE-Gym 的任务，有 491 条通过了仓库测试。只用这 491 条微调 Qwen，解决率大幅上升。空补丁和卡在循环里的情况，大多也少了。</p>
+<table class="lab">
+  <tr><th>SWE-Bench（解决率 %）</th><th>7B</th><th>14B</th><th>32B</th></tr>
+  <tr><td>Lite（300 题）</td><td>1.0 → 10.0（+9.0）</td><td>2.7 → 12.7（+10.0）</td><td>3.0 → 15.3（+12.3）</td></tr>
+  <tr><td>Verified（500 题）</td><td>1.8 → 10.6（+8.8）</td><td>4.0 → 16.4（+12.4）</td><td>7.0 → 20.6（+13.6）</td></tr>
+  <tr><td>Lite 上的空补丁 %</td><td>40.3 → 29.7</td><td>49.7 → 18.1</td><td>27.0 → 18.1</td></tr>
+  <tr><td>Lite 上卡在循环 %</td><td>47.0 → 31.0</td><td>31.7 → 27.1</td><td>16.7 → 18.1（反而 +1.5）</td></tr>
+</table>
+<p>轨迹数量会饱和吗（讲义第 23 页）<span class="ts">24:52</span><span class="ts">25:36</span>？同一组任务只改采样的轨迹数，用 25% / 50% / 100% 的数据。32B 大约 10.5 → 16.5 → 20.5，7B 大约 4.5 → 10 → 10.5。这是 SWE-Bench Verified 上的分，讲义读图。小模型更早饱和。32B 在采样预算用完时还在涨。他们任务有富余，缺的是再多采一些运行的算力。</p>
+<pre class="code" data-lang="py" data-run>curve = {"7B": [4.5, 10, 10.5], "32B": [10.5, 16.5, 20.5]}   # 讲义第 23 页读图，25% / 50% / 100% 数据
+for size, s in curve.items():
+    print(size, [round(b - a, 1) for a, b in zip(s, s[1:])])   # 数据每翻一倍涨多少
+# 输出: 7B [5.5, 0.5]
+# 输出: 32B [6.0, 4.0]</pre>
+
+<h3 data-d="1" data-m="2" data-why="过滤、选老师、选任务的实用经验">6. 成功的轨迹也会教坏模型，过滤、老师、任务来源都要挑</h3>
+<p>测试通过只说明结果对，中间的坏动作照样会被学走。</p>
+<pre class="code" data-lang="py" data-run>turns = {"A": 4, "B": 7, "C": 11}   # 讲义第 29 页：A 四回合解决，B 错了又恢复，C 打转十一次（B 的回合数是示意）
+keep = [run for run, n in turns.items() if n &gt;= 5]   # 最少 5 回合的过滤
+print(keep)
+# 输出: ['B', 'C']
+# 踩坑：干净的 A 被扔掉，打转的 C 被留下。回合数只说明干了多少活，不说明干得好不好</pre>
+<p>这像抄学霸的作业。答案是对的，可他草稿上的涂改和弯路，你也一起抄了。</p>
+<p>"成功"只说明最后任务完成了，中间的做法没被度量（讲义第 24 页，Nemotron 3 Ultra）<span class="ts">25:36</span><span class="ts">26:18</span><span class="ts">26:58</span>。这些运行都过了测试。可有一条，大部分回合都在"改一下 → 跑测试"打转。另一条在最终补丁里留下了 print 语句。<b>损失会照抄每一个动作，不管好坏。</b>直接拿来训，模型就把乱七八糟和修复一起学会了。</p>
+<p>最简单的过滤是看<b>形状</b>（讲义第 25 页，OpenThoughts-Agent）<span class="ts">26:58</span><span class="ts">27:39</span><span class="ts">28:21</span>。很短的轨迹可疑。要么一次就做对，学不到恢复能力。要么本身就错了。要么生成时遇到了错误。实验里最好的过滤只是数回合，扔掉少于 5 回合的：</p>
+<table class="lab">
+  <tr><th>过滤</th><th>SWE-bench Verified</th><th>OT-TBLite</th><th>Terminal-Bench 2.0</th><th>平均</th><th>标准化</th></tr>
+  <tr><td><b>最少回合 ≥ 5</b></td><td>29.00</td><td>19.10</td><td>11.61</td><td>19.90</td><td>+1.25</td></tr>
+  <tr><td>去掉超时的</td><td>26.67</td><td>18.03</td><td>10.49</td><td>18.39</td><td>−0.35</td></tr>
+  <tr><td>去掉子智能体轨迹</td><td>23.00</td><td>17.31</td><td>10.86</td><td>17.06</td><td>−0.90</td></tr>
+</table>
+<p>回合数说明干了多少活，不说明干得好不好。四个回合的干净修复会被扔掉，十几回合的一团糟会被留下。但平均而言，它仍然有帮助 <span class="ts">28:21</span><span class="ts">29:02</span>。</p>
+<p><b>最强的模型不一定是最好的老师</b>（讲义第 26 页）<span class="ts">29:02</span><span class="ts">29:42</span>。论文说 GPT-5.3-Codex 在这些基准上本身是五个里最强的。可用它的运行训出来的学生最弱，有的基准上甚至还掉分：</p>
+<figure class="dg"><script type="application/json">{"type":"bars","title":"用不同老师的轨迹训练后，学生在三个基准上的平均分","max":20,"fmt":2,"lw":150,"rows":[["Kimi K2.5",18.59,"ok"],["GLM 5",18.27,"ok"],["GLM 4.7（量化）",18.16,"ok"],["GLM 4.6（量化）",16.45,"data"],["GPT-5.3-Codex",11.94,"bad"]]}</script>
+<figcaption>讲义第 26 页（OpenThoughts-Agent 表 6）的"平均"列。按标准化分，GLM 4.7 排第一（+0.73），GPT-5.3-Codex 是 −1.47</figcaption></figure>
+<p>讲师给了一种解释。它解题很强。可它的思考方式、解题路数和学生差别太大，学生学不来 <span class="ts">30:26</span>。排行榜在这里给了错误信号。办法是多试几个老师，比较训出来的学生，留下最好的。这比看排行榜可靠，相比之下也很便宜。</p>
+<p><b>任务来源影响最大</b>（讲义第 27 页）<span class="ts">31:16</span><span class="ts">31:57</span>。同样是 OpenThoughts-Agent 的消融。SWESmith 对 SWE-bench Verified 帮助最大（32.33），对 Terminal-Bench 帮助较小。排第 95 的 AgentTuning-OS，平均只有 2.00。不同来源帮不同的基准，所以训练前先在这上面花力气。他们的经验结论是，把最好的 4–8 个来源混起来。更宽并没有帮助 <span class="ts">32:37</span>。</p>
+<p><b>扩数据要扩分布</b>（讲义第 28 页）<span class="ts">32:37</span><span class="ts">33:17</span><span class="ts">33:59</span>。两条曲线都从同一个 10K 数据集出发，10K → 31.6K → 100K。区别只在新增数据的来源。同样的任务多采几次 rollout（粉线），很快走平。合成增广加入新任务（蓝线），一直往上。</p>
+<div class="co key"><p><b>课堂讨论</b>（讲义第 29 页）<span class="ts">33:59</span><span class="ts">34:41</span>：同一任务跑了三次。A 四个回合就解决。B 做了一次错误编辑，看到测试失败，又恢复过来。C 试了十一次什么都没改，最后解决。讨论的是留哪些，哪些动作算损失。还有"最少 5 回合"的过滤会在哪出错。</p>
+<p>讲师的回答是这样的。留 B 能提高恢复能力，但模型也可能学到那次错误编辑本身。只留 A，学不到怎么从错误里恢复。最好是 <b>A 和 B 都留</b>，让数据覆盖对目标基准最有用的能力 <span class="ts">35:27</span><span class="ts">36:31</span><span class="ts">37:11</span>。按回合数过滤，恰好会扔掉四个回合的 A。开头的代码就是这样。</p></div>
+
+<h3 data-d="1" data-m="1" data-why="一个具体的数据格式">7. 先统一成一种格式，每个数据集和外壳只转换一次</h3>
+<p>ADP 让每个数据集只转换一次，每个外壳也只渲染一次。</p>
+<pre class="code" data-lang="py" data-run>datasets = ["Go-Browse", "Mind2Web", "SWE-Gym"]
+harnesses = ["OpenHands", "SWE-Agent", "AgentLab"]
+pairwise = len(datasets) * len(harnesses)     # 每一对写一个转换器
+via_adp = len(datasets) + len(harnesses)      # 先转成 ADP，再从 ADP 渲染出去
+print(pairwise, via_adp)
+# 输出: 9 6
+# 数据集和外壳越多，两种做法差得越大</pre>
+<p>这像出国带万能转换插头。不用给每个国家、每种电器各配一个。先统一插到转换头上就行。</p>
+<p>这部分是讲师自己和 Graham Neubig 的工作 <span class="ts">37:11</span>。现有的智能体 SFT 数据集，由不同团队建立。它们格式不同，面向的用户也不同。讲义第 31 页列了 13 个，从 SWE-Gym 的 0.5K 到 Orca AgentInstruct 的 1046.1K 条。比如网页数据，Go-Browse 存无障碍树，Mind2Web 存 HTML <span class="ts">37:56</span>。想用这两个数据集训练 OpenHands，就得写两个定制转换器。数据集和外壳一多，就是 N×M 个转换器 <span class="ts">38:40</span>。</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":140,"gx":40,"gy":26,"top":18,
+ "nodes":[{"id":"d1","c":0,"r":0,"t":"Go-Browse","s":"无障碍树","k":"data"},
+  {"id":"d2","c":0,"r":1,"t":"Mind2Web","s":"HTML","k":"data"},
+  {"id":"d3","c":0,"r":2,"t":"SWE-Gym …","s":"各自的格式","k":"data"},
+  {"id":"adp","c":1,"r":1,"t":"ADP","s":"有类型的动作和观察","k":"ok"},
+  {"id":"h1","c":2,"r":0,"t":"OpenHands","k":"info"},
+  {"id":"h2","c":2,"r":1,"t":"SWE-Agent","k":"info"},
+  {"id":"h3","c":2,"r":2,"t":"AgentLab","k":"info"}],
+ "edges":[["d1","adp",""],["d2","adp",""],["d3","adp",""],["adp","h1",""],["adp","h2",""],["adp","h3",""]]}</script>
+<figcaption>每个数据集转换一次，每个外壳转换一次。不用每一对都写一次（讲义第 32 页）</figcaption></figure>
+<ul>
+  <li>ADP 把每个数据集读一次，改写成有类型的动作和观察。动作有 APIAction、CodeAction、MessageAction。观察有 WebObservation、TextObservation。网页的 HTML 和无障碍树<b>都保留</b>，下游要哪个自己挑 <span class="ts">39:21</span><span class="ts">40:03</span>。</li>
+  <li>统一之后，还要<b>按目标外壳渲染回去</b>（讲义第 33 页）。OpenHands、SWE-Agent、AgentLab 的动作不同，同一条轨迹在各自里面长得不一样。这一步也决定系统提示和上下文太长时怎么办。最后要检查三件事。一是工具调用能不能解析。二是每个调用前有没有思考。三是对话是不是按该有的方式结束 <span class="ts">40:44</span>。</li>
+</ul>
+<p>有了统一格式，就能做"多样性对任务专用"的对照实验（讲义第 34 页）<span class="ts">41:27</span><span class="ts">42:10</span>。外壳、模型、评测都一样，只改训练配比。混合数据胜过对应的单领域数据。<b>甚至在单一领域自己的基准上</b>也是这样：</p>
+<table class="lab">
+  <tr><th>基准</th><th>只用该领域的数据</th><th>ADP 混合数据</th></tr>
+  <tr><td>SWE-Bench</td><td>11.0</td><td>16.6（+5.6）</td></tr>
+  <tr><td>WebArena</td><td>16.0</td><td>20.1（+4.1）</td></tr>
+  <tr><td>AgentBench</td><td>21.5</td><td>25.7（+4.2）</td></tr>
+  <tr><td>GAIA</td><td>0.6</td><td>9.1（+8.5）</td></tr>
+</table>
+
+<h3 data-d="1" data-m="1" data-why="真实训练配置，模板漂移在 c6 还会细讲">8. 真跑训练时整段对话装箱，训练和服务的模板一个空格都不能差</h3>
+<p>真跑训练时，整段对话装箱打包，不切开。训练和服务的模板，连空白都要一样。</p>
+<pre class="code" data-lang="py" data-run>packs, cap = [], 64                                      # 每条序列 64k 是示意，对话长度照讲义第 38 页
+for n in sorted([29, 19, 17, 15, 11, 8, 7], reverse=True):
+    fits = [p for p in packs if sum(p) + n &lt;= cap]
+    if fits: min(fits, key=lambda p: cap - sum(p) - n).append(n)   # 放进剩余容量最贴合的那条
+    else: packs.append([n])                              # 放不下就开新的一条，对话不切开
+print(packs)
+# 输出: [[29, 19, 15], [17, 11, 8, 7]]
+# 讲义的图没写容量，图上的分法是 19+15+11+8 和 29+17+7</pre>
+<p>打包像往行李箱里塞衣服。大件先放，每件塞进剩余空间最贴合的那个箱子。衣服不能剪开。</p>
+<p>几组真实的 SFT 配置（讲义第 36 页）<span class="ts">42:50</span><span class="ts">43:32</span>：</p>
+<table class="lab">
+  <tr><th></th><th>序列（打包）长度</th><th>batch</th><th>学习率</th></tr>
+  <tr><td>Nemotron 3 Ultra</td><td>294,912，之后 515,000</td><td>64</td><td>1.5e-5 → 1e-6</td></tr>
+  <tr><td>MAI 自蒸馏</td><td>128k</td><td>2,048</td><td>1.7e-5 → 5.2e-6，2% 预热</td></tr>
+  <tr><td>K2 Horizon</td><td>512K，三个阶段</td><td>未给</td><td>在高质量子集上衰减</td></tr>
+</table>
+<p><b>MoE 的专家路由</b>（讲义第 37 页）<span class="ts">44:18</span><span class="ts">44:59</span>。这一讲提到的前沿模型都是专家混合（MoE）。公开论文微调的大多是稠密模型。在窄的智能体数据上微调 MoE，少数几个专家会拿走大部分 token。MAI 的办法是在监督阶段把路由均衡压得很重。比 RL 时重一千倍。它还把 dropout 提到 0.15。讲师建议，动手前至少读一两份前沿实验室的技术报告。</p>
+<p><b>打包整段对话</b>（讲义第 38 页，Nemotron 3 Ultra）<span class="ts">44:59</span><span class="ts">45:42</span>。训练用定长序列，用几段对话把一条填满，而不是大半补 pad。每段对话放进剩余容量最贴合的那个 pack。对话<b>不切开、不截断</b>，这是有意的，为了防止幻觉。相同的提示不放进同一个 pack，打包之后再打乱。开头的代码就是这个装箱过程，下面的演示也是。</p>
+<p><b>模板漂移</b>（讲义第 39 页）<span class="ts">46:26</span>。训练用的模板，必须和服务时的模板<b>一模一样，连空白都一样</b>。同一条轨迹渲染两次，可能得到两个不同的字符串。一次后面跟着工具消息，一次没有。追加一条工具消息时，模板里有个条件式的 thinking 块会变。它改变了前面的 assistant 回合，前缀就对不上了。在工具循环里这是致命的。第 12 讲还会从 RL 系统的角度再讲一次。</p>
+<pre class="code" data-lang="py" data-run>def render(msgs):   # 示意：模板只给最后一个 assistant 回合保留 thinking 块
+    return "|".join(m + ("+think" if m == "assistant" and i == len(msgs) - 1 else "") for i, m in enumerate(msgs))
+before = render(["user", "assistant"])
+after = render(["user", "assistant", "tool"])
+print(before, after, after.startswith(before))
+# 输出: user|assistant+think user|assistant|tool False
+# 踩坑：多了一条工具消息，前面的 assistant 回合就变了，前缀对不上</pre>
+<p><b>公开的训练产物</b>（讲义第 40 页）<span class="ts">47:11</span><span class="ts">47:52</span>。K2 Horizon 的模型卡有逐阶段的训练表。表里有步数、token、序列长度和每阶段目的。上面配置表的数就来自这里。它还公开了 Weights &amp; Biases 上的真实损失曲线。每个阶段的中间检查点也公开了。Nemotron 把后训练检查点和训练数据、配方一起发布了。讲师建议至少读一份。</p>
+
+<div data-vz="c5-sft" data-sc="2"></div>
+
+<h3 data-d="1" data-m="2" data-why="训练损失低不等于部署好，评测要在外壳里跑">9. 训练损失低不等于会干活，评测要在外壳里真跑</h3>
+<p>训练时每一步都接着记录往下走，部署时没有记录可接。所以损失低不保证会干活。</p>
+<pre class="code" data-lang="py" data-run>demo = {"issue": "edit A", "edit A": "submit"}         # 示范里见过的"状态 → 动作"
+def model(state): return demo.get(state, "???")        # 示意：只会照搬示范
+print(model("issue"), model("edit A"))                 # teacher forcing：每步都接着记录走，全对
+print(model("edit B"))                                 # 自己跑：第一步换成合理的 edit B，后面没见过
+# 输出: edit A submit
+# 输出: ???</pre>
+<p>这像只练过标准路线的新司机。教练一路纠正，练得很好。自己开时拐错一个路口，后面的路就全没见过。</p>
+<p><b>训练和运行之间有错配</b>（讲义第 42 页）<span class="ts">48:38</span><span class="ts">49:19</span><span class="ts">50:01</span>：</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":130,"gx":30,"gy":30,"top":18,
+ "nodes":[{"id":"p","c":0,"r":0.5,"t":"同样的前缀","s":"issue + 第一次编辑","k":"neutral"},
+  {"id":"a","c":1,"r":0,"t":"编辑 A","s":"记录里的那个","k":"ok"},
+  {"id":"ap","c":2,"r":0,"t":"测试通过","s":"预期的观察","k":"ok"},
+  {"id":"as","c":3,"r":0,"t":"提交","s":"任务完成","k":"ok"},
+  {"id":"b","c":1,"r":1,"t":"编辑 B","s":"合理但不同","k":"warn"},
+  {"id":"bf","c":2,"r":1,"t":"测试失败","s":"没预料到的观察","k":"bad"},
+  {"id":"bq","c":3,"r":1,"t":"怎么办？","s":"数据里没有","k":"bad"}],
+ "edges":[["p","a","示范"],["a","ap",""],["ap","as",""],["p","b","自己跑"],["b","bf",""],["bf","bq",""]]}</script>
+<figcaption>训练每次只给一个动作打分。它总是接着记录的运行往下走，这叫 teacher forcing。部署时没有记录。模型的每个动作，都改变它接下来看到的东西</figcaption></figure>
+<p>一次不同的编辑，模型就进入了训练从没到过的状态。那里的低损失什么也保证不了。训练损失可以用来监控训练是否正常。但它<b>不能代替真正的评测</b>，两个都要看 <span class="ts">50:01</span>。这就是 DAgger 那类方法要解决的问题，也是后面 RL 几讲的动机。</p>
+<p>评测的几条经验（讲义第 43–45 页）<span class="ts">50:43</span><span class="ts">51:23</span><span class="ts">52:07</span>：</p>
+<ul>
+  <li>相信任何数字之前，先看能不能<b>过拟合 20 个例子</b>。损失降不下来，问题在上游。</li>
+  <li>在外壳里、在结果可检查的任务上跑模型来评测。仔细读公开的数字。有时那是几个外壳里最好的一个。不是单个外壳跑一次的结果。</li>
+  <li>划分要和你的声明一致。同一任务的所有运行放在同一边。想说能泛化到新仓库，就按仓库划分。</li>
+  <li><b>跨外壳的鲁棒性</b>。一个系统里收的轨迹，连任务带系统的惯例一起教。在 OpenHands 里收的数据，未必能泛化到 Claude Code 或 Codex。各实验室的做法是在几个外壳上收集。</li>
+  <li><b>目标领域之外的退化</b>。训练一种能力，其他能力也会动，不管你量没量。配比是控制杆，按条数配平不等于按 token 配平。所以也要评测你本来没想提升的东西，别只在一个领域刷榜。</li>
+</ul>
+<pre class="code" data-lang="py" data-run>runs = [("repo1", "task1"), ("repo1", "task1"), ("repo2", "task2"), ("repo3", "task3")]   # 示意：(仓库, 任务)
+test_repos = {"repo3"}                                            # 想说能泛化到新仓库，就按仓库切
+train = [r for r in runs if r[0] not in test_repos]
+print(len(train), len(runs) - len(train))
+# 输出: 3 1
+# 踩坑：按运行随机切，task1 的两次运行可能一边一个，测试分就虚高了</pre>
+
+<div data-vz="c5-sft" data-sc="3"></div>
+
+<h3 data-d="1" data-m="1" data-why="SFT 和 RL 怎么衔接的实验结果">10. SFT 给通用能力打底，RL 从特意留了余地的检查点接着练</h3>
+<p>SFT 加 RL 远好过只做其中一个。RL 要从一个故意没训到最佳的 SFT 检查点开始。</p>
+<pre class="code" data-lang="py" data-run>avg = {"cold-start SFT + RL": 21.7, "SFT only (10K)": 15.9, "cold-start SFT only": 15.1, "RL only": 3.6, "base": 2.7}   # 讲义第 47 页
+for name, score in avg.items():
+    print(name, round(score - avg["base"], 1))   # 比基座多几分
+# 输出: cold-start SFT + RL 19.0
+# 输出: RL only 0.9
+# 不做 SFT 直接 RL，几乎没把基座带动。只做 SFT 又受老师能力和示范数据的限制</pre>
+<p>这像盖房子。SFT 打地基，RL 往上盖楼。地基不打，楼盖不起来。地基也别浇得太死，要给楼留接口。</p>
+<p>RL 之前该做多少 SFT？讲义第 47 页给了答案（OpenThoughts-Agent 表 11）<span class="ts">52:49</span><span class="ts">53:35</span><span class="ts">54:21</span>：</p>
+<figure class="dg"><script type="application/json">{"type":"bars","title":"三个基准的平均分","max":25,"fmt":1,"lw":200,"rows":[["冷启动 SFT + RL（8B）",21.7,"ok"],["只做 SFT（10K）",15.9,"data"],["只做冷启动 SFT",15.1,"data"],["不做 SFT 直接 RL（Qwen3-8B）",3.6,"bad"],["Qwen3-8B 基座",2.7,"neutral"]]}</script>
+<figcaption>讲义第 47 页的"平均"列</figcaption></figure>
+<ul>
+  <li>完全不做 SFT 的 RL，几乎没把基座带动（3.6 对 2.7）。这和 DeepSeek-R1-Zero 的教训一致。</li>
+  <li>只做 SFT，远不如两者结合。</li>
+  <li>赢的配方从一个<b>故意没训练到自身最佳分</b>的检查点开始 RL。选 SFT 模型时，就要想着后面的 RL。</li>
+</ul>
+<p>讲师的看法是这样的。SFT 是模型获得<b>通用</b>智能体能力最多的地方。RL 用来练特定领域和更好的推理。Nemotron、K2 Horizon 也都这么发现 <span class="ts">52:49</span><span class="ts">53:35</span>。</p>
+<p>课后问答里有几个值得记的点：</p>
+<ul>
+  <li><b>没有更强的老师怎么办？</b>MAI 的选择是从自己蒸馏。领先的实验室更多靠 RL 获得能力。因为 SFT 从根本上受老师能力的限制 <span class="ts">55:17</span><span class="ts">56:02</span>。</li>
+  <li><b>要不要在错的东西上监督？</b>中间的错误编辑可以留，这正是学恢复的方式。但最终结果要对 <span class="ts">59:15</span>。</li>
+  <li><b>配比怎么定？</b>基本靠经验。先在小模型、小数据上试，再放大。MAI 那 56% 的 STEM 和编程也是试出来的 <span class="ts">59:56</span><span class="ts">1:00:44</span>。</li>
+  <li><b>还用 LoRA 吗？</b>资源充足的实验室倾向全参数微调。讲师自己为了效率用过 LoRA <span class="ts">58:22</span>。</li>
+  <li><b>SFT 的损失和预训练有什么不同？</b>损失函数一样是交叉熵，只是用在不同的数据和位置上。这是带 teacher forcing 的模仿学习。上下文是固定的，训练时不从模型采样。让模型自己产生训练数据，是接下来几讲的内容 <span class="ts">1:03:36</span><span class="ts">1:04:21</span>。</li>
+</ul>
+
+<div class="co key"><p><b>和作业 3 的联系</b>：要点已写进第 3 节例子的注释。作业本身看第 8 章的 <a href="c8.html#e3">作业 3</a>。复原过程看作业复原笔记的 <a href="作业复原/作业笔记/stages.html#S20">S20</a>。</p></div>
+</section>
+
+
+<section class="ep" data-n="2">
+<h2>强化学习基础：策略梯度、基线与 GRPO</h2>
+<p class="tldr">三讲 RL 的第一讲，讲师是 Daniel Fried。从 SFT 的三个问题出发：任务错配、数据错配、暴露偏差。由此引出 RL。让智能体自己生成轨迹，按奖励调整参数，最大化期望奖励。先讲最简单的 ReST，只在成功轨迹上做 SFT。再一步步推出策略梯度（REINFORCE）。它在实现上就是"对 SFT 损失做掩码和缩放"。然后讲为什么奖励要减去基线。减基线不引入偏差，能降方差，用两臂老虎机算给你看。最后是 GRPO，它不需要价值模型，用组均值当基线。还有 DrGRPO 的两处修正。全程用作业 3 也要用的"猜数字"当例子。</p>
+
+<h3 data-d="1" data-m="1" data-why="这三讲的路线图">1. 三讲 RL 一路铺向作业 3</h3>
+<p>这三讲 RL 都是为作业 3 准备的。这一讲打基础，后两讲讲怎么稳住、怎么跑起来。这一节是课程安排，没有可算的东西。</p>
+<p>打个比方。学游泳分三课。先学基本划水，再学换气稳住，最后下真泳池。</p>
+<p>这一讲接着上周的 SFT，是三讲 RL 的第一讲。今天讲基本的策略梯度方法。智能体和环境交互、拿到反馈，再更新权重。让高奖励的事更可能，低奖励的事更不可能。下一讲由 Graham Neubig 讲离策略方法和让 RL 稳定下来的各种手段。第三讲讲 RL 系统、实际框架和超参数 <span class="ts">0:00</span><span class="ts">0:40</span>。作业 3 要在两个环境里用 RL 训练模型。一个是今天的贯穿例子"猜数字"。另一个是有点像 Minecraft 的合成环境。它比之前的作业更吃算力 <span class="ts">0:40</span><span class="ts">1:23</span>。</p>
+
+<h3 data-d="1" data-m="2" data-why="贯穿例子，就是作业 3 的 Number Search">2. 猜数字：猜中给 1 分，四次用完给 0 分</h3>
+<p>猜数字是全讲的贯穿例子。猜中奖励 1，四次用完还没猜中奖励 0。</p>
+<pre class="code" data-lang="py" data-run>for hidden in [11, 16]:
+    low, high, guesses = 1, 16, []
+    while len(guesses) &lt; 4 and hidden not in guesses:      # 四次机会，猜中就停
+        guesses.append((low + high) // 2)                  # 二分：每次猜中间
+        low, high = (guesses[-1] + 1, high) if guesses[-1] &lt; hidden else (low, guesses[-1] - 1)
+    print(hidden, guesses, int(hidden in guesses))         # 奖励：猜中 1，否则 0
+# 输出: 11 [8, 12, 10, 11] 1
+# 输出: 16 [8, 12, 14, 15] 0
+# 隐藏 11 时正好是讲义的 τ1。隐藏 16 时四次用完也没猜中
+# 作业 3 考点：Number Search 的范围是 [low, high]，次数是 ⌈log2(high − low + 2)⌉
+# 这正好是二分法最坏情况要的次数，含最后猜中那次，没有余量
+# 按这个公式 1–16 要 5 次。讲义只给 4 次，所以二分也只能猜中 16 个数里的 15 个</pre>
+<p>这像"二十个问题"游戏。每问一次，范围砍掉一半。</p>
+<p>环境里藏着 1–16 之间的一个整数，智能体看不到。它有四次机会。猜错时，环境说"更大"（higher）或"更小"（lower）。猜中则任务结束，奖励 1。四次用完还没猜中，奖励 0（讲义第 2 页）<span class="ts">2:03</span><span class="ts">2:43</span><span class="ts">3:25</span>。下面的轨迹都以隐藏数 11 为例：</p>
+<table class="lab">
+  <tr><th>轨迹</th><th>猜测与反馈</th><th>R</th></tr>
+  <tr><td>τ1</td><td>8 higher · 12 lower · 10 higher · 11 correct</td><td>1</td></tr>
+  <tr><td>τ2</td><td>4 higher · 8 higher · 12 lower · 11 correct</td><td>1</td></tr>
+  <tr><td>τ3</td><td>16 lower · 8 higher · 9 higher · 10 超时</td><td>0</td></tr>
+  <tr><td>τ4</td><td>1 higher · 2 higher · 3 higher · 4 超时</td><td>0</td></tr>
+</table>
+<p>最好的第一猜是中间的 8。像"二十个问题"或 Wordle 一样，把范围劈开。从 4 开始不是最优，但只要会利用反馈也能成功。从 16 或 1 开始，就很可能超时 <span class="ts">4:07</span><span class="ts">4:48</span>。<b>奖励</b>是一个标量，说明一条轨迹有多好。智能体场景里，可以是"代码是否通过全部单元测试"（1 或 0）。也可以是通过测试的比例。现在很多训练是 RLVR，也就是可验证奖励的强化学习。它的奖励只有 0 和 1。但今天的方法对任意标量奖励都成立 <span class="ts">4:48</span><span class="ts">5:29</span>。</p>
+
+<h3 data-d="1" data-m="2" data-why="RL 要解决的三个问题，引出同策略学习">3. SFT 有三个毛病：只认示范，不会从失败学，没见过自己犯的错</h3>
+<p>SFT 有三个毛病：只认示范，不会从失败学，没见过自己犯的错。</p>
+<pre class="code" data-lang="py" data-run>demo_action = 11                              # 示范在"8 higher、12 lower"之后猜了 11
+for a in [10, 13]:                            # 10 合理，13 明显错，答案已知小于 12
+    sft_target = 1 if a == demo_action else 0     # SFT 只认示范，别的动作一律是 0
+    print(a, sft_target)
+# 输出: 10 0
+# 输出: 13 0
+# 踩坑：合理的 10 和离谱的 13，在 SFT 看来一样差。这就是任务错配</pre>
+<p>SFT 像只会背标准答案的学生。别的解法一律算错，自己写错了也不知道怎么改。</p>
+<p>先回顾 SFT。给一条示范，最大化示范动作在给定历史下的概率（讲义第 3 页）<span class="ts">6:11</span><span class="ts">6:53</span>：</p>
+<div class="fx math">L<sub>SFT</sub> = − Σ<sub>t</sub> log π<sub>θ</sub>(a*<sub>t</sub> | h<sub>1:t</sub>)</div>
+<p>目标动作 a* 可以来自人、来自更强的模型。今天还可以来自这个智能体自己的成功轨迹。SFT 有三个问题，RL 会逐一处理（讲义第 4–6 页）<span class="ts">7:36</span>：</p>
+<table class="lab">
+  <tr><th>问题</th><th>是什么</th><th>猜数字里的例子</th></tr>
+  <tr><td><b>任务错配</b></td><td>SFT 最大化示范动作的概率。我们要的是完成任务的概率，两者相近但不同。完成任务的方式不止一种，示范只展示一种。示范之外的动作有好有坏，在 SFT 看来却都一样 <span class="ts">8:17</span><span class="ts">8:59</span></td><td>第一猜 4 也能成功。"12 → lower"之后猜 13 很糟，但它和别的没被示范的动作损失一样</td></tr>
+  <tr><td><b>数据错配</b></td><td>我们也想从次优、甚至失败的数据里学。但不能在失败轨迹上做 SFT，那会提高它们的概率 <span class="ts">9:41</span><span class="ts">10:23</span></td><td>τ3、τ4 超时了，应该学会"别这么做"</td></tr>
+  <tr><td><b>暴露偏差</b></td><td>训练时以固定的历史为条件，生成时历史是模型自己产生的。它犯了训练数据里没有的错，后面的反应可能完全失准 <span class="ts">10:23</span><span class="ts">11:06</span></td><td>只见过"higher 之后往上猜"的示范。生成时一旦猜了个更小的数，就可能乱套 <span class="ts">11:47</span></td></tr>
+</table>
+<p>看待 RL 的一种方式，是让模型<b>自己生成训练数据</b>。它还要学会从自己的错误中恢复。训练数据来自模型自己，这叫<b>同策略</b>（on-policy）。它让模型准备好应对自己的错误。监督信号也正好匹配模型当前能预测的东西。代价是效率。下一讲会讲放松这个假设、更"离策略"的方法 <span class="ts">11:47</span><span class="ts">12:29</span>。</p>
+
+<h3 data-d="1" data-m="2" data-why="RL 的基本循环">4. RL 一圈三步：自己生成、按奖励打分、调参数</h3>
+<p>RL 一圈三步：智能体自己生成轨迹，按奖励打分，再调参数。高奖励的变得更可能。</p>
+<pre class="code" data-lang="py" data-run>probs = np.array([0.30, 0.20, 0.25, 0.25])   # τ1..τ4 的概率（讲义第 13 页）
+reward = np.array([1, 1, 0, 0])
+for step in range(3):                         # 示意：比平均好的轨迹往上推，差的往下压
+    probs = probs * np.exp(0.5 * (reward - probs @ reward))
+    probs /= probs.sum()
+print(probs.round(3), round(probs @ reward, 3))
+# 输出: [0.491 0.327 0.091 0.091] 0.818
+# 期望奖励从 0.5 往上涨。真实的 RL 调的是参数 θ，不是直接改轨迹的概率</pre>
+<p>这像学投篮。投一筐，看进了几个，再调手型。进的动作多练，不进的少用。</p>
+<p>RL 不再模仿一条固定的轨迹。它让智能体自己生成动作和轨迹。再评估它们的奖励，调整参数。高奖励的轨迹变得更可能，低奖励的更不可能（讲义第 7 页）<span class="ts">12:29</span><span class="ts">13:10</span><span class="ts">13:50</span>。它对应地解决三个问题 <span class="ts">14:33</span><span class="ts">15:14</span>：</p>
+<ul>
+  <li>任务错配：训练目标直接就是期望奖励。</li>
+  <li>数据错配：能从所有轨迹学。追求高奖励的，避开低奖励的。</li>
+  <li>暴露偏差：训练用的轨迹是智能体自己生成的。犯了错、拿了低奖励就会被惩罚，从而学会避免。讲师提到几年前语言模型常见的毛病，比如重复、陷入循环。很多是加了一步 RL 后训练才解决的。RL 让模型能从自己的错误中恢复 <span class="ts">15:14</span><span class="ts">15:57</span>。</li>
+</ul>
+
+<h3 data-d="2" data-m="2" data-why="RL 的记号，策略梯度的推导要用">5. 轨迹概率是策略乘环境，环境那一半根本不用知道</h3>
+<p>轨迹的概率等于策略的概率乘环境的概率。求梯度时环境那项消失，所以只要能和环境交互就行。</p>
+<pre class="code" data-lang="py" data-run>policy_probs = [0.4, 0.5, 0.6, 0.7]     # 示意：τ1 每一步策略选中那个猜测的概率
+env_probs = [1, 1, 1, 1]                # 猜数字的环境是确定的，反馈的概率都是 1
+p_traj = math.prod(policy_probs) * math.prod(env_probs)
+print(round(p_traj, 4), round(sum(map(math.log, policy_probs)), 4))
+# 输出: 0.084 -2.4769
+# log p 拆成"策略那几项 + 环境那几项"。环境那几项不含 θ，求导时直接消失</pre>
+<p>这像练投飞镖不用懂空气动力学。扔出去，看落在哪，再调整手。风怎么吹，你不必会算。</p>
+<p>智能体就是策略 π<sub>θ</sub>，θ 是驱动它的语言模型的参数。它从语言模型采样、经外壳执行，得到动作 a<sub>t</sub>。环境回给观察 o<sub>t+1</sub> 和奖励 r<sub>t+1</sub>（讲义第 9 页）<span class="ts">15:57</span><span class="ts">16:40</span>。很多场景只在最后给奖励，比如跑测试。但今天讲的几乎都适用于有中间奖励的场景。</p>
+<table class="lab">
+  <tr><th></th><th>任务实例 x</th><th>观察</th><th>动作</th><th>奖励</th></tr>
+  <tr><td>文本生成</td><td>提示</td><td>目前为止的 token</td><td>下一个 token</td><td>评审模型的打分（比如 RLHF）</td></tr>
+  <tr><td>网页智能体</td><td>任务和网站</td><td>渲染出的页面（后台数据库等是隐藏状态）</td><td>点击、输入、滚动</td><td>完成的子任务数</td></tr>
+  <tr><td>猜数字</td><td>隐藏的数字。它对智能体不可见，所以每个任务开头看起来都一样</td><td>更大、更小或正确</td><td>下一次猜测</td><td>猜中 1，否则 0</td></tr>
+</table>
+<p>这张表出自讲义第 9 页，讲解在 <span class="ts">17:23</span><span class="ts">18:03</span>。智能体只以过去的动作和观察为条件。环境的隐藏状态，它看不到。历史是 h<sub>t</sub> = (o<sub>0</sub>, a<sub>0</sub>, o<sub>1</sub>, …, o<sub>t</sub>)，策略给出 π<sub>θ</sub>(a<sub>t</sub> | h<sub>t</sub>)（讲义第 10 页）<span class="ts">18:46</span><span class="ts">19:27</span>。轨迹 τ 由观察、动作、奖励交错组成，R(τ) = Σ<sub>t</sub> r<sub>t</sub>。猜数字里只有最后一步有奖励（讲义第 11 页）<span class="ts">20:07</span>。</p>
+<p>轨迹的概率同时取决于策略和环境（讲义第 12 页）<span class="ts">20:49</span><span class="ts">21:30</span>：</p>
+<div class="fx math">p<sub>θ</sub>(τ | x) = Π<sub>t</sub> π<sub>θ</sub>(a<sub>t</sub> | h<sub>t</sub>) · P(o<sub>t+1</sub>, r<sub>t+1</sub> | h<sub>t</sub>, a<sub>t</sub>, x)</div>
+<p>关键在于，<b>我们不需要知道环境的概率 P</b>。只要和环境交互、从中采样就够了。这有点神奇，但也让 RL 很慢、很耗算力。它只能不断尝试、看结果。结果就是"奖励如何随参数变化"的间接反馈 <span class="ts">21:30</span><span class="ts">22:11</span>。课上有同学问马尔可夫假设。这里其实是 POMDP，也就是部分可观测马尔可夫决策过程。看不到底层状态，所以下一个观察要以全部历史为条件。两种写法等价，这种更好用 <span class="ts">22:51</span><span class="ts">23:31</span>。</p>
+
+<h3 data-d="1" data-m="2" data-why="RL 的目标函数，策略梯度从这里推">6. 目标是期望奖励，训练就是把概率挪到高奖励轨迹上</h3>
+<p>RL 的目标是期望奖励 J(θ)。训练就是调 θ，把概率质量从低奖励轨迹挪到高奖励轨迹。</p>
+<pre class="code" data-lang="py" data-run>probs = [0.30, 0.20, 0.25, 0.25]      # τ1..τ4 的概率（讲义第 13 页）
+rewards = [1, 1, 0, 0]
+J = sum(p * r for p, r in zip(probs, rewards))
+print(J)
+# 输出: 0.5
+# 一半概率走出零奖励的轨迹。训练就是把概率质量挪到 τ1、τ2 上</pre>
+<p>这像四条路去同一个地方，两条能到，两条走不通。J 就是随手挑一条、恰好能到的概率。</p>
+<div class="fx math">J(θ) = 𝔼<sub>τ∼p<sub>θ</sub>(·|x)</sub> [ R(τ) ]</div>
+<p>假设策略只会走出上面四条轨迹，概率分别是 0.30、0.20、0.25、0.25。那么 J = 0.30 × 1 + 0.20 × 1 + 0.25 × 0 + 0.25 × 0 = 0.50（讲义第 13 页）<span class="ts">24:14</span><span class="ts">24:55</span><span class="ts">25:37</span>。这是个不太好的策略，有一半概率走出零奖励的轨迹。训练就是调 θ，把概率质量从低奖励的轨迹挪到高奖励的轨迹。真实的轨迹空间是组合爆炸的，这里只是简化 <span class="ts">26:19</span>。</p>
+
+<div data-vz="c5-pg" data-sc="0"></div>
+
+<h3 data-d="1" data-m="2" data-why="最简单的基线，和 SFT 只差一步过滤">7. ReST 只留成功轨迹做 SFT，最简单，也最像 SFT</h3>
+<p>ReST 用当前策略生成轨迹，只留成功的做 SFT，再循环。</p>
+<pre class="code" data-lang="py" data-run>trajs = {"τ1": 1, "τ2": 1, "τ3": 0, "τ4": 0}                 # 采到的轨迹和奖励（讲义第 2 页）
+sft_data = [name for name, R in trajs.items() if R == 1]     # 只留 R = 1 的做 SFT
+print(sft_data)
+# 输出: ['τ1', 'τ2']
+# 踩坑：一条成功轨迹都采不到时，数据集是空的，什么也学不到</pre>
+<p>这像把自己做对的题攒成范文集，再照着练。</p>
+<p>强化自训练（ReST）是专家迭代的一种，是对 SFT 很自然的改造。用当前策略生成数据，只留成功的轨迹做微调。"强化"的是智能体已经会做的正确行为（讲义第 15–16 页）<span class="ts">26:19</span><span class="ts">27:04</span>。ReST-EM 的名字来自它和 EM 算法的相似 <span class="ts">27:44</span>：</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":150,"gx":40,"gy":40,"top":18,
+ "nodes":[{"id":"g","c":0,"r":0,"t":"1 Grow","s":"从当前策略采样轨迹，算奖励","k":"data"},
+  {"id":"i","c":1,"r":0,"t":"2 Improve","s":"按奖励过滤，并入数据集，做 SFT","k":"ok"},
+  {"id":"r","c":2,"r":0,"t":"3 Repeat","s":"用更新后的策略再采","k":"info"}],
+ "edges":[["g","i","τ1、τ2 留，τ3、τ4 扔"],["i","r",""],["r","g","",{"via":"arc","bend":30,"dash":1}]]}</script>
+<figcaption>奖励是二值时，阈值就是"只留 R = 1 的"<span class="ts">28:24</span></figcaption></figure>
+<div class="fx math">L<sub>ReST</sub> = − Σ<sub>τ : R(τ)=1</sub> Σ<sub>t</sub> log π<sub>θ</sub>(a<sub>t</sub> | h<sub>t</sub>)</div>
+<p>它严格说不算强化学习，但形态很像。模型生成数据，再按奖励决定怎么更新。它复用了 SFT 的全部机制。在二值奖励下，它是个简单有效的基线 <span class="ts">29:09</span><span class="ts">29:51</span>。和"自蒸馏"的区别只在于用奖励过滤。自蒸馏也可以指在模型产生的全部轨迹上训练 <span class="ts">29:51</span>。</p>
+<div class="co warn"><p><b>如果一条成功的轨迹都采不到呢？</b>那 RL 和 ReST 都不太合适 <span class="ts">30:31</span>。办法有三个。一是先用示范做一轮训练。很多推理模型 RL 之前都有一个"冷启动"阶段，就是上一讲的 SFT。二是用课程，先练模型能拿到奖励的题，再逐步加难。三是给中间奖励。比如先奖励"去探索代码仓库"，学会之后再解锁整个任务 <span class="ts">31:12</span><span class="ts">31:52</span>。</p></div>
+
+<div data-vz="c5-pg" data-sc="1"></div>
+
+<h3 data-d="3" data-m="3" data-why="作业 3 要实现，c6 全章都基于它">8. 策略梯度把 ∇J 改写成能采样估计的期望，环境不用可微</h3>
+<p>策略梯度把 ∇J 改写成 𝔼[R(τ) ∇log p(τ)]。只要能采样，就能估计，环境不用可微。</p>
+<pre class="code" data-lang="py" data-run>p = 0.25                                           # 老虎机：猜 A 的概率（讲义第 30 页）
+true_grad = p * (1 - p)                            # J = p，直接求导 dJ/dθ = σ'(θ) = p(1-p)
+score_grad = p * 1 * (1 - p) + (1 - p) * 0 * (-p)  # 𝔼[R · ∇log π]：A 的斜率 1-p，B 的斜率 -p
+print(true_grad, score_grad)
+# 输出: 0.1875 0.1875
+# 两边一样：只靠采样和 ∇log π，就能得到真梯度的无偏估计</pre>
+<p>这像民意调查。不用问遍所有人，随机抽一批就能估出平均。策略梯度也是抽几条轨迹，估出梯度的平均。</p>
+<p>为什么不能直接反向传播 J(θ)？有两处断了（讲义第 18 页）<span class="ts">31:52</span><span class="ts">32:33</span><span class="ts">33:17</span>。一是动作是<b>离散采样</b>出来的。参数改变的是概率，在跳变点之前不改变采到的动作。所以导数几乎处处为 0。二是<b>环境</b>是黑盒，通常不可微。单元测试对代码怎么求导？一般解法是个很经典的方法，叫 REINFORCE，讲师说是 1992 年提出的。它利用期望的定义和一点代数技巧，得到一个梯度。这个梯度能用模型样本加普通反向传播来估计 <span class="ts">33:17</span><span class="ts">34:00</span>。推导五行（讲义第 19 页）<span class="ts">34:00</span><span class="ts">34:41</span><span class="ts">35:24</span><span class="ts">36:06</span>：</p>
+<table class="lab">
+  <tr><th>式子</th><th>这一步做了什么</th></tr>
+  <tr><td>J(θ) = 𝔼[R(τ)] = Σ<sub>τ</sub> p<sub>θ</sub>(τ|x) R(τ)</td><td>期望的定义：所有轨迹按概率加权（实际上算不完）</td></tr>
+  <tr><td>∇J = Σ<sub>τ</sub> ∇p<sub>θ</sub>(τ|x) R(τ)</td><td>梯度移进求和。只有概率依赖 θ，奖励只是轨迹的函数</td></tr>
+  <tr><td>= Σ<sub>τ</sub> p<sub>θ</sub>(τ|x) R(τ) · ∇p<sub>θ</sub>(τ|x) / p<sub>θ</sub>(τ|x)</td><td>乘一个 p、除一个 p（得分比技巧）</td></tr>
+  <tr><td>= Σ<sub>τ</sub> p<sub>θ</sub>(τ|x) R(τ) ∇log p<sub>θ</sub>(τ|x)</td><td>链式法则：∇p / p = ∇log p</td></tr>
+  <tr><td>= 𝔼<sub>τ∼p<sub>θ</sub></sub>[ R(τ) ∇log p<sub>θ</sub>(τ|x) ]</td><td>又变回一个期望。可以用采样的轨迹来估计</td></tr>
+</table>
+<p>把期望换成采样的轨迹，再把轨迹的对数概率拆开（讲义第 20–21 页）<span class="ts">37:33</span><span class="ts">38:13</span><span class="ts">38:54</span><span class="ts">39:34</span>：</p>
+<div class="fx math">∇̂J = R(τ) ∇log p<sub>θ</sub>(τ|x) = R(τ) Σ<sub>t</sub> ∇log π<sub>θ</sub>(a<sub>t</sub> | h<sub>t</sub>)</div>
+<ul>
+  <li>log p<sub>θ</sub>(τ|x) = Σ log P(环境) + Σ log π<sub>θ</sub>(a<sub>t</sub>|h<sub>t</sub>)。环境那一项不依赖 θ，求导就消失了。这就是为什么不需要知道环境。</li>
+  <li>三块各有来处。轨迹 τ 靠<b>采样</b>，和平时跑智能体一样。R(τ) 来自<b>环境</b>的任务级评估。∇log π<sub>θ</sub> 和 SFT 的计算<b>完全一样</b>。只是动作是智能体自己采的，不是示范给的 <span class="ts">38:54</span>。</li>
+  <li>一个动作可能是多个 token，比如一次复杂的工具调用。动作的对数概率，就是这些 token 对数概率之和 <span class="ts">40:18</span>。</li>
+</ul>
+
+<div data-vz="c5-pg" data-sc="2"></div>
+
+<h3 data-d="2" data-m="3" data-why="作业 3 的损失就是给 SFT 损失加掩码、乘优势">9. REINFORCE 的实现就是 SFT 损失乘上奖励</h3>
+<p>REINFORCE 的实现，就是在自己采的轨迹上算 SFT 损失，再乘上奖励。</p>
+<pre class="code" data-lang="py" data-run>logp = np.array([-0.2, -1.0, -0.5, -0.1])   # 示意：一条轨迹里 4 个 token 的 log π
+mask = np.array([1, 1, 0, 1])               # 第 3 个是观察，不算。回合结束 token 要算
+sft_loss = -(logp * mask).sum()             # 和 SFT 一模一样
+for R in [1, 0]:
+    print(R, round(R * sft_loss, 2))        # REINFORCE：再乘上这条轨迹的奖励
+# 输出: 1 1.3
+# 输出: 0 0.0
+# 踩坑：R = 0 的失败轨迹损失是 0，一点梯度都没有。下一节的基线就是来修这个的
+# 作业 3 考点：REINFORCE 用 A = r。成功的每个采样 token 被强化，失败的什么都不贡献</pre>
+<p>这像只复习考好的卷子。考好的那份反复练，考砸的直接扔一边，不看也不改。</p>
+<p>落到 token 序列上（讲义第 22 页）<span class="ts">40:58</span><span class="ts">41:41</span><span class="ts">42:23</span>：</p>
+<div class="fx math">L<sub>PG</sub> = − R(τ) Σ<sub>t : m<sub>t</sub>=1</sub> log π<sub>θ</sub>(u<sub>t</sub> | u<sub>&lt;t</sub>)</div>
+<ul>
+  <li>m<sub>t</sub> = 1 是策略采样出的 token，<b>包括回合结束 token</b>。m<sub>t</sub> = 0 是提示、观察、外壳加的 token。这和上一讲 SFT 的掩码一模一样。</li>
+  <li>R(τ) 是一个标量，轨迹里每个生成的 token 共享它。</li>
+</ul>
+<p>讲师说他第一次看到 REINFORCE 代码时很惊讶。那是一个复杂任务，用 RL 优化谈判对话模型。实现就是算一遍 SFT 的损失，再乘上奖励，然后求梯度。但数学上就是对的 <span class="ts">42:23</span><span class="ts">43:05</span>。训练循环是这样的（讲义第 23 页）<span class="ts">43:05</span>。先采样任务实例，在上面跑智能体。再算每条轨迹的奖励。然后用奖励给动作的对数概率加权。最后反向传播、更新 θ，再收集。普通 REINFORCE 每个任务实例一条轨迹。到 GRPO 会每个实例采多条 <span class="ts">43:47</span>。</p>
+<p>奖励是二值时，REINFORCE 的损失就等于"成功轨迹上的 SFT 损失"。这和 ReST 几乎一样。区别是 REINFORCE 完全在线，采了就更新。ReST 攒一个大数据集，跑一个或多个 epoch（讲义第 24 页）<span class="ts">44:29</span>。</p>
+
+<h3 data-d="2" data-m="3" data-why="作业 3 的优势和 c6 的 PPO 都建在它上面">10. 奖励要减去基线，算的是这个动作比平均好多少</h3>
+<p>更新该看"比平时好多少"，所以奖励要减去基线。减完的差叫优势。</p>
+<pre class="code" data-lang="py" data-run>rewards = np.array([1, 1, 0, 0])    # τ1..τ4
+baseline = rewards.mean()           # 示意：用平均奖励当基线
+print(rewards - baseline)           # 优势：比平均好多少
+# 输出: [ 0.5  0.5 -0.5 -0.5]
+# 失败的轨迹现在拿到负的权重，会被往下压。这正是"学会别这么做"</pre>
+<p>这像看排名而不是看分数。班平均 90 分时，你考 85 分就该补课了。</p>
+<p>实际中很少有人直接跑原始的 REINFORCE <span class="ts">44:29</span><span class="ts">45:11</span>。最大的问题出在失败轨迹上（讲义第 26 页）。τ1 成功，每个动作都按 1 往上推。τ3 失败，R = 0，基本的 REINFORCE <b>完全不产生梯度</b>，ReST 也一样。可我们恰恰想学会别这么做 <span class="ts">45:53</span>。更新应该取决于"策略在这道题上通常做得怎样"。一道简单题，95% 的时候都能做对。偶尔犯的那 5% 蠢错误，应该被重重惩罚 <span class="ts">46:35</span>。</p>
+<p><b>优势</b>就是这个动作比策略的平均好多少（讲义第 27 页）<span class="ts">46:35</span><span class="ts">47:18</span>：</p>
+<div class="fx math">A<sup>π</sup>(h, a) = Q<sup>π</sup>(h, a) − V<sup>π</sup>(h)</div>
+<p>Q 是做了 a、之后按策略继续的期望奖励。V 是从 h 按策略继续的期望奖励。例子：已经猜了 8（higher）和 12（lower），答案只能是 9、10、11，还剩两次 <span class="ts">48:00</span>。V 取决于策略。一直走最优的话总能赢，随机在合法范围里猜大约是 2/3。<b>猜 11</b> 在区间一端。错了就剩两个候选、一次机会，优势为负。<b>猜 10</b> 错了，还能根据 higher / lower 锁定唯一答案，优势为正 <span class="ts">48:40</span>。</p>
+<pre class="code" data-lang="py" data-run>cands = [9, 10, 11]                       # 8 higher、12 lower 之后剩下的，还有两次机会
+def q(guess):                             # 猜 guess，猜错就在剩下的合法数里随机猜一次
+    rest = [sum(c != guess and (c &gt; guess) == (h &gt; guess) for c in cands) for h in cands if h != guess]
+    return (1 + sum(1 / n for n in rest)) / len(cands)
+print(q(10), round(q(11), 3))
+# 输出: 1.0 0.667
+# V 落在这两个数之间。所以猜 10 的优势 Q − V 为正，猜 11 为负</pre>
+<p>Q 和 V 都不知道，所以用采样的奖励来估计。Â<sub>t</sub> = R(τ) − b(h<sub>t</sub>)，b 是 V<sup>π</sup>(h<sub>t</sub>) 的某个估计，叫<b>基线</b>（讲义第 27–28 页）<span class="ts">49:22</span><span class="ts">50:07</span>：</p>
+<div class="fx math">∇̂J = Σ<sub>t</sub> ( R(τ) − b(h<sub>t</sub>) ) ∇log π<sub>θ</sub>(a<sub>t</sub> | h<sub>t</sub>)</div>
+<p>这和不减基线的版本数值上不同。但两者都是同一个梯度的合法估计。b 怎么选，就得到不同的算法 <span class="ts">50:47</span><span class="ts">51:30</span>：</p>
+<table class="lab">
+  <tr><th>基线 b</th><th>对应的方法</th></tr>
+  <tr><td>常数</td><td>下面的老虎机例子</td></tr>
+  <tr><td>奖励的滑动平均</td><td>随策略进步而调整</td></tr>
+  <tr><td>训练一个价值模型 V<sub>φ</sub>(h<sub>t</sub>)</td><td>actor–critic、PPO。要一个单独的模型，贵，下一讲讲</td></tr>
+  <tr><td>同一任务多次采样的组均值</td><td>GRPO，不需要额外的模型（本讲最后）</td></tr>
+</table>
+
+<h3 data-d="3" data-m="2" data-why="证明基线无偏，理解结论即可">11. 基线只依赖历史时，减掉它不改梯度的期望，只降方差</h3>
+<p>减去基线不改变梯度的期望，只降方差。前提是基线只依赖历史，不依赖当前动作。</p>
+<pre class="code" data-lang="py" data-run>p, b = 0.25, 0.5                                   # 老虎机：猜 A 的概率，基线
+prob = {"A": p, "B": 1 - p}
+slope = {"A": 1 - p, "B": -p}                      # 两个动作的 ∂log π / ∂θ
+print(sum(prob[a] * b * slope[a] for a in "AB"))   # 𝔼[b · ∇log π]
+# 输出: 0.0
+# 换成别的 b 也是 0。踩坑：b 要是依赖当前动作，这一项就不再是 0，梯度就有偏了</pre>
+<p>概率像一块切好的蛋糕，总量永远是 1。往每一份上乘同一个基线再求平均，推力互相抵消，结果是 0。</p>
+<p>估计量看两个指标。偏差是均值偏离真值多少，方差是散得多开 <span class="ts">52:16</span>。只要基线只依赖历史 h，不依赖当前动作，就没问题。减去它不改变梯度的期望（讲义第 29 页）<span class="ts">53:00</span><span class="ts">53:41</span><span class="ts">54:22</span>：</p>
+<div class="fx math">𝔼<sub>a∼π</sub>[ b(h) ∇log π(a|h) ] = b(h) Σ<sub>a</sub> π(a|h) ∇log π(a|h)<br>
+= b(h) Σ<sub>a</sub> ∇π(a|h) = b(h) ∇ Σ<sub>a</sub> π(a|h) = b(h) ∇1 = 0</div>
+<p>所以对任何只以历史为条件的基线，𝔼[∇̂J] = ∇J。基线改变的只有<b>方差</b>。而 RL 里大量的工作，都是在降低梯度估计的方差，让学习稳定 <span class="ts">55:04</span>。</p>
+
+<h3 data-d="3" data-m="2" data-why="用具体数字看清基线怎么降方差">12. 两臂老虎机：减去 0.5 的基线，期望不变，标准差小三倍</h3>
+<p>老虎机上算得出来。减去基线后，期望梯度还是 0.1875。单次估计的标准差从 0.325 降到 0.108。</p>
+<pre class="code" data-lang="py" data-run>p, w = 0.25, np.array([0.25, 0.75])                     # 猜 A 的概率。采到 A、B 的概率
+for b in [0.0, 0.5, 0.75]:
+    g = np.array([(1 - b) * (1 - p), (0 - b) * (-p)])   # 采到 A、采到 B 时的单次估计 (R − b) × 斜率
+    mean = w @ g
+    print(b, mean, round(math.sqrt(w @ (g - mean) ** 2), 3))
+# 输出: 0.0 0.1875 0.325
+# 输出: 0.5 0.1875 0.108
+# 输出: 0.75 0.1875 0.0
+# 期望始终是 0.1875，变的只是标准差。b = 0.75 时两种情况一样大，标准差为 0</pre>
+<p>这像两个人估同一个数。一个要么报 0.75，要么报 0。另一个总在 0.125 到 0.375 之间。平均都对，后一个靠谱得多。</p>
+<p>最简单的例子：只有一步、两个动作，猜 A 或猜 B。只有一个参数 θ，p = π<sub>θ</sub>(猜 A) = σ(θ)。θ = −1.1 时 p = 0.25。猜 A 奖励 1，猜 B 奖励 0。这是个糟糕的策略，把大概率放在了零奖励的动作上。梯度应该把 θ 往正推（讲义第 30 页）<span class="ts">55:04</span><span class="ts">55:45</span><span class="ts">56:30</span><span class="ts">57:11</span>。</p>
+<table class="lab">
+  <tr><th>采到</th><th>概率</th><th>斜率 ∂log π/∂θ</th><th>不减基线：R × 斜率</th><th>基线 b = 0.5：(R − b) × 斜率</th></tr>
+  <tr><td>猜 A（R = 1）</td><td>0.25</td><td>1 − p = +0.75</td><td>+0.75</td><td>+0.5 × 0.75 = <b>+0.375</b></td></tr>
+  <tr><td>猜 B（R = 0）</td><td>0.75</td><td>−p = −0.25</td><td>0（什么都不发生）</td><td>−0.5 × (−0.25) = <b>+0.125</b></td></tr>
+  <tr><td colspan="3">期望梯度</td><td>0.25 × 0.75 = 0.1875</td><td>0.25 × 0.375 + 0.75 × 0.125 = 0.1875</td></tr>
+  <tr><td colspan="3">单次估计的标准差</td><td>0.325</td><td>0.108</td></tr>
+</table>
+<p>这些数出自讲义第 30–33 页，本机复算一致。讲师口头说的"大约 0.18"就是 0.1875 <span class="ts">57:53</span><span class="ts">58:35</span>。不减基线时，1/4 的时候拿到 0.75，远大于真值。3/4 的时候拿到 0。减去 0.5 之后，两种情况都推 θ 往正方向，都靠近 0.1875。期望不变，方差小了三倍 <span class="ts">59:17</span><span class="ts">1:00:00</span>。讲义第 33 页反复采样 20 次。两条滑动平均最后都收敛到 0.188。但加了基线的那条，一路上离真值更近 <span class="ts">1:01:25</span><span class="ts">1:02:05</span><span class="ts">1:02:47</span>。讲师说，基线对他自己也一直有点神秘。做这些可视化，也是为了说服自己 <span class="ts">1:02:47</span>。下面的演示就是这个老虎机。</p>
+<p>基线帮了什么、没帮什么（讲义第 34 页）<span class="ts">1:03:27</span>？它能把一条轨迹标成比预期好或差。好的基线能降方差、稳定学习。但轨迹里<b>所有动作的优势还是一样</b>，τ1 的 8、12、10、11 都是 +0.5。估计 V 还可能需要一个单独的模型。功劳分配留给下一讲。</p>
+<p><b>有中间奖励时</b>，用剩余回报代替整条轨迹的奖励。剩余回报是 R<sub>t</sub> = Σ<sub>t'=t+1</sub><sup>T</sup> r<sub>t'</sub>。一个动作只由它之后的奖励加权。之前的奖励不依赖这个动作。丢掉它们能降方差，又不引入偏差。猜数字只在最后给奖励，所以每个动作的 R<sub>t</sub> 都等于 R(τ)（讲义第 35 页）<span class="ts">1:04:10</span>。</p>
+
+<div data-vz="c5-pg" data-sc="3"></div>
+
+<h3 data-d="2" data-m="3" data-why="作业 3 要写 GRPO 的组内优势">13. GRPO 对同一道题采一组，用组均值当基线，不要价值模型</h3>
+<p>GRPO 对同一道题采 G 条 rollout，用这组奖励的均值当基线。这样就不用单独的价值模型。</p>
+<pre class="code" data-lang="py" data-run>groups = {"x1": [1, 1, 0, 0], "x2": [1, 0, 0, 0], "x3": [1, 1, 1, 0]}   # 讲义第 38 页
+for x, r in groups.items():
+    r = np.array(r)
+    print(x, r.mean(), ((r - r.mean()) / r.std()).round(2))   # 每组只在自己组内算均值和标准差
+# 输出: x2 0.25 [ 1.73 -0.58 -0.58 -0.58]
+# 踩坑：把整批混在一起算均值，难题和简单题的基线就搅在一起了
+# 作业 3 考点：p2b 就是 GRPO，每题 8 条。p2a 是 REINFORCE，每题 1 条</pre>
+<p>这像同一张卷子让一个人考八遍，拿他的平均分当及格线。高于平均的那几遍多学，低于平均的少学。</p>
+<p>以前 RL 用在语言模型上，常要单独一个模型来预测基线。这很耗算力。DeepSeek 很在意效率，提出了 GRPO（组相对策略优化）。做法是对同一个任务实例采样多次。再用这组奖励的均值当基线。好的基线就是"策略在这道题上的期望奖励"。多跑几次取平均，正是一个很好的估计（讲义第 37 页）<span class="ts">1:04:52</span><span class="ts">1:05:32</span><span class="ts">1:06:14</span>：</p>
+<div class="fx math">b(h<sub>t</sub>) = R̄ = (1/G) Σ<sub>j</sub> R(τ<sub>j</sub>)，　Â<sub>j</sub> = ( R(τ<sub>j</sub>) − R̄ ) / σ<sub>R</sub></div>
+<p>原始 GRPO 还除以组内奖励的标准差 σ<sub>R</sub>。但很多自称 GRPO 的实现都去掉了这一步，只减均值 <span class="ts">1:06:58</span><span class="ts">1:07:42</span>。组大小 G 常用 8 左右 <span class="ts">1:08:22</span>。一批里可以有多个任务实例。<b>每个实例只在自己的组内算均值和标准差</b>。因为基线估计的是"这道题"的期望奖励（讲义第 38 页）<span class="ts">1:08:22</span><span class="ts">1:09:05</span>：</p>
+<table class="lab">
+  <tr><th>任务实例</th><th>G 个 rollout 的奖励</th><th>组均值 R̄</th><th>优势（÷σ<sub>R</sub>）</th></tr>
+  <tr><td>x1 · 隐藏 11</td><td>1 1 0 0</td><td>0.50</td><td>+1 +1 −1 −1</td></tr>
+  <tr><td>x2 · 隐藏 3</td><td>1 0 0 0</td><td>0.25</td><td>+1.73 −0.58 −0.58 −0.58</td></tr>
+  <tr><td>x3 · 隐藏 7</td><td>1 1 1 0</td><td>0.75</td><td>+0.58 +0.58 +0.58 −1.73</td></tr>
+</table>
+<div class="fx math">L<sub>GRPO</sub> = − Σ<sub>i</sub> (1/G) Σ<sub>j=1</sub><sup>G</sup> Â<sub>ij</sub> Σ<sub>t</sub> log π<sub>θ</sub>(a<sub>ij,t</sub> | h<sub>ij,t</sub>)</div>
+<p>课上有同学问，这样还无偏吗？是的，基线只依赖提示和模型自己的 rollout <span class="ts">1:09:47</span><span class="ts">1:10:29</span>。注意这里写的不是论文里的完整损失。论文还有比率、裁剪和对初始策略的正则（KL）。裁剪是为了防止一步走太远。这些下一讲讲 <span class="ts">1:10:29</span><span class="ts">1:11:12</span>。</p>
+
+<div data-vz="c5-grpo" data-sc="0,1"></div>
+
+<h3 data-d="2" data-m="3" data-why="作业 3 的优势不除标准差，就是 DrGRPO 的做法">14. DrGRPO 不除标准差，也不按回答长度平均</h3>
+<p>DrGRPO 改了两处。优势不除组内标准差，回答里也不按自己的长度平均。</p>
+<pre class="code" data-lang="py" data-run>for r in [[1, 1, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0]]:      # 一道中等题，一道几乎总失败的难题（第二组是示意）
+    r = np.array(r)
+    print("GRPO", ((r - r.mean()) / r.std()).max().round(2), "DrGRPO", (r - r.mean()).max())
+# 输出: GRPO 1.0 DrGRPO 0.5
+# 输出: GRPO 2.65 DrGRPO 0.875
+# 除以标准差后，σ 小的难题被放大得更多
+# 作业 3 考点：compute_group_advantages 就是 A = r − 组均值，不除标准差，不加 KL</pre>
+<p>这像按每张卷子自己的长度平均扣分。写得越长、错得越多的人，每行扣分反而越少。</p>
+<p>DrGRPO 就是"做对了的 GRPO"。讲师说作业里也会这么做，因为它去掉了 GRPO 的一些偏差（讲义第 39–40 页）<span class="ts">1:11:12</span><span class="ts">1:11:53</span><span class="ts">1:12:36</span>：</p>
+<table class="lab">
+  <tr><th></th><th>GRPO</th><th>DrGRPO</th><th>为什么</th></tr>
+  <tr><td>优势</td><td>(R<sub>j</sub> − R̄) / σ<sub>R</sub></td><td>R<sub>j</sub> − R̄</td><td>σ<sub>R</sub> 在每组内部量，随题目而变。几乎总成功或几乎总失败的题 σ<sub>R</sub> 小，权重反而更大。去掉这个除法，优势就不再"知道"题目的难度</td></tr>
+  <tr><td>一条回答内的聚合</td><td>(1/|y<sub>j</sub>|) Σ<sub>t</sub></td><td>(1/C) Σ<sub>t</sub></td><td>按各自长度平均时，很长的错误回答每个 token 受罚更少。策略会漂向更长的错误回答。C 是全局常数，论文用的是生成预算</td></tr>
+</table>
+<div class="fx math">L<sub>DrGRPO</sub> = − (1/G) Σ<sub>j=1</sub><sup>G</sup> (1/C) Σ<sub>t : m<sub>j,t</sub>=1</sub> Â<sub>j</sub> log π<sub>θ</sub>(u<sub>j,t</sub> | u<sub>j,&lt;t</sub>)，<br>
+Â<sub>j</sub> = R(τ<sub>j</sub>) − R̄</div>
+<p>奖励本身不变，变的是题目之间、回答之间的相对权重。实现上，同一条轨迹的每个生成 token 共享这条轨迹的优势。比如 τ1 的每个 token 是 +0.5/C，τ3 是 −0.5/C <span class="ts">1:12:36</span><span class="ts">1:13:20</span>。</p>
+<pre class="code" data-lang="py" data-run>adv = -0.25                                   # 一条错误回答的优势（x2 那组，不除标准差）
+for length in [50, 400]:                      # 示意：短的错误回答和长的错误回答
+    print(length, adv / length, adv / 512)    # GRPO 按自己长度平均，DrGRPO 除以全局常数 C = 512（示意）
+# 输出: 50 -0.005 -0.00048828125
+# 输出: 400 -0.000625 -0.00048828125
+# 按长度平均时，长的错误回答每个 token 罚得少。除以 C，长短一样罚
+# 作业 3 考点：tinker_adapter.py 给每个优势乘 1/T，T 是整批的动作 token 数
+# 每条回答用同一个系数，不按各自长度归一化，和 DrGRPO 第二处改动同一个方向</pre>
+
+<h3 data-d="1" data-m="3" data-why="作业 3 要识别退化组并跳过">15. 一组奖励全一样，优势全是 0，这组直接跳过</h3>
+<p>一组奖励全一样，优势就全是 0，这组不贡献梯度。</p>
+<pre class="code" data-lang="py" data-run>for r in [[0, 0, 0, 0], [1, 1, 1, 1], [1, 0, 0, 0]]:
+    adv = np.array(r) - np.mean(r)
+    print(r, "skip" if not adv.any() else adv)    # 优势全为 0，这组不贡献梯度
+# 输出: [0, 0, 0, 0] skip
+# 输出: [1, 1, 1, 1] skip
+# 作业 3 考点：退化组直接跳过，日志里有 train/frac_degenerate_groups</pre>
+<p>这像全班都考满分，或者都交白卷。排名排不出来，这次考试对谁都没参考价值。</p>
+<p>这种组叫"退化"组（讲义第 41 页）<span class="ts">1:13:20</span><span class="ts">1:14:01</span>。全失败 [0,0,0,0] 可能太难，全成功 [1,1,1,1] 可能太容易。如果每条采样轨迹都失败，能改什么 <span class="ts">1:14:01</span><span class="ts">1:14:43</span>？</p>
+<ul>
+  <li>换任务实例。</li>
+  <li>在提示里注入知识，引导模型产出更可能正确的解。</li>
+  <li>加示范。有些离策略 RL 方法把正确示范放进组里。更简单的是，RL 之前先在正确示范上微调。</li>
+  <li>给更有信息量的奖励，鼓励正确的中间决策。这叫奖励塑形，比如找到正确的文件就给分。</li>
+</ul>
+<p>GRPO 和 PPO 的区别在讲义第 42 页 <span class="ts">1:14:43</span><span class="ts">1:15:26</span>。GRPO 是作为 PPO 的更高效替代提出的。PPO 用一个单独的价值模型估计基线，再用 GAE 算优势。这个价值模型通常和策略共享主干。GRPO 对同一个提示采 G 个输出，用组内计算得到优势。比率、裁剪和参考模型在下一讲。</p>
+
+<div data-vz="c5-grpo" data-sc="2"></div>
+
+<h3 data-d="1" data-m="2" data-why="把 ReST、REINFORCE、GRPO 串成一个公式">16. 三种方法是同一个公式，只是动作的权重不同</h3>
+<p>ReST、REINFORCE、GRPO 都是给做过的动作加权，区别只在权重 w<sub>t</sub>。</p>
+<pre class="code" data-lang="py" data-run>R = np.array([1, 1, 0, 0])                    # τ1..τ4
+weights = {"ReST-EM": (R == 1).astype(int), "REINFORCE": R, "GRPO": (R - R.mean()) / R.std(), "DrGRPO": R - R.mean()}
+for name, w in weights.items():
+    print(name, w)
+# 输出: GRPO [ 1.  1. -1. -1.]
+# 作业 3 考点：p2a（REINFORCE）对 p2b（GRPO），Part 4.1 再加 p41（G = 2）
+# 比较组大小对优势方差和"有用序列数"的影响</pre>
+<p>这像同一台机器换旋钮档位。ReST 只开或关，REINFORCE 按奖励开，GRPO 按比平均好多少开。</p>
+<p>今天的方法都让智能体在环境里行动。再给它做过的动作加权（讲义第 44 页）<span class="ts">1:15:26</span><span class="ts">1:16:07</span>：</p>
+<div class="fx math">∇̂J = Σ<sub>t</sub> w<sub>t</sub> ∇log π<sub>θ</sub>(a<sub>t</sub> | h<sub>t</sub>)</div>
+<table class="lab">
+  <tr><th>方法</th><th>权重 w<sub>t</sub></th></tr>
+  <tr><td>ReST-EM</td><td>成功轨迹 1，其余 0（在留下的数据上做 SFT）</td></tr>
+  <tr><td>REINFORCE</td><td>R(τ)：动作所在轨迹的奖励</td></tr>
+  <tr><td>GRPO / DrGRPO</td><td>Â<sub>j</sub>：相对同一任务实例其他 rollout 的奖励</td></tr>
+</table>
+<p>它们一起回答了开头的三个问题（讲义第 45 页）<span class="ts">1:16:50</span><span class="ts">1:17:31</span>。目标就是期望奖励，任何成功的轨迹都被强化。减了合适的基线，就能从奖励为 0 的轨迹里学。轨迹来自当前策略，模型在训练时自己"开车"。这样它学会从自己的错误中恢复。代价是必须真的在环境里尝试，既贵又给梯度带来噪声。下两讲继续讲怎么让这个过程更稳。</p>
+
+<div data-vz="c5-grpo" data-sc="3"></div>
+
+<div class="co key"><p><b>和作业 3 的联系</b>：要点写在前面几节例子的注释里。作业本身看第 8 章的 <a href="c8.html#e3">作业 3</a>。复原过程看作业复原笔记的 <a href="作业复原/作业笔记/stages.html#S20">S20</a>。</p></div>
+</section>
+
+<nav class="pager">
+  <a href="c4.html"><span>← 上一章</span>04 · 领域智能体：编程、操作电脑、深度研究</a>
+  <a class="nx" href="c6.html"><span>下一章 →</span>06 · 训练（下）：进阶 RL 算法与 RL 系统</a>
+</nav>
+</main>
+<script src="assets/vz.js"></script>
+<script src="assets/viz/c5-sft.js"></script>
+<script src="assets/viz/c5-pg.js"></script>
+<script src="assets/viz/c5-grpo.js"></script>
+</body>
+</html>

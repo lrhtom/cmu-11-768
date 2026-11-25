@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CMU 11-768：AI 智能体 · 中文笔记</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/site.css">
+<script>window.PAGE = { key: 'index' };</script>
+<script src="assets/course.js"></script>
+<script src="assets/glossary.js"></script>
+<script src="assets/site.js"></script>
+<style>
+  .card.todo{opacity:.55}
+  .home table.map{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0 6px}
+  .home table.map th,.home table.map td{padding:7px 11px;border:1px solid var(--line);text-align:left;vertical-align:top}
+  .home table.map th{background:var(--bg-3);font-weight:650;white-space:nowrap}
+  .home table.map td:first-child{white-space:nowrap}
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0 6px}
+  .tw table.map{margin:0;min-width:820px}
+  .home .note{font-size:13px;color:var(--fg-3);max-width:860px}
+  /* 课表 */
+  table.sched td{font-size:13.5px;line-height:1.55}
+  table.sched td.code{font:600 12px var(--mono);color:var(--fg-3)}
+  table.sched td.date{white-space:nowrap;font:12px var(--mono);color:var(--fg-2)}
+  table.sched .zh{display:block;font-weight:600;color:var(--fg)}
+  table.sched .en{display:block;font-size:12px;color:var(--fg-3)}
+  table.sched .ms{display:inline-block;margin-top:3px;font-size:11.5px;color:var(--warn);border:1px solid currentColor;border-radius:5px;padding:0 6px}
+  table.sched tr.off td{color:var(--fg-3);background:var(--bg)}
+  table.sched tr.off .zh{color:var(--fg-3);font-weight:500}
+  table.sched tr.brk td{background:var(--bg-3);color:var(--fg-3);font-size:12.5px}
+  table.sched td.res{white-space:nowrap;font-size:12.5px}
+  table.sched td.res a,table.sched td.res span{display:block}
+  table.sched td.res .pill{display:table;margin-top:2px}
+  .home table.map td.nw{white-space:nowrap}
+  .pill{display:inline-block;font-size:11px;border-radius:5px;padding:0 6px;background:var(--bg-3);color:var(--fg-3)}
+  button.play{all:unset;cursor:pointer;color:var(--accent);font-size:12.5px}
+  button.play:hover{text-decoration:underline}
+  /* 播放器 */
+  .player{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;margin:12px 0 4px}
+  .screen{position:relative;aspect-ratio:16/9;background:#0e1116;border-radius:var(--r);overflow:hidden;border:1px solid var(--line)}
+  .screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .screen .cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#e8ecf2;text-align:center;padding:20px;cursor:pointer}
+  .screen .cover b{font-size:18px;line-height:1.4}
+  .screen .cover small{font-size:12.5px;color:#9aa4b2}
+  .screen .cover .btn{width:64px;height:64px;border-radius:50%;background:#e33;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;box-shadow:0 4px 18px rgba(0,0,0,.4)}
+  .vlist{display:flex;flex-direction:column;gap:2px;max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--bg-2);padding:5px}
+  .vlist button{all:unset;display:flex;gap:9px;align-items:baseline;padding:6px 9px;border-radius:7px;cursor:pointer;font-size:13px;line-height:1.45;color:var(--fg-2)}
+  .vlist button:hover{background:var(--bg-3);color:var(--fg)}
+  .vlist button.cur{background:var(--accent-weak);color:var(--accent);font-weight:650}
+  .vlist button[disabled]{cursor:default;opacity:.5}
+  .vlist b{font:700 11px var(--mono);min-width:20px;color:var(--fg-3)}
+  .vlist small{margin-left:auto;font:11px var(--mono);color:var(--fg-3);white-space:nowrap}
+  .pbar{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--fg-3);margin-top:6px}
+  @media (max-width:860px){.player{grid-template-columns:1fr}.vlist{max-height:260px}}
+  @media (max-width:640px){.home table.map th,.home table.map td{padding:6px 8px}.home table.map td:first-child{white-space:normal;min-width:4em}.home table.map td.nw{white-space:normal;word-break:break-all}}
+</style>
+</head>
+<body>
+<div class="home">
+  <div class="kicker">CMU 11-768 · Fall 2026 · Daniel Fried、Graham Neubig</div>
+  <h1>CMU 11-768：AI 智能体</h1>
+  <p class="lede">课程 <a href="https://www.cmu-agents.com/" target="_blank" rel="noopener">11-768: AI Agents</a> 的中文笔记。依据是课程的 <a href="https://www.youtube.com/playlist?list=PLSN0qpDfUvTM" target="_blank" rel="noopener">YouTube 录像</a>、官方讲义 PDF 和三个公开作业的代码。已经发讲义的 17 讲（第 1–15、17、18 讲）按主题分成 9 章。还没上的树搜索一讲，按讲者的论文先写了 1 章。另有 1 章走读作业代码。一章一页，左栏列出这一章的每一讲。正文里穿插流程图、时序图、表格和能逐步播放的动画演示。时间戳点一下，就跳到录像的对应位置。</p>
+  <div class="stats">
+    <div class="stat"><b>11</b><span>章</span></div>
+    <div class="stat"><b>17</b><span>讲有讲义（共 23 讲）</span></div>
+    <div class="stat"><b>16.3</b><span>小时录像（14 讲）</span></div>
+    <div class="stat"><b>975</b><span>页讲义</span></div>
+    <a class="stat" href="demos.html" title="演示总表：每个场景的步数、时长和出处"><b id="vzCount">—</b><span>个动画演示 · 总表 →</span></a>
+  </div>
+
+  <div class="cards">
+    <a class="card" href="c1.html" data-m="c1"><div class="num">01 · 第 1–2 讲</div><h3>智能体入门与工具调用</h3><div class="en">What Is an Agent · Tool Use</div>
+      <p>智能体是什么，由哪几块组成，怎么一圈圈地跑起来。模型怎么学会调用工具：工具描述、调用格式、聊天模板和 MCP。</p>
+      <div class="foot"><span>作业 1</span><span data-vz-n="c1"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+    <a class="card" href="c2.html" data-m="c2"><div class="num">02 · 第 3–4 讲</div><h3>长上下文、记忆与技能</h3><div class="en">Long Context · Memory &amp; Skills</div>
+      <p>上下文越来越长，模型结构和推理系统要怎么改。智能体自己又该怎么管上下文。再讲跨任务的记忆，和按需加载的技能。</p>
+      <div class="foot"><span>作业 1</span><span data-vz-n="c2"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+    <a class="card" href="c3.html" data-m="c3"><div class="num">03 · 第 5 讲</div><h3>规划与多智能体协作</h3><div class="en">Planning · Decomposition · Multi-Agent</div>
+      <p>先想再做。怎么规划，怎么把大任务拆成小任务。多个智能体之间怎么分工、怎么协调。</p>
+      <div class="foot"><span data-vz-n="c3"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+    <a class="card" href="c4.html" data-m="c4"><div class="num">04 · 第 6、7、10 讲</div><h3>领域智能体：编程、操作电脑、深度研究</h3><div class="en">Coding · Computer Use · Deep Research</div>
+      <p>三类最成熟的智能体各自怎么做。编程智能体写代码修 bug。电脑操作智能体看屏幕点鼠标。深度研究智能体上网查资料写报告。</p>
+      <div class="foot"><span>作业 1、2</span><span data-vz-n="c4"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+    <a class="card" href="c5.html" data-m="c5"><div class="num">05 · 第 8–9 讲</div><h3>训练（上）：SFT 与强化学习基础</h3><div class="en">Training: SFT · RL Basics</div>
+      <p>怎么用轨迹数据做监督微调，让模型学会当智能体。再讲强化学习的基本概念：策略、奖励、策略梯度。最后看它用在智能体上的样子。</p>
+      <div class="foot"><span>作业 3</span><span data-vz-n="c5"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+    <a class="card" href="c6.html" data-m="c6"><div class="num">06 · 第 11–12 讲</div><h3>训练（下）：进阶 RL 算法与 RL 系统</h3><div class="en">Training: Advanced RL · RL Systems</div>
+      <p>智能体 RL 里常用的算法改进。再看怎么把多轮、长时间的智能体 RL 跑起来。采样和训练怎么分开，怎么异步。</p>
+      <div class="foot"><span>作业 3</span><span data-vz-n="c6"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+    <a class="card" href="c7.html" data-m="c7"><div class="num">07 · 第 13–14 讲</div><h3>安全与框架：沙箱、攻击与 OpenHands</h3><div class="en">Agent Safety · OpenHands</div>
+      <p>智能体能动手以后会出什么事，怎么防。讲沙箱、权限和凭据、提示注入。再看开源智能体框架 OpenHands 是怎么搭的。</p>
+      <div class="foot"><span>讲义</span><span data-vz-n="c7"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+    <a class="card" href="c8.html" data-m="c8"><div class="num">08 · 作业 1–3</div><h3>作业：Harness、Eval 与 Training</h3><div class="en">Assignments 1–3</div>
+      <p>三个公开作业的代码走读。作业 1 从零写一个 ReAct 智能体外壳。作业 2 给智能体设计评测。作业 3 在小框架 ScottyRL 里用 REINFORCE、GRPO 和异步 GRPO 训练智能体。完整复原另见顶栏「复原」。</p>
+      <div class="foot"><span>代码</span><span data-vz-n="c8"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+    <a class="card" href="c9.html" data-m="c9"><div class="num">09 · 第 15–16 讲（第 15 讲只有讲义，第 16 讲预写）</div><h3>框架与安全（下）：编排、监控与可观测性</h3><div class="en">Orchestration · Monitoring</div>
+      <p>什么时候用固定的工作流，什么时候放手给智能体。用 LangGraph 搭一个带条件路由、检查点、人工审核和重试的客服流程。轨迹多到看不过来时怎么查。第 16 讲按官网给的阅读和前面几讲预写。</p>
+      <div class="foot"><span>讲义</span><span data-vz-n="c9"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+    <a class="card" href="c10.html" data-m="c10"><div class="num">10 · 第 17–19 讲（第 17、18 讲只有讲义，第 19 讲预写）</div><h3>交互：智能体与人的工作、多智能体、人机协作</h3><div class="en">Future of Work · Interaction</div>
+      <p>智能体离真正干活还差什么。真实任务怎么收集，环境怎么搭，结果怎么评。几个智能体怎么分工、通信。人和智能体怎么协作。第 19 讲按核验过的论文和前面几讲预写。</p>
+      <div class="foot"><span>讲义</span><span data-vz-n="c10"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+    <a class="card" href="c11.html" data-m="c11"><div class="num">11 · 第 20–23 讲（预写，两场客座讲座未公布）</div><h3>搜索：重排序、评判模型与树搜索</h3><div class="en">Reranking · Critics · Tree Search</div>
+      <p>推理时多花算力。多采几个候选，让评判模型挑最好的。在真实环境里边走边搜，靠价值函数打分、回溯。这几讲都还没有官方材料，按现有材料预写。</p>
+      <div class="foot"><span>论文</span><span data-vz-n="c11"></span><span class="pg"></span></div><div class="bar"><i></i></div></a>
+  </div>
+
+  <h2 id="watch">看录像</h2>
+  <p class="note" style="margin:0">点右边的列表切换讲次，点画面开始播放。嵌入的是 YouTube 播放器，要能访问 YouTube。第 13、14 讲的录像 10 月下旬补发了。第 15 讲以后还没有录像（截至 11/12），有讲义的几讲按讲义写。</p>
+  <div class="player">
+    <div>
+      <div class="screen" id="screen"><div class="cover" id="cover"><span class="btn">▶</span><b id="coverT">—</b><small id="coverS">点击播放</small></div></div>
+      <div class="pbar"><span id="pInfo"></span><a id="pYt" href="#" target="_blank" rel="noopener">在 YouTube 打开 ↗</a><a id="pNote" href="#">这一讲的笔记 →</a><a id="pPdf" href="#" target="_blank" rel="noopener">讲义 PDF</a></div>
+    </div>
+    <div class="vlist" id="vlist">
+<!--VIDS-->
+      <button data-yt="UwfjzyLnvMg" data-t="第 1 讲 · 课程概览：什么是智能体" data-en="Lecture 1 · Course Overview: What Is an Agent?" data-who="Daniel Fried、Graham Neubig" data-dur="1:07:52" data-note="c1.html#e1" data-pdf="https://www.cmu-agents.com/slides/lecture-01-agents.pdf"><b>1</b><span>课程概览：什么是智能体</span><small>1:07:52</small></button>
+      <button data-yt="jXChFB4JSyw" data-t="第 2 讲 · 智能体能力 1：工具调用" data-en="Lecture 2 · Agent Capabilities 1: Tool Use" data-who="Graham Neubig" data-dur="57:22" data-note="c1.html#e2" data-pdf="https://www.cmu-agents.com/slides/lecture-02-tool-use.pdf"><b>2</b><span>智能体能力 1：工具调用</span><small>57:22</small></button>
+      <button data-yt="AiwCCvFW1uE" data-t="第 3 讲 · 智能体能力 2：长上下文智能体的上下文管理" data-en="Lecture 3 · Agent Capabilities 2: Context Management for Long-Context Agents" data-who="Graham Neubig" data-dur="1:15:39" data-note="c2.html#e1" data-pdf="https://www.cmu-agents.com/slides/lecture-03-long-context.pdf"><b>3</b><span>智能体能力 2：长上下文智能体的上下文管理</span><small>1:15:39</small></button>
+      <button data-yt="6zigF2a-2Pw" data-t="第 4 讲 · 智能体能力 3：技能与记忆" data-en="Lecture 4 · Agent Capabilities 3: Skills and Memory" data-who="Daniel Fried" data-dur="1:15:23" data-note="c2.html#e2" data-pdf="https://www.cmu-agents.com/slides/lecture-04-memory-and-skills.pdf"><b>4</b><span>智能体能力 3：技能与记忆</span><small>1:15:23</small></button>
+      <button data-yt="S8v-dR4s29M" data-t="第 5 讲 · 智能体能力 4：规划、任务分解与多智能体协作" data-en="Lecture 5 · Agent Capabilities 4: Planning, Task Decomposition, and Multi-Agent Coordination" data-who="Daniel Fried" data-dur="1:15:14" data-note="c3.html#e1" data-pdf="https://www.cmu-agents.com/slides/lecture-05-planning.pdf"><b>5</b><span>智能体能力 4：规划、任务分解与多智能体协作</span><small>1:15:14</small></button>
+      <button data-yt="1BWeH1oOM7k" data-t="第 6 讲 · 领域 1：编程智能体" data-en="Lecture 6 · Domains 1: Coding Agents" data-who="Graham Neubig" data-dur="1:18:49" data-note="c4.html#e1" data-pdf="https://www.cmu-agents.com/slides/lecture-06-coding-agents.pdf"><b>6</b><span>领域 1：编程智能体</span><small>1:18:49</small></button>
+      <button data-yt="jwGluLrrqjQ" data-t="第 7 讲 · 电脑操作智能体" data-en="Lecture 7 · Computer Use Agents" data-who="JY Koh" data-dur="1:14:26" data-note="c4.html#e2" data-pdf="https://www.cmu-agents.com/slides/lecture-07-computer-use-agents.pdf"><b>7</b><span>电脑操作智能体</span><small>1:14:26</small></button>
+      <button data-yt="O3HSU0AoILc" data-t="第 8 讲 · 训练 1：监督微调（SFT）" data-en="Lecture 8 · Training 1: Supervised Fine-Tuning (SFT)" data-who="Yueqi Song" data-dur="1:04:59" data-note="c5.html#e1" data-pdf="https://www.cmu-agents.com/slides/lecture-08-sft.pdf"><b>8</b><span>训练 1：监督微调（SFT）</span><small>1:04:59</small></button>
+      <button data-yt="paAcPaaYZGM" data-t="第 9 讲 · 训练 2：强化学习基础" data-en="Lecture 9 · Training 2: Reinforcement Learning Basics" data-who="Daniel Fried" data-dur="1:17:46" data-note="c5.html#e2" data-pdf="https://www.cmu-agents.com/slides/lecture-09-rl-basics.pdf"><b>9</b><span>训练 2：强化学习基础</span><small>1:17:46</small></button>
+      <button data-yt="nKUBrXFQBUM" data-t="第 10 讲 · 领域 3：深度研究智能体" data-en="Lecture 10 · Domains 3: Deep Research Agents" data-who="Akari Asai" data-dur="1:12:25" data-note="c4.html#e3" data-pdf="https://www.cmu-agents.com/slides/lecture-10-deep-research-agents.pdf"><b>10</b><span>领域 3：深度研究智能体</span><small>1:12:25</small></button>
+      <button data-yt="jKx7_fOZRzg" data-t="第 11 讲 · 训练 3：进阶 RL 算法" data-en="Lecture 11 · Training 3: Advanced RL Algorithms" data-who="Graham Neubig" data-dur="1:08:15" data-note="c6.html#e1" data-pdf="https://www.cmu-agents.com/slides/lecture-11-rl-advanced.pdf"><b>11</b><span>训练 3：进阶 RL 算法</span><small>1:08:15</small></button>
+      <button data-yt="dwR6NP9nI-8" data-t="第 12 讲 · 训练 4：RL 系统" data-en="Lecture 12 · Training 4: RL Systems" data-who="Apurva Gandhi" data-dur="1:06:27" data-note="c6.html#e2" data-pdf="https://www.cmu-agents.com/slides/lecture-12-rl-systems.pdf"><b>12</b><span>训练 4：RL 系统</span><small>1:06:27</small></button>
+      <button data-yt="Mbonnq-PUGM" data-t="第 13 讲 · 安全 1：智能体安全" data-en="Lecture 13 · Safety 1: Agent Safety" data-who="Graham Neubig" data-dur="54:11" data-note="c7.html#e1" data-pdf="https://www.cmu-agents.com/slides/lecture-13-agent-safety.pdf"><b>13</b><span>安全 1：智能体安全</span><small>54:11</small></button>
+      <button data-yt="VAzZkT68h2Q" data-t="第 14 讲 · 框架 1：OpenHands" data-en="Lecture 14 · Frameworks 1: OpenHands" data-who="Graham Neubig" data-dur="1:09:20" data-note="c7.html#e2" data-pdf="https://www.cmu-agents.com/slides/lecture-14-openhands.pdf"><b>14</b><span>框架 1：OpenHands</span><small>1:09:20</small></button>
+      <button disabled data-t="第 15 讲"><b>15</b><span>框架 2：编排与监控</span><small>暂无录像</small></button>
+      <button disabled data-t="第 17 讲"><b>17</b><span>智能体与未来的工作</span><small>暂无录像</small></button>
+      <button disabled data-t="第 18 讲"><b>18</b><span>交互 1：多智能体交互</span><small>暂无录像</small></button>
+<!--/VIDS-->
+    </div>
+  </div>
+
+  <h2 id="schedule">课表与全部资料</h2>
+  <p class="note" style="margin:0">官网课表的全部 30 次课。“录像 / 讲义 / 笔记”三列都链到网上：录像在 YouTube，讲义是官网的 PDF。灰色行是官网还没发讲义的课（按 2026-11-12 的课表）。暂时只有题目和讲者。</p>
+  <div class="tw">
+  <table class="map sched">
+    <tr><th>课次</th><th>日期</th><th>题目</th><th>讲者</th><th>录像</th><th>讲义</th><th>笔记</th></tr>
+<!--SCHED-->
+    <tr><td class="code">1a<br>L1</td><td class="date">Tue, Aug 25</td><td><span class="zh">课程概览：什么是智能体</span><span class="en">Course Overview: What Is an Agent?</span></td><td>Daniel Fried、Graham Neubig</td><td class="res"><button class="play" data-yt="UwfjzyLnvMg">▶ 播放</button><a href="https://www.youtube.com/watch?v=UwfjzyLnvMg" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:07:52</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-01-agents.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 3 · 参考 0</span></td><td class="res"><a data-ch="c1" href="c1.html#e1">第 1 章 →</a></td></tr>
+    <tr><td class="code">1b<br>L2</td><td class="date">Thu, Aug 27</td><td><span class="zh">智能体能力 1：工具调用</span><span class="en">Agent Capabilities 1: Tool Use</span></td><td>Graham Neubig</td><td class="res"><button class="play" data-yt="jXChFB4JSyw">▶ 播放</button><a href="https://www.youtube.com/watch?v=jXChFB4JSyw" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">57:22</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-02-tool-use.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 4 · 参考 26</span></td><td class="res"><a data-ch="c1" href="c1.html#e2">第 1 章 →</a></td></tr>
+    <tr><td class="code">2a<br>L3</td><td class="date">Tue, Sep 1</td><td><span class="zh">智能体能力 2：长上下文智能体的上下文管理</span><span class="en">Agent Capabilities 2: Context Management for Long-Context Agents</span></td><td>Graham Neubig</td><td class="res"><button class="play" data-yt="AiwCCvFW1uE">▶ 播放</button><a href="https://www.youtube.com/watch?v=AiwCCvFW1uE" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:15:39</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-03-long-context.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 0 · 参考 42</span></td><td class="res"><a data-ch="c2" href="c2.html#e1">第 2 章 →</a></td></tr>
+    <tr><td class="code">2b<br>L4</td><td class="date">Thu, Sep 3</td><td><span class="zh">智能体能力 3：技能与记忆</span><span class="en">Agent Capabilities 3: Skills and Memory</span></td><td>Daniel Fried</td><td class="res"><button class="play" data-yt="6zigF2a-2Pw">▶ 播放</button><a href="https://www.youtube.com/watch?v=6zigF2a-2Pw" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:15:23</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-04-memory-and-skills.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 6 · 参考 19</span></td><td class="res"><a data-ch="c2" href="c2.html#e2">第 2 章 →</a></td></tr>
+    <tr><td class="code">3a<br>L5</td><td class="date">Tue, Sep 8</td><td><span class="zh">智能体能力 4：规划、任务分解与多智能体协作</span><span class="en">Agent Capabilities 4: Planning, Task Decomposition, and Multi-Agent Coordination</span></td><td>Daniel Fried</td><td class="res"><button class="play" data-yt="S8v-dR4s29M">▶ 播放</button><a href="https://www.youtube.com/watch?v=S8v-dR4s29M" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:15:14</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-05-planning.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 10 · 参考 26</span></td><td class="res"><a data-ch="c3" href="c3.html#e1">第 3 章 →</a></td></tr>
+    <tr><td class="code">3b<br>L6</td><td class="date">Thu, Sep 10</td><td><span class="zh">领域 1：编程智能体</span><span class="en">Domains 1: Coding Agents</span><span class="ms">作业 1 截止 Mon, Sep 14: Harness</span></td><td>Graham Neubig</td><td class="res"><button class="play" data-yt="1BWeH1oOM7k">▶ 播放</button><a href="https://www.youtube.com/watch?v=1BWeH1oOM7k" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:18:49</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-06-coding-agents.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 0 · 参考 41</span></td><td class="res"><a data-ch="c4" href="c4.html#e1">第 4 章 →</a></td></tr>
+    <tr><td class="code">4a<br>L7</td><td class="date">Tue, Sep 15</td><td><span class="zh">电脑操作智能体</span><span class="en">Computer Use Agents</span></td><td>JY Koh</td><td class="res"><button class="play" data-yt="jwGluLrrqjQ">▶ 播放</button><a href="https://www.youtube.com/watch?v=jwGluLrrqjQ" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:14:26</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-07-computer-use-agents.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 6 · 参考 8</span></td><td class="res"><a data-ch="c4" href="c4.html#e2">第 4 章 →</a></td></tr>
+    <tr><td class="code">4b<br>L8</td><td class="date">Thu, Sep 17</td><td><span class="zh">训练 1：监督微调（SFT）</span><span class="en">Training 1: Supervised Fine-Tuning (SFT)</span></td><td>Yueqi Song</td><td class="res"><button class="play" data-yt="O3HSU0AoILc">▶ 播放</button><a href="https://www.youtube.com/watch?v=O3HSU0AoILc" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:04:59</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-08-sft.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 0 · 参考 19</span></td><td class="res"><a data-ch="c5" href="c5.html#e1">第 5 章 →</a></td></tr>
+    <tr><td class="code">5a<br>L9</td><td class="date">Tue, Sep 22</td><td><span class="zh">训练 2：强化学习基础</span><span class="en">Training 2: Reinforcement Learning Basics</span></td><td>Daniel Fried</td><td class="res"><button class="play" data-yt="paAcPaaYZGM">▶ 播放</button><a href="https://www.youtube.com/watch?v=paAcPaaYZGM" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:17:46</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-09-rl-basics.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 4 · 参考 2</span></td><td class="res"><a data-ch="c5" href="c5.html#e2">第 5 章 →</a></td></tr>
+    <tr><td class="code">5b<br>L10</td><td class="date">Thu, Sep 24</td><td><span class="zh">领域 3：深度研究智能体</span><span class="en">Domains 3: Deep Research Agents</span></td><td>Akari Asai</td><td class="res"><button class="play" data-yt="nKUBrXFQBUM">▶ 播放</button><a href="https://www.youtube.com/watch?v=nKUBrXFQBUM" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:12:25</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-10-deep-research-agents.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 6 · 参考 18</span></td><td class="res"><a data-ch="c4" href="c4.html#e3">第 4 章 →</a></td></tr>
+    <tr><td class="code">6a<br>L11</td><td class="date">Tue, Sep 29</td><td><span class="zh">训练 3：进阶 RL 算法</span><span class="en">Training 3: Advanced RL Algorithms</span></td><td>Graham Neubig</td><td class="res"><button class="play" data-yt="jKx7_fOZRzg">▶ 播放</button><a href="https://www.youtube.com/watch?v=jKx7_fOZRzg" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:08:15</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-11-rl-advanced.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 0 · 参考 25</span></td><td class="res"><a data-ch="c6" href="c6.html#e1">第 6 章 →</a></td></tr>
+    <tr><td class="code">6b<br>L12</td><td class="date">Thu, Oct 1</td><td><span class="zh">训练 4：RL 系统</span><span class="en">Training 4: RL Systems</span><span class="ms">作业 2 截止: Eval</span></td><td>Apurva Gandhi</td><td class="res"><button class="play" data-yt="dwR6NP9nI-8">▶ 播放</button><a href="https://www.youtube.com/watch?v=dwR6NP9nI-8" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:06:27</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-12-rl-systems.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 0 · 参考 0</span></td><td class="res"><a data-ch="c6" href="c6.html#e2">第 6 章 →</a></td></tr>
+    <tr><td class="code">7a<br>L13</td><td class="date">Tue, Oct 6</td><td><span class="zh">安全 1：智能体安全</span><span class="en">Safety 1: Agent Safety</span></td><td>Graham Neubig</td><td class="res"><button class="play" data-yt="Mbonnq-PUGM">▶ 播放</button><a href="https://www.youtube.com/watch?v=Mbonnq-PUGM" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">54:11</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-13-agent-safety.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 0 · 参考 30</span></td><td class="res"><a data-ch="c7" href="c7.html#e1">第 7 章 →</a></td></tr>
+    <tr><td class="code">7b<br>L14</td><td class="date">Thu, Oct 8</td><td><span class="zh">框架 1：OpenHands</span><span class="en">Frameworks 1: OpenHands</span></td><td>Graham Neubig</td><td class="res"><button class="play" data-yt="VAzZkT68h2Q">▶ 播放</button><a href="https://www.youtube.com/watch?v=VAzZkT68h2Q" target="_blank" rel="noopener">YouTube ↗</a><span class="pill">1:09:20</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-14-openhands.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 0 · 参考 20</span></td><td class="res"><a data-ch="c7" href="c7.html#e2">第 7 章 →</a></td></tr>
+    <tr class="brk"><td class="code">8a</td><td class="date">Tue, Oct 13</td><td><span class="zh">秋假，停课</span></td><td></td><td class="res" colspan="3"></td></tr>
+    <tr class="brk"><td class="code">8b</td><td class="date">Thu, Oct 15</td><td><span class="zh">秋假，停课</span></td><td></td><td class="res" colspan="3"></td></tr>
+    <tr><td class="code">9a<br>L15</td><td class="date">Tue, Oct 20</td><td><span class="zh">框架 2：编排与监控</span><span class="en">Frameworks 2: Orchestration and Monitoring</span></td><td>Daniel Fried</td><td class="res"><span class="pill">暂无录像</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-15-orchestration-and-monitoring.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 4 · 参考 24</span></td><td class="res"><a data-ch="c9" href="c9.html#e1">第 9 章 →</a></td></tr>
+    <tr class="off"><td class="code">9b<br>L16</td><td class="date">Thu, Oct 22</td><td><span class="zh">安全 2：可观测性与监控</span><span class="en">Safety 2: Observability and Monitoring</span></td><td>Eric Wallace</td><td class="res" colspan="3"><span class="pill">上过了，官网还没发讲义和录像</span> <a data-ch="c9" href="c9.html#e2">第 9 章（预写）→</a></td></tr>
+    <tr><td class="code">10a<br>L17</td><td class="date">Tue, Oct 27</td><td><span class="zh">智能体与未来的工作</span><span class="en">Agents and the Future of Work</span></td><td>Zora Wang</td><td class="res"><span class="pill">暂无录像</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/2026-10-27-zora-wang.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 5 · 参考 31</span></td><td class="res"><a data-ch="c10" href="c10.html#e1">第 10 章 →</a></td></tr>
+    <tr><td class="code">10b<br>L18</td><td class="date">Thu, Oct 29</td><td><span class="zh">交互 1：多智能体交互</span><span class="en">Interaction 1: Multi-Agent Interaction</span><span class="ms">作业 3 截止: Training</span></td><td>Saujas Vaduguru</td><td class="res"><span class="pill">暂无录像</span></td><td class="res"><a href="https://www.cmu-agents.com/slides/lecture-18-multi-agent-systems.pdf" target="_blank" rel="noopener">讲义 PDF ↗</a><span class="pill">阅读 6 · 参考 17</span></td><td class="res"><a data-ch="c10" href="c10.html#e2">第 10 章 →</a></td></tr>
+    <tr class="off"><td class="code">11a</td><td class="date">Tue, Nov 3</td><td><span class="zh">学校假日，停课</span><span class="en">University holiday (no class)</span></td><td></td><td class="res" colspan="3"><span class="pill">上过了，官网还没发讲义和录像</span></td></tr>
+    <tr class="off"><td class="code">11b</td><td class="date">Thu, Nov 5</td><td><span class="zh">项目时间</span><span class="en">Project hours</span></td><td></td><td class="res" colspan="3"><span class="pill">上过了，官网还没发讲义和录像</span></td></tr>
+    <tr class="off"><td class="code">12a<br>L19</td><td class="date">Tue, Nov 10</td><td><span class="zh">交互 2：人与智能体的交互</span><span class="en">Interaction 2: Human-Agent Interaction</span></td><td>Valerie Chen</td><td class="res" colspan="3"><span class="pill">上过了，官网还没发讲义和录像</span> <a data-ch="c10" href="c10.html#e3">第 10 章（预写）→</a></td></tr>
+    <tr class="off"><td class="code">12b<br>L20</td><td class="date">Thu, Nov 12</td><td><span class="zh">搜索 1：重排序与评判模型</span><span class="en">Search 1: Reranking and Critic Models</span></td><td></td><td class="res" colspan="3"><span class="pill">今天上，讲义和录像还没发布</span> <a data-ch="c11" href="c11.html#e1">第 11 章（预写）→</a></td></tr>
+    <tr class="off"><td class="code">13a<br>L21</td><td class="date">Tue, Nov 17</td><td><span class="zh">搜索 2：树搜索</span><span class="en">Search 2: Tree Search</span></td><td>JY Koh</td><td class="res" colspan="3"><span class="pill">还没上</span> <a data-ch="c11" href="c11.html#e2">第 11 章（按论文预写）→</a></td></tr>
+    <tr class="off"><td class="code">13b<br>L22</td><td class="date">Thu, Nov 19</td><td><span class="zh">客座讲座</span><span class="en">Guest Lecture</span></td><td>Karthik Narasimhan</td><td class="res" colspan="3"><span class="pill">还没上</span> <a data-ch="c11" href="c11.html#e3">第 11 章（占位）→</a></td></tr>
+    <tr class="off"><td class="code">14a<br>L23</td><td class="date">Tue, Nov 24</td><td><span class="zh">客座讲座</span><span class="en">Guest Lecture</span></td><td>Sasha Rush</td><td class="res" colspan="3"><span class="pill">还没上</span> <a data-ch="c11" href="c11.html#e4">第 11 章（占位）→</a></td></tr>
+    <tr class="brk"><td class="code">14b</td><td class="date">Thu, Nov 26</td><td><span class="zh">感恩节，停课</span></td><td></td><td class="res" colspan="3"></td></tr>
+    <tr class="off"><td class="code">15a</td><td class="date">Tue, Dec 1</td><td><span class="zh">期末展示（海报）</span><span class="en">Final presentations (posters)</span></td><td></td><td class="res" colspan="3"><span class="pill">还没上</span></td></tr>
+    <tr class="off"><td class="code">15b</td><td class="date">Thu, Dec 3</td><td><span class="zh">期末展示（海报）</span><span class="en">Final presentations (posters)</span></td><td></td><td class="res" colspan="3"><span class="pill">还没上</span></td></tr>
+<!--/SCHED-->
+  </table>
+  </div>
+  <p class="note">官网课表每讲还列了阅读材料和参考链接。阅读多是论文，参考是文档、代码仓库、博客。上表「讲义」列下方的灰字是它们的数量。论文条目这份笔记不转载。按笔记作者的引用规定，没逐篇核验过的文献不挂进笔记。核验过的几篇在正文里直接链出。需要全部清单时请看 <a href="https://www.cmu-agents.com/" target="_blank" rel="noopener">官网课表</a>。</p>
+
+  <h2 id="hw">作业与评分</h2>
+  <table class="map">
+    <tr><th>作业</th><th>截止</th><th>内容</th><th>代码</th></tr>
+    <tr><td>作业 1 · Harness</td><td>Mon, Sep 14</td><td>在开源模型上从零写一个编程智能体的外壳。包括 ReAct 循环、提示构造、工具分发与出错恢复。还有 Modal 沙箱、技能的渐进披露、上下文压缩。再用它修象棋应用的 bug，解一个 SWE-bench 的 Django 问题。最后和象棋机器人下棋。→ <a href="c8.html#e1">第 8 章</a></td><td class="nw"><a href="https://github.com/cmu-agents/assignment-1" target="_blank" rel="noopener">GitHub ↗</a><br><a href="作业复原/作业笔记/stages.html#S0">复原笔记 →</a></td></tr>
+    <tr><td>作业 2 · Eval</td><td>Thu, Oct 1</td><td>给数据可视化智能体设计评测。怎么写任务和判定，怎么检验判定够不够严。→ <a href="c8.html#e2">第 8 章</a></td><td class="nw"><a href="https://github.com/cmu-agents/assignment-2" target="_blank" rel="noopener">GitHub ↗</a><br><a href="作业复原/作业笔记/stages.html#S10">复原笔记 →</a></td></tr>
+    <tr><td>作业 3 · Training</td><td>Thu, Oct 29</td><td>用课程自带的小型 RL 框架 ScottyRL 训练智能体。任务是第 9 讲的「猜数字」和 TextCraft。要实现 REINFORCE、GRPO 和异步 GRPO（过期度与重要性加权）。→ <a href="c5.html">第 5 章</a>、<a href="c6.html">第 6 章</a></td><td class="nw"><a href="https://github.com/cmu-agents/assignment-3" target="_blank" rel="noopener">GitHub ↗</a><br><a href="作业复原/作业笔记/stages.html#S20">复原笔记 →</a></td></tr>
+    <tr class="off"><td>课程项目</td><td>12 月初</td><td>2–4 人一组，研究一个智能体方向的开放问题。要交开题、中期检查、海报展示、期末报告。</td><td>—</td></tr>
+  </table>
+  <table class="map" style="max-width:620px">
+    <tr><th>评分项</th><th>占比</th><th>形式</th></tr>
+<!--GRADE-->
+    <tr><td>作业 1：Harness</td><td>10%</td><td>个人</td></tr>
+    <tr><td>作业 2：Eval</td><td>15%</td><td>个人</td></tr>
+    <tr><td>作业 3：Training</td><td>15%</td><td>个人</td></tr>
+    <tr><td>课堂要点（lecture highlights）</td><td>10%</td><td>个人</td></tr>
+    <tr><td>项目开题</td><td>5%</td><td>2–4 人一组</td></tr>
+    <tr><td>项目中期检查</td><td>5%</td><td>2–4 人一组</td></tr>
+    <tr><td>期末展示</td><td>10%</td><td>2–4 人一组</td></tr>
+    <tr><td>期末报告</td><td>30%</td><td>2–4 人一组</td></tr>
+<!--/GRADE-->
+  </table>
+
+  <h2 id="info">课程信息</h2>
+  <table class="map">
+<!--INFO-->
+    <tr><td><b>讲师</b></td><td>Daniel Fried、Graham Neubig（卡内基梅隆大学语言技术研究所 LTI）</td></tr>
+    <tr><td><b>助教</b></td><td>Aditya Soni、Andy Liu、Apurva Gandhi、Demi Wang、Jiarui Liu、Saujas Vaduguru、Weiwei Sun、Yueqi Song</td></tr>
+    <tr><td><b>时间地点</b></td><td>Tue/Thu, 3:30–4:50 PM，Porter Hall 100。2026-08-25 至 12-03，共 30 次课（Fall Break: Oct. 12 – 16 · Thanksgiving Break: Nov. 25 – 27）</td></tr>
+    <tr><td><b>面向</b></td><td>训练过神经语言模型的研究生。官网列的先修是 11-667、11-711、10-202，或同等经验。</td></tr>
+    <tr><td><b>内容</b></td><td>按这个顺序讲。先讲智能体能力：指令遵循、工具调用、规划、记忆。再讲应用领域：通用工具、编程、GUI、社交。然后是训练：SFT、强化学习算法与系统。接着是框架（OpenHands、LangGraph）和安全（沙箱、凭据、对抗攻击）。最后是进阶：人机交互、多智能体、基于搜索的推理。</td></tr>
+    <tr><td><b>往期</b></td><td>没有往期：2026 秋是第一次开课（第 1 讲开场讲师说"这门新课"）。官网列了内容有重叠的几门 CMU 课。<a href="https://cmu-l3.github.io/anlp-spring2026" target="_blank" rel="noopener">11-711 Advanced NLP</a>（约两周讲 RL 和智能体，更偏 RL 方法）。<a href="https://cmu-llms.org/schedule/" target="_blank" rel="noopener">11-766 Large Language Model Applications</a>（约两周讲工具调用、安全、多智能体、代码助手）。<a href="https://cmu-codegen.github.io/f2025/" target="_blank" rel="noopener">11-891 Neural Code Generation</a>（约两周讲代码生成智能体）。<a href="https://cmu-mmml.github.io/" target="_blank" rel="noopener">11-777 Multimodal Machine Learning</a>（约一周讲 GUI 智能体）。</td></tr>
+    <tr><td><b>链接</b></td><td><a href="https://www.cmu-agents.com/" target="_blank" rel="noopener">官网</a> · <a href="https://www.youtube.com/playlist?list=PLSN0qpDfUvTM" target="_blank" rel="noopener">YouTube 播放列表</a> · <a href="https://github.com/cmu-agents" target="_blank" rel="noopener">GitHub（作业）</a> · <a href="https://piazza.com/cmu/fall2026/11768/home" target="_blank" rel="noopener">Piazza</a> · <a href="https://canvas.cmu.edu/courses/55126" target="_blank" rel="noopener">Canvas</a>（后两个需要 CMU 账号）</td></tr>
+<!--/INFO-->
+  </table>
+
+  <h2 id="files">资料在网上哪里</h2>
+  <table class="map">
+    <tr><td><b>录像</b></td><td>官方 <a href="https://www.youtube.com/playlist?list=PLSN0qpDfUvTM" target="_blank" rel="noopener">YouTube 播放列表</a>。第 15 讲以后官网还没放录像。YouTube 自带英文字幕。</td></tr>
+    <tr><td><b>讲义</b></td><td>官网课表里每讲的 PDF，地址是 <code>https://www.cmu-agents.com/slides/</code> 加文件名。上面课表的「讲义」列直接链过去。</td></tr>
+    <tr><td><b>作业</b></td><td>三个作业的仓库在 <a href="https://github.com/cmu-agents" target="_blank" rel="noopener">GitHub 上的 cmu-agents</a>。作业 1 带子模块 <code>chess_app</code>，克隆时加 <code>--recursive</code>。</td></tr>
+    <tr><td><b>课表</b></td><td><a href="https://www.cmu-agents.com/" target="_blank" rel="noopener">课程官网</a>。讲者、阅读材料、作业、评分都在上面。</td></tr>
+  </table>
+
+  <h2 id="howto">怎么用这份笔记</h2>
+  <table class="map">
+    <tr><td><b>左栏</b></td><td>当前这一章的每一讲和每个小节。读完一个小节点它前面的圆圈，读完一讲点 ✓。宽屏点左上角 ☰ 收起左栏，拖它的右边缘调宽度。</td></tr>
+    <tr><td><b>难度和重要程度</b></td><td>每个小节标题下面有两个标签。难度分易、中、难。易是读一遍就懂。中要停下来跟一遍代码或公式。难要动笔推导。重要程度分三档：★★★ 必须掌握，作业要写或后面要用。★★ 应该看懂。★ 了解即可，跳过不影响后面。这是整理笔记时的判断，不是官方标注。鼠标放到标签上能看到依据。</td></tr>
+    <tr><td><b>术语卡片</b></td><td>带淡下划线的词是缩写或专有名词。鼠标放上去会弹出小卡片，写着全称和一句解释。手机上点一下就行。</td></tr>
+    <tr><td><b>时间戳</b></td><td>正文里的 <span class="ts">12:34</span> 是这段内容在录像里的位置。点一下，在新标签页里从这里开始播放。</td></tr>
+    <tr><td><b>讲义</b></td><td>每讲标题条右边的「讲义 lecture-NN」链到官网的 PDF。正文里的「讲义第 N 页」点一下，直接打开那一页。</td></tr>
+    <tr><td><b>动画演示</b></td><td>可以播放、暂停、单步、回退、调速（0.5× / 1× / 2×）。带代码的演示，右侧逐行高亮代码。控制台输出和变量的变化也跟着显示。</td></tr>
+    <tr><td><b>编辑</b></td><td>打开章节页右上角的「✎ 编辑」，正文能直接改。改动自动存在本机浏览器里。想把修改写进文件，用 ⋯ 菜单里的「另存为 HTML」。</td></tr>
+    <tr><td><b>标注</b></td><td>紫色的「补充」是整理时新加的、课上没讲的内容。橙色的「注意」说明特殊情况。比如字幕听不清、讲义和口述对不上、没有录像、按现有材料预写。</td></tr>
+    <tr><td><b>字幕</b></td><td>YouTube 上只有自动生成的英文字幕，没有标点分句。术语、人名、模型名常被听错，比如 Neubig 被听成 Nubig。笔记已对照讲义改正，拿不准的地方标了出来。</td></tr>
+  </table>
+</div>
+<script>
+/* 首页上的数量和完成情况：READY 是已经写好的章，VZ_PER_CHAPTER 是每章的演示个数，新写完一章时改这里 */
+(function () {
+  var READY = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10', 'c11'];
+  var VZ_PER_CHAPTER = { c1: 4, c2: 4, c3: 5, c4: 5, c5: 3, c6: 4, c7: 4, c8: 5, c9: 1, c10: 2, c11: 2 };
+  var n = 0, k; for (k in VZ_PER_CHAPTER) n += VZ_PER_CHAPTER[k];
+  document.getElementById('vzCount').textContent = n || '—';
+  Array.prototype.forEach.call(document.querySelectorAll('[data-vz-n]'), function (e) {
+    var c = VZ_PER_CHAPTER[e.getAttribute('data-vz-n')]; e.textContent = c ? c + ' 个演示' : '';
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.card[data-m]'), function (c) {
+    if (READY.indexOf(c.getAttribute('data-m')) >= 0) return;
+    c.classList.add('todo'); c.removeAttribute('href');
+    var f = c.querySelector('.pg'); if (f) { f.className = 'todo-pg'; f.textContent = '未生成'; }
+  });
+  /* 笔记链接：还没生成的章不给链接 */
+  Array.prototype.forEach.call(document.querySelectorAll('a[data-ch]'), function (a) {
+    if (READY.indexOf(a.getAttribute('data-ch')) < 0) { var s = document.createElement('span'); s.className = 'pill'; s.textContent = '未生成'; a.replaceWith(s); }
+  });
+})();
+
+/* 播放器：点列表切换，点画面才真正加载 YouTube 播放器（不点就不联网） */
+(function () {
+  var list = document.getElementById('vlist'), screen = document.getElementById('screen'), cover = document.getElementById('cover');
+  var cur = null;
+  function pick(b, autoplay) {
+    if (!b || b.disabled) return;
+    if (cur) cur.classList.remove('cur');
+    cur = b; b.classList.add('cur');
+    var f = screen.querySelector('iframe'); if (f) f.remove();
+    cover.style.display = '';
+    document.getElementById('coverT').textContent = b.getAttribute('data-t');
+    document.getElementById('coverS').textContent = b.getAttribute('data-who') + ' · ' + b.getAttribute('data-dur') + ' · 点击播放';
+    document.getElementById('pInfo').textContent = b.getAttribute('data-en');
+    document.getElementById('pYt').href = 'https://www.youtube.com/watch?v=' + b.getAttribute('data-yt');
+    var nt = document.getElementById('pNote'); nt.href = b.getAttribute('data-note');
+    document.getElementById('pPdf').href = b.getAttribute('data-pdf');
+    if (autoplay) play();
+  }
+  function play() {
+    if (!cur) return;
+    var f = document.createElement('iframe');
+    f.src = 'https://www.youtube-nocookie.com/embed/' + cur.getAttribute('data-yt') + '?autoplay=1&rel=0';
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    f.allowFullscreen = true; f.referrerPolicy = 'strict-origin-when-cross-origin';
+    f.title = cur.getAttribute('data-t');
+    cover.style.display = 'none'; screen.appendChild(f);
+  }
+  cover.addEventListener('click', play);
+  list.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) pick(b, !!screen.querySelector('iframe')); });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button.play'); if (!b) return;
+    var t = list.querySelector('button[data-yt="' + b.getAttribute('data-yt') + '"]');
+    pick(t, true); document.getElementById('watch').scrollIntoView({ behavior: 'smooth' });
+  });
+  pick(list.querySelector('button:not([disabled])'), false);
+})();
+</script>
+</body>
+</html>

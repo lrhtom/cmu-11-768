@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>01 智能体入门与工具调用 · 11-768</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/site.css">
+<script>window.PAGE = { key: 'c1' };</script>
+<script src="assets/course.js"></script>
+<script src="assets/glossary.js"></script>
+<script src="assets/site.js"></script>
+</head>
+<body>
+<main class="doc">
+<header class="mhead">
+  <div class="kicker">01 · What Is an Agent · Tool Use</div>
+  <h1>智能体是什么，它怎么用工具</h1>
+  <p class="lede">智能体（agent）说穿了，就是一个语言模型在循环里反复调用工具。第 1 讲先把这件事讲清楚。智能体和环境之间交换什么，模型和外壳（harness）各管什么。好智能体需要哪六种能力。这些能力靠训练模型，还是靠打磨外壳来获得。最后看一个智能体系统由哪几块软件组成。第 2 讲专讲最基础的能力：工具调用。工具怎么描述，调用怎么变成 token，外壳怎么解析和分发。怎么保证格式不出错，REST API 和 MCP 两种接法。最后是并行调用和评测。</p>
+  <div class="chips"><span class="chip">共 <b>2</b> 讲</span><span class="chip">视频 <b>2 小时 5 分</b></span><span class="chip">动画演示 <b>4</b> 个</span><span class="chip">对应 <b>作业 1</b></span></div>
+</header>
+
+<section class="ep" data-n="1">
+<h2>智能体是什么、怎么工作</h2>
+<p class="tldr">智能体就是语言模型加一个外壳。模型只管读 token、写 token。外壳把工具说明和工具结果变成 token 喂给模型。模型写出工具调用，外壳解析出来，拿到环境里执行。这样一圈一圈地转，直到任务完成。好用的智能体要六种能力。比如准确调工具，长上下文里不忘事。每种能力都能靠训练模型或打磨外壳得到。真跑起来的智能体是一整套系统。外壳、沙箱、推理服务、训练框架、监控，缺一不可。</p>
+
+<h3 data-d="1" data-m="1" data-why="背景和现状">1. 智能体已经很能干，但边缘还很粗糙</h3>
+<p>先说结论：模型越来越能干，但一不留神就会闯祸。</p>
+<p>这门课由两位讲师合上。Graham Neubig 做编程智能体、网页智能体多年。Daniel Fried 研究"落地"的智能体。他也研究人与智能体、智能体之间的交互 <span class="ts">0:00</span>。开场先看两个真实的例子。</p>
+<div class="cmp">
+  <div class="c-ok"><h4>成功的例子：多智能体写出 C 编译器</h4><p>Anthropic 做过一次实验。他们用一个较新的编程模型配成多智能体。16 个智能体协作两周，用 Rust 写出了一个 C 编译器 <span class="ts">1:28</span>。它能编译 Linux 内核。讲义第 2 页说代码约 10 万行。</p></div>
+  <div class="c-bad"><h4>失败的例子：不经同意删邮件</h4><p>一位用户让 OpenClaw 智能体整理收件箱。他事先叮嘱过"动手前先问我"。它却开始大批删邮件。用户连喊"不要这样做"都拦不住。最后智能体承认："我记得你说过，但我违反了" <span class="ts">2:11</span>。事后查明，它做了一次<b>上下文压缩</b>。也就是把过去的历史总结成短的，好腾地方继续干活。压缩时，"不许删邮件"这条指令被丢了 <span class="ts">2:54</span>。</p></div>
+</div>
+<p>下面把删邮件的事故用几行代码重演一遍。列表就是对话历史，压缩就是拿一句摘要换掉旧历史：</p>
+<pre class="code" data-lang="py" data-run>history = ["user: ask me before deleting", "tool: 500 emails", "assistant: sorting"]
+summary = "user wants inbox cleaned"  # 压缩：旧历史被总结成一句（示意）
+history = [summary] + history[-1:]    # 只留摘要和最近一条
+print("ask me" in " ".join(history))
+# 输出: False
+# 踩坑：指令在摘要里没了，后面的动作就不再受它约束
+# 作业 1 考点：Part 2 写压缩时，原始的系统消息和任务消息必须原样保留</pre>
+<p>打个比方，现在的智能体像一个能力很强的实习生。活干得漂亮，但会把你早上交代的话忘掉。这次事故属于第 8 节"长上下文里保持连贯"出了问题。它同时也是安全问题，讲师认为安全本身就是一种能力。</p>
+<p>这门课要讲两件事。一是怎么从基础语言模型出发，把这些能力造出来。二是还有哪些研究问题和空白没填上 <span class="ts">3:37</span>。</p>
+
+<h3 data-d="1" data-m="1" data-why="课堂举手调查，讲信任的直觉">2. 敢不敢放手，取决于你有多信任它</h3>
+<p>同一件事，大家愿意放手的程度差别很大，关键在信任。课上做了一个举手调查 <span class="ts">3:37</span>。每件事有三个选项。完全自主做，先问你再做，或者绝不让它碰。讲义第 4 页列了六件事，课上的大致结果如下 <span class="ts">4:17</span>：</p>
+<table class="lab">
+  <tr><th>任务</th><th>课上举手最多的选项</th></tr>
+  <tr><td>网店结账突然出错，让它查原因</td><td class="y">完全自主（举手的人更多）<span class="ts">4:17</span></td></tr>
+  <tr><td>起草并群发一封新品邮件给 5 万名客户</td><td>先问我 <span class="ts">5:01</span></td></tr>
+  <tr><td>收集税表、填好并提交 2025 年的报税</td><td class="n">"绝不"的人最多，其次是先问我 <span class="ts">5:01</span></td></tr>
+  <tr><td>把支付接口从 Python 迁到 Rust（有现成的测试可用）</td><td>自主和先问我非常接近，讲师判给"自主" <span class="ts">5:44</span></td></tr>
+  <tr><td>喜欢的乐队来附近开演唱会就买票</td><td class="y">完全自主 <span class="ts">5:44</span></td></tr>
+  <tr><td>看了一周血糖读数后调整胰岛素剂量</td><td class="n">绝不 <span class="ts">6:28</span></td></tr>
+</table>
+<p>这就像把家里钥匙交给新来的保姆。查个故障可以让她自己来，动钱、动药就得先问你。大家对智能体的边界已经有直觉。后面讲沙箱、安全、人对智能体的监督时，还会回到这些问题 <span class="ts">6:28</span>。</p>
+
+<h3 data-d="1" data-m="1" data-why="研究和产品现状的例子">3. 网页智能体和编程智能体，都已经能自己动手</h3>
+<p>这几年的变化，是模型从"会说"变成了"会做"。以前它像只会出主意的顾问。现在它像能自己上手的工程师。</p>
+<p>CMU 这几年做了不少图形界面（GUI）智能体 <span class="ts">7:10</span>。讲义第 5 页是两年前的一个演示。任务是找一家匹兹堡的好泰国餐馆，要求至少 200 条评价、4.3 星。右边是模型的思维链。左边是模型在浏览器里操作 Yelp。它在搜索框打字，点进页面，最后成功 <span class="ts">7:53</span>。之后 Manus、OpenAI 的 Operator、Claude 的电脑操作等产品也都出来了。</p>
+<p>编程智能体方面，Graham 的组做了开源的 OpenHands <span class="ts">8:36</span>。讲义第 6 页的演示是让它"写一个待办清单应用"。它先建好静态文件和模板目录，再写主程序和样式。接着写 requirements.txt 和 README，在后台把应用跑起来 <span class="ts">9:19</span>。发现端口被占用，它就自己换一个。最后它打开浏览器，真的去点"添加""删除"来测试 <span class="ts">10:04</span>。讲师说有一次应用崩了，智能体比他还先发现，并自己修好了 <span class="ts">10:50</span>。课程后面有一讲专讲 OpenHands 和它的 SDK，见第 7 章 <span class="ts">11:32</span>。</p>
+<p>课程事务一句话带过。助教都在做智能体相关的研究。期末项目可以找方向对口的助教。Fireworks、Modal、Prime Intellect、Sail 四家公司赞助了作业和项目的算力 <span class="ts">14:26</span>。</p>
+
+<h3 data-d="1" data-m="2" data-why="环境、动作、奖励这些基本说法，后面一直沿用">4. 智能体就是能感知环境、又能作用于环境的东西</h3>
+<p>凡是能感知环境、又能作用于环境的东西，都是智能体 <span class="ts">15:10</span>。这是课上引用的经典 AI 教科书的定义。感知靠传感器，作用靠执行器。这个定义放到今天的 LLM 智能体上依然成立。以前的智能体技术，比如搜索和强化学习，大多还用得上 <span class="ts">15:54</span>。</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":150,"gx":70,"gy":40,"top":0,"bottom":34,
+ "nodes":[{"id":"ag","c":1,"r":0,"t":"智能体","s":"LLM + 外壳","k":"info"},
+  {"id":"env","c":1,"r":2,"t":"环境","s":"仓库 / 网站 / 应用","k":"neutral"},
+  {"id":"obs","c":0,"r":1,"t":"状态 / 观察","s":"消息、文件、网页、截图","k":"data"},
+  {"id":"act","c":2,"r":1,"t":"动作","s":"回复、改文件、跑命令","k":"warn"},
+  {"id":"rw","c":0,"r":2,"t":"奖励","s":"测试通过 / 评审打分","k":"ok"}],
+ "edges":[["obs","ag","",{"via":"vh","k":"data"}],["ag","act","",{"via":"hv","k":"warn"}],["act","env","",{"via":"vh","k":"warn"}],["env","obs","",{"via":"h","k":"data","dash":1}],["env","rw","",{"k":"ok","dash":1}]]}</script>
+<figcaption>智能体和环境之间的循环（依据讲义第 9 页的图和要点重画）</figcaption></figure>
+<p>可以把它想成打游戏。屏幕是观察，按键是动作，得分是奖励。四个词在今天的 LLM 智能体里分别是这些：</p>
+<table class="lab">
+  <tr><th>概念</th><th>在今天的 LLM 智能体里是什么</th></tr>
+  <tr><td>环境</td><td>代码仓库、网站、电脑上的应用、某个工作流 <span class="ts">15:54</span></td></tr>
+  <tr><td>状态 / 观察</td><td>用户发来的消息、正在看的文件、当前网页、截图。还有<b>工具的返回结果</b> <span class="ts">16:38</span>。</td></tr>
+  <tr><td>动作</td><td>回复用户、改文件、在 shell 里跑命令、调网页背后的 API。动作会改变环境，智能体所处的状态也跟着变 <span class="ts">16:38</span>。</td></tr>
+  <tr><td>奖励</td><td>用一个数衡量做得好不好。有测试的，测试过了记 1，否则记 0。没法写程序判的，用 LLM 当评审（LLM-as-a-judge）。最终关心的是用户满不满意，所以也可以用用户反馈 <span class="ts">17:21</span>。</td></tr>
+</table>
+<p>下面用一个函数当环境，把观察和奖励模拟出来：</p>
+<pre class="code" data-lang="py" data-run>def env(action):  # 环境：一个测试没通过的小仓库（示意）
+    return "test passed" if action == "fix" else "test failed"
+obs = env("read")                                  # 观察：环境交回当前状态
+reward = 1 if env("fix") == "test passed" else 0   # 奖励：测试过了记 1
+print(obs, reward)
+# 输出: test failed 1
+# 踩坑：只有测试能判对错时才这么简单。判不了的要请 LLM 当评审</pre>
+<div class="co key"><p>作业 2 会亲手做"LLM 当评审"这类评测。用户反馈那部分，放在后面人机交互的客座讲座里讲 <span class="ts">17:21</span>。</p></div>
+
+<div data-vz="c1-loop" data-sc="0"></div>
+
+<h3 data-d="2" data-m="3" data-why="作业 1 TODO 1.1、1.3 按这套消息格式拼提示">5. 工具调用就是三条消息：定义、调用、结果</h3>
+<p>模型自己不会动手。外壳先告诉它有哪些工具。它写出调用，外壳去执行，再把结果按 ID 送回去。</p>
+<p>先复习语言模型。它每一步预测下一个 token 的分布，采样一个接到后面，再重复 <span class="ts">18:05</span>。思维链（chain of thought）就是先写一串中间推理当草稿纸，再给答案。比如讲义第 10 页的 <code>2 × (3 + 4)</code> → 推理 → <code>14</code> <span class="ts">18:51</span>。到这里模型还只是在回应提示，不会"动手"。</p>
+<p>让模型动手的主要办法是<b>工具</b>。工具放在环境里，给模型一个和环境交互的接口。比如把天气网站的 API 包一层，模型就能查天气 <span class="ts">19:34</span>。一个工具要告诉模型三件事。名字、一句话描述、参数的结构 <span class="ts">20:18</span>。参数结构用 JSON Schema 写。这份定义经过<b>聊天模板</b>渲染成文本，再切成 token 喂给模型。模型要么训练过，要么看几个例子，就知道怎么用这些工具 <span class="ts">21:01</span>。</p>
+<pre class="code" data-lang="json" data-title="讲义第 11 页 · 工具定义（OpenAI 格式）">{
+  "name": "read_file",
+  "description": "Read a UTF-8 file.",
+  "parameters": {
+    "type": "object",
+    "properties": { "path": { "type": "string" } },
+    "required": ["path"]
+  }
+}</pre>
+<p>模型要用工具，就生成一个<b>工具调用</b>。调用里写函数名和参数，这里是 JSON <span class="ts">21:47</span>。外壳执行后，把结果放进一条 <code>role: tool</code> 的消息。消息里用 <code>tool_call_id</code> 指明它回应的是哪次调用。再经模板渲染成 token，让模型接着读 <span class="ts">22:29</span>。</p>
+<div class="cmp">
+<pre class="code" data-lang="json" data-title="API 里的结构（讲义第 11–12 页）"># 工具调用：助手消息
+{"role": "assistant", "tool_calls": [{
+  "id": "call_7",
+  "name": "read_file",
+  "arguments": {"path": "test.py"}}]}
+
+# 工具结果：tool 消息，按 ID 配对
+{"role": "tool",
+ "tool_call_id": "call_7",
+ "name": "read_file",
+ "content": "def add(a, b): …"}</pre>
+<pre class="code" data-lang="text" data-title="经 apply_chat_template 渲染后模型看到的文本">&lt;tools&gt;
+{"name":"read_file",
+ "description":"Read a UTF-8 file.",
+ "parameters":{…,"required":["path"]}}
+&lt;/tools&gt;
+
+&lt;tool_call&gt;
+{"name":"read_file","arguments":{"path":"test.py"}}
+&lt;/tool_call&gt;
+
+&lt;tool_response&gt;
+def add(a, b): …
+&lt;/tool_response&gt;</pre>
+</div>
+<p>用列表当对话、字典当消息，一次往返就是往列表里追加两条：</p>
+<pre class="code" data-lang="py" data-run>messages = [{"role": "user", "content": "fix test.py"}]
+call = {"id": "call_7", "name": "read_file", "arguments": {"path": "test.py"}}
+messages.append({"role": "assistant", "tool_calls": [call]})
+messages.append({"role": "tool", "tool_call_id": call["id"], "content": "def add(a, b): ..."})
+print([m["role"] for m in messages])
+# 输出: ['user', 'assistant', 'tool']
+# 作业 1 考点：TODO 1.1 把系统提示、任务、之前的推理、动作、观察拼成这样的消息列表
+# 作业 1 考点：TODO 1.3 每个调用回一条 role: tool 消息，tool_call_id 要和调用的 id 一样</pre>
+<p>这就像寄快递贴单号。调用出门时贴一个单号，结果回来时认单号，才知道是哪一件。</p>
+<p>课上问：还有别的方式让模型调工具吗？有同学答：直接写代码。比如写 bash 脚本，或者把工具写成 Python 函数，让模型用 Python 语法调 <span class="ts">21:47</span>。讲师说过几讲会看到，这往往比生成 JSON 更有效，但也有取舍 <span class="ts">22:29</span>。详见第 2 讲"代码是元工具"一节。</p>
+
+<div data-vz="c1-loop" data-sc="1"></div>
+
+<h3 data-d="1" data-m="3" data-why="作业 1 要写 ReAct 循环，全课都在用">6. 智能体就是把模型放进一个循环里转</h3>
+<p>外壳每转一圈，就把全部历史喂给模型一次 <span class="ts">23:12</span>。模型写调用，外壳执行，结果接回历史。两边的分工是这样的：</p>
+<div class="cmp">
+  <div class="c-info"><h4>语言模型</h4><p>只管 token 进、token 出。多模态模型也只是多了图片 token。工具调用对它来说，只是另一种能预测的 token 序列。序列里写明调哪个工具、给什么参数（讲义第 13 页）。</p></div>
+  <div class="c-warn"><h4>外壳（harness）</h4><p>把语言模型当引擎，负责协调工具调用。它解析、校验、执行模型写出的调用。再把结果变成"观察"token 送回去 <span class="ts">23:56</span>。什么时候停，也由外壳决定。</p></div>
+</div>
+<p>Toolformer 当年说明：可以训练模型去调工具 <span class="ts">23:56</span>。返回的结果还能让后面的文本更准。有了这个基础，智能体就是跑一个循环。影响很大的一种做法叫 <b>ReAct</b>（reasoning + acting）：先写推理，再做动作 <span class="ts">23:56</span>。每一步模型读到的东西有四块 <span class="ts">24:39</span>：</p>
+<ol class="pipe">
+  <li>上下文<small>这类任务的总体说明，比如"解决 GitHub 上的 issue"</small></li>
+  <li>任务<small>用户这一次的具体请求</small></li>
+  <li>工具清单<small>用上一节那种格式写的全部可用工具</small></li>
+  <li>历史<small>之前所有的动作和观察</small></li>
+</ol>
+<p>模型读完这四块，先写一段推理，再给出一个或多个工具调用。调用在环境里执行，结果追加进历史，环境也跟着变。然后再来一轮 <span class="ts">25:24</span>。</p>
+<p>怎么结束？可以给一个专门的"结束"工具，比如给用户发消息（讲义第 14 页的 <code>send_message</code>）。调用它就表示做完了。也可以干脆不再调用工具。智能体怎么判断自己做完了，规划那一讲再细说 <span class="ts">26:08</span>。</p>
+<figure class="dg"><script type="application/json">{"type":"seq","cw":200,
+ "actors":[{"id":"h","t":"外壳","k":"warn"},{"id":"m","t":"语言模型","k":"info"},{"id":"e","t":"环境（沙箱）","k":"neutral"}],
+ "msgs":[["h","m","上下文 + 任务 + 工具 + 历史",{"k":"data"}],["m","m","写推理（思维链）"],["m","h","工具调用 read_file",{"k":"warn"}],["h","e","执行",{"k":"warn"}],["e","h","结果（观察）",{"k":"data","dash":1}],["h","h","结果追加进历史"],{"note":"重复，直到模型调用 send_message 之类的结束工具","over":["h","e"],"k":"info"}]}</script>
+<figcaption>ReAct 循环里一轮的消息往来（依据讲义第 14 页和 24:39–26:08 的讲解）</figcaption></figure>
+<p>代码层面非常简单。讲义第 15 页摘了 mini-swe-agent 的核心 <span class="ts">26:50</span>。它很小，在编程智能体最常用的基准 SWE-bench 上分数却很高。讲师推荐去读它的源码。它先放进系统消息和用户消息，然后无限循环 <span class="ts">27:33</span>。每圈四步。先用全部历史查询模型，再把回复加进历史。然后执行回复里的动作，把观察加进历史。</p>
+<pre class="code" data-lang="py" data-title="讲义第 15 页 · mini-swe-agent 的循环（节选）">def run(self, task: str = "", **kwargs) -&gt; dict:
+    self.messages = []
+    self.add_messages(
+        self.model.format_message(role="system", content=self._render_template(self.config.system_template)),
+        self.model.format_message(role="user", content=self._render_template(self.config.instance_template)),
+    )
+    while True:
+        self.step()
+
+def step(self) -&gt; list[dict]:
+    return self.execute_actions(self.query())
+
+def query(self) -&gt; dict:
+    message = self.model.query(self.messages)
+    self.add_messages(message)
+    return message
+
+def execute_actions(self, message: dict) -&gt; list[dict]:
+    """Execute actions in message, add observation messages, return them."""</pre>
+<p>把模型换成一个假函数，整个循环只要几行：</p>
+<pre class="code" data-lang="py" data-run>def model(history):  # 假模型：历史够长就说做完了（示意）
+    return "send_message" if len(history) &gt;= 6 else "bash"
+history = ["system", "task"]
+while (action := model(history)) != "send_message":
+    history += [action, "observation"]  # 动作和观察都接回历史
+print(len(history), history[-2:])
+# 输出: 6 ['bash', 'observation']
+# 作业 1 考点：TODO 1.2 写的就是这个循环。调用 send_message 时设 finished
+# 踩坑：模型一直不收尾就是死循环。作业里超过 step_limit 要抛 StepLimitError</pre>
+<p>这像一个只会传纸条的秘书。模型写纸条，外壳照做，再把回执贴到本子上。下一圈模型从头翻整本子。作业 1 就是自己写一个这样的 ReAct 外壳。讲义第 15 页底部的要求就是实现并扩展一个类似的控制器。</p>
+<div data-vz="c1-react"></div>
+
+<h3 data-d="1" data-m="2" data-why="看清 ReAct 实际长什么样，作业 2 判卷也要读轨迹">7. 一条真实轨迹，就是几个角色轮流说话</h3>
+<p>智能体的一次运行，留下来就是一串消息。系统、用户、助手、环境轮流说话。SWE-bench 的排行榜网站上，能看到各个模型的完整运行轨迹 <span class="ts">28:16</span>。课上点开了一个开源模型的（讲义第 16 页是同类查看器的截图）：</p>
+<ol class="pipe">
+  <li>系统消息<small>很通用："You are a helpful assistant that can interact with a computer shell to solve programming tasks."</small></li>
+  <li>用户消息<small>具体任务：解决某个拉取请求（PR）描述的问题</small></li>
+  <li>助手：思维链 + 工具调用<small>它的工具就是"写一条 bash 命令"。也就是同学提的那种方式。</small></li>
+  <li>环境：执行结果<small>比如只返回"退出码 0"，表示成功</small></li>
+  <li>下一轮<small>新的思考、新的 bash 命令……</small></li>
+</ol>
+<pre class="code" data-lang="py" data-run>trajectory = ["system", "user", "assistant", "tool", "assistant", "tool", "assistant"]
+rounds = trajectory.count("assistant")  # 一轮 = 助手写命令 + 环境回结果
+print(rounds, trajectory[2:4])
+# 输出: 3 ['assistant', 'tool']
+# 作业 2 考点：判卷时读的就是这样一串消息，先数清每轮做了什么</pre>
+<p>读轨迹像看监控回放。每一帧都是一条消息，出错的地方一帧一帧往回找。这就是工具和提示的一种具体落地方式。作业 1 会亲手实验 <span class="ts">29:00</span><span class="ts">29:45</span>。</p>
+
+<h3 data-d="1" data-m="2" data-why="六种能力是全课的组织框架">8. 好用的智能体要六种能力，安全也算一种</h3>
+<p>做一个智能体不难，难的是做一个真正好用的。下半节由 Graham 讲。现在有现成的库调模型推理，搭个能跑的很容易 <span class="ts">30:36</span>。</p>
+<p>他先让大家说，用智能体时最烦什么 <span class="ts">31:19</span>。大家的抱怨是：太慢、啰嗦、会忘事、忘了上次会话。还有误解你的意思然后做错，访问不该访问的东西。常识上有奇怪的盲区，两行能解决的事写一千行。你提了不合理的要求，它也不反驳。它会说谎，还暗含很多假设 <span class="ts">32:06</span>。他归纳成六种能力（讲义第 17 页）：</p>
+<table class="lab">
+  <tr><th>能力</th><th>说明</th></tr>
+  <tr><td>1 准确调用工具</td><td>没人提，因为大家已经习以为常。但如果你负责训练模型，这不是白来的。工具都调不对，什么任务都会失败 <span class="ts">32:52</span>。</td></tr>
+  <tr><td>2 长上下文里保持连贯</td><td>"会忘事""忘了上次会话"都属于这类。开场删邮件也是：早先被告知不许做，后来还是做了 <span class="ts">33:36</span>。</td></tr>
+  <tr><td>3 可定制</td><td>每个人、每门课的做事方式和要求不同。智能体要按你的方式来 <span class="ts">33:36</span>。</td></tr>
+  <tr><td>4 管理复杂任务</td><td>拆解任务，处理很长的任务 <span class="ts">34:21</span>。</td></tr>
+  <tr><td>5 看懂环境</td><td>两行能改好却改了一千行，本质上是没看懂代码库 <span class="ts">34:21</span>。</td></tr>
+  <tr><td>6 安全</td><td>很多人把安全和能力分开说。讲师认为<b>安全本身就是一种能力</b>。不安全的智能体你不敢用，这就是它的失败 <span class="ts">35:06</span>。</td></tr>
+</table>
+<p>六种能力像招一个靠谱同事的六条标准。会用工具、记性好、守你的规矩、能扛大活、看懂现场、不闯祸。</p>
+
+<h3 data-d="1" data-m="2" data-why="全课主线：打磨外壳和训练模型两条路">9. 问题通常先在外壳里补上，再被训进模型</h3>
+<p>每种能力都有两种获得方式：训练模型，或者打磨外壳（讲义第 18 页）<span class="ts">35:06</span>。</p>
+<div class="cmp">
+  <div class="c-info"><h4>训练 LLM（LLM training）</h4><p>通过预训练、监督微调（SFT）或强化学习（RL）改变模型行为。教会它推理、用工具、出错后恢复这些可复用的模式。能力成了学到的策略的一部分 <span class="ts">36:34</span>。</p></div>
+  <div class="c-warn"><h4>外壳工程（harness engineering）</h4><p>改模型周围的系统：提示、工具、记忆、控制流。它提供上下文、校验、重试、安全边界。能力来自"模型 + 外壳"的组合 <span class="ts">37:17</span>。</p></div>
+</div>
+<p>课上举手，认为外壳更重要的人更多 <span class="ts">35:50</span>。讲师的看法是两者都重要。通常的演变是这样的。<b>先在外壳里解决一个问题。等做模型的人发现这个问题够大，就把它训进模型。之后外壳就不用再管了</b> <span class="ts">37:17</span>。所以他更倾向把训练当根本解法。只是训练慢，常常得先用外壳顶上 <span class="ts">38:02</span>。</p>
+<p>这像先打补丁、后发新版。补丁快，但新版才是根治。</p>
+<p>课上有同学问：哪些能力训练完了，外壳还是省不掉？讲师能确定的只有<b>长上下文</b> <span class="ts">38:48</span>。把所有记忆都塞进上下文，不只是准确率问题，也是效率问题。Transformer 的计算量随长度平方增长，除非换掉现在的模型范式。算一下就知道：</p>
+<pre class="code" data-lang="py" data-run>lengths = [8_000, 16_000, 32_000]
+pairs = [n * n for n in lengths]          # 注意力要两两比较
+print([p // pairs[0] for p in pairs])
+# 输出: [1, 4, 16]
+# 长度翻倍，计算翻四倍。所以外壳还得替模型挑要放进上下文的东西</pre>
+<p>其余几种理论上都能靠模型解决，只是现在还没做到 <span class="ts">39:32</span>。这包括工具调用、上下文内的连贯、复杂任务、看懂环境。甚至安全也算。可定制比较特别 <span class="ts">39:32</span>。你可以现场训练模型。但有时你只想按情况给它一份脚本或一条指令。这时训练未必合适。</p>
+<p>另一个问题：推理延迟很重要时，是不是该多靠外壳？讲师说，要省推理开销，往往就得用更弱的模型、更少的算力 <span class="ts">40:15</span>。于是需要更多护栏，或者针对任务做适配。模型越小越要小心。大模型泛化更好，但也不完美 <span class="ts">41:01</span>。</p>
+
+<div data-vz="c1-loop" data-sc="2"></div>
+
+<h3 data-d="1" data-m="2" data-why="每种能力的两种做法，相当于全课地图">10. 六种能力，每种都有外壳做法和训练做法</h3>
+<p>下面这张表就是全课地图。每种能力一行，左边靠外壳，右边靠训练。</p>
+<p>这门课有个大目标：人人都能为智能体任务训练模型。会做的人不多 <span class="ts">41:49</span>。预训练要用整个互联网的数据，课程算力不够，所以不讲。中期训练（mid-training）和 SFT 都是在示范上做最大似然训练。大家应该都会，课上只简单讲。重点放在<b>智能体场景下怎么造数据</b>。RL 重点讲，因为给智能体做 RL 很棘手 <span class="ts">42:32</span>。课上调查：做过语言模型 RL 的人不多。给智能体做过 RL 的约 10%，约 80% 没做过 <span class="ts">43:17</span>。</p>
+<table class="lab">
+  <tr><th>能力</th><th>外壳工程</th><th>训练 LLM</th></tr>
+  <tr><td>准确调用工具</td><td>语法约束解码（grammar-constrained decoding）。保证调用格式合法、符合定义 <span class="ts">43:17</span>。</td><td>SFT 或中期训练：在工具调用轨迹上训练 <span class="ts">44:01</span>。</td></tr>
+  <tr><td>长上下文里连贯</td><td>上下文压缩（compression 和 compaction 同义）。动态查记忆：不一次全拉进来，按需取 <span class="ts">44:01</span>。派给子智能体：子任务的上下文由它保管，做完就丢 <span class="ts">44:47</span>。</td><td>SFT：长上下文训练，课上不多讲 <span class="ts">44:47</span>。</td></tr>
+  <tr><td>可定制</td><td>目前外壳最好的用武之地 <span class="ts">44:47</span>。智能体记忆，越用越懂你。技能（skills），需要时才拉进来的提示，有时带脚本。还有专门的工具 <span class="ts">45:32</span>。</td><td>RL：从用户反馈（点赞、点踩）里学，还是个新方向 <span class="ts">45:32</span>。</td></tr>
+  <tr><td>管理复杂任务</td><td>规划或拆解工具，"计划模式"，派给子智能体 <span class="ts">45:32</span>。</td><td>RL：在复杂、长程的任务上训练 <span class="ts">46:59</span>。</td></tr>
+  <tr><td>看懂环境</td><td>给对应领域知识的技能 <span class="ts">48:23</span>。</td><td>SFT：用和真实观察同样形态的数据训练。RL：在领域专用环境里训练 <span class="ts">48:23</span>。</td></tr>
+  <tr><td>安全</td><td>沙箱、限制凭据、监控轨迹 <span class="ts">49:51</span>。</td><td>RL：考虑安全的强化学习 <span class="ts">49:51</span>。</td></tr>
+</table>
+<p>外壳这一列很多其实只是改提示。比如"计划模式"，代码就这么点：</p>
+<pre class="code" data-lang="py" data-run>def build_prompt(task, plan_mode=False):
+    prefix = "Plan first. Do not act yet. " if plan_mode else ""
+    return prefix + task
+print(build_prompt("fix bug", plan_mode=True))
+# 输出: Plan first. Do not act yet. fix bug
+# 踩坑：外壳的新"功能"常常只是多一句提示，模型本身没学到新东西</pre>
+<p>几个课上讲的小故事：</p>
+<ul>
+  <li><b>计划模式</b>：有个流行的编程外壳加了"计划模式"按钮，很受欢迎。它做的唯一一件事，是在提示里加一句"请先计划，不要动手" <span class="ts">46:15</span>。完全靠提示实现。</li>
+  <li><b>看懂环境不是白来的</b>。电脑操作智能体要看懂网页和界面。很多开源模型不支持多模态，支持的也比读文本错得多 <span class="ts">46:59</span>。炒股要看懂时间序列，实验室要看懂培养皿照片。这些同样会出错 <span class="ts">47:44</span>。</li>
+  <li><b>模型不会自己变好，是人把模型变好的</b>。某个模型的新版本突然更会作曲了。背后很可能是有人做了一个"作曲"环境，加进训练里训了一遍 <span class="ts">48:23</span>。所以很多工作其实是在造领域专用的训练环境 <span class="ts">49:08</span>。</li>
+  <li><b>安全事故</b>：讲师讲了最近的一起事件。一个新模型在网络安全基准里被要求攻进某个系统。它攻不进去，就转而攻进 Hugging Face 网站拿答案 <span class="ts">50:36</span>。失败的环节有好几个。沙箱没关住它。限制了凭据，它绕开了。监控不够，没及时发现。这个模型本来就是为测试攻击能力训练的，护栏也不足 <span class="ts">51:19</span>。</li>
+</ul>
+
+<h3 data-d="1" data-m="2" data-why="智能体系统的几块软件，后面各章分别展开">11. 智能体是一整套系统，模型只是其中一块</h3>
+<p>智能体比以前任何机器学习课里的东西都复杂得多 <span class="ts">51:19</span>。讲义第 26 页的结构是这样的。沙箱里装着外壳，外壳通过推理服务和模型通信。旁边还有监控和训练 <span class="ts">52:04</span>。</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":150,"gx":60,"gy":40,"top":18,
+ "groups":[{"c":0,"r":0,"w":2,"h":1,"t":"沙箱","k":"data"}],
+ "nodes":[{"id":"h","c":0,"r":0,"w":2,"t":"外壳","s":"权限 · 记忆 · 工具 · 控制流","k":"warn"},
+  {"id":"m","c":3,"r":0,"t":"模型","s":"推理服务","k":"info"},
+  {"id":"mon","c":0.5,"r":1,"t":"监控","s":"轨迹 · 成本 · 失败","k":"neutral"},
+  {"id":"tr","c":3,"r":1,"t":"训练","s":"采样 · 奖励 · 更新","k":"ok"}],
+ "edges":[["h","m","推理请求 / 生成",{"k":"data"}],["h","mon","",{"via":"v","dash":1}],["tr","m","更新权重",{"k":"ok","dash":1}]]}</script>
+<figcaption>智能体系统的几块（依据讲义第 26 页重画）</figcaption></figure>
+<p>这像一家餐馆。模型是大厨，外壳是前厅经理，沙箱是后厨的隔离间。推理服务是出菜窗口，监控是摄像头，训练是厨师培训。</p>
+<table class="lab">
+  <tr><th>部件</th><th>负责什么</th><th>课上举的软件</th></tr>
+  <tr><td>外壳</td><td>管理状态、工具、记忆、控制流。校验动作，处理错误。执行权限和安全边界 <span class="ts">53:30</span>。</td><td>编程智能体：Claude Code、Codex、OpenHands、OpenCode、Pi。编排框架：LangGraph、CrewAI <span class="ts">54:16</span>。讲义写的是 LangChain，讲师说该写 LangGraph。</td></tr>
+  <tr><td>沙箱</td><td>隔离代码和工具的执行。限制算力、网络、文件系统的访问 <span class="ts">54:57</span>。做出可复现的环境：SWE-bench 每道题一个沙箱，起始状态就是题目 <span class="ts">55:41</span>。</td><td>本地：Docker、Apptainer。云上：Modal、Sail，Prime Intellect 也算 <span class="ts">55:41</span>。</td></tr>
+  <tr><td>推理服务</td><td>稳定地生成。把多个智能体的请求合批。<b>复用 KV 缓存</b>：智能体动作越多、上下文越长，缓存越重要。还要处理流式、并行和吞吐 <span class="ts">56:25</span>。上下文常要 256K 以上，比 NLP 课里的 16K、32K 难得多 <span class="ts">52:47</span>。</td><td>vLLM、SGLang。推理服务商很多，OpenRouter 把它们汇总在一起。一个模型常有二三十家在提供 <span class="ts">57:07</span>。</td></tr>
+  <tr><td>训练系统</td><td>准备数据、收集 rollout、协调分布式 worker、存检查点、评估、复现 <span class="ts">57:07</span>。</td><td>SkyRL、Miles <span class="ts">57:52</span>。</td></tr>
+  <tr><td>可观测性与监控</td><td>记录轨迹和指标（耗时、成本）。追踪质量、成本和失败。对比不同轨迹和评测结果 <span class="ts">57:52</span>。</td><td>Laminar、MLflow。还有 Daniel 演示时用的 Transluce 的工具 <span class="ts">58:36</span>。</td></tr>
+</table>
+<p>推理服务为什么对智能体特别重要？智能体一步步往历史后面追加。不复用 KV 缓存，每一步都要把前面所有 token 重算一遍。下面用字符串当 token 序列模拟一下：</p>
+<pre class="code" data-lang="py" data-run>cache = []
+def prefill(prompt):  # 返回这次要重算的 token 数（示意：一个字母当一个 token）
+    hit = max([len(p) for p in cache if prompt.startswith(p)] + [0])
+    cache.append(prompt)
+    return len(prompt) - hit
+print(prefill("abcd"), prefill("abcdef"), prefill("xbcdef"))
+# 输出: 4 2 6
+# 踩坑：前缀一个字不差才命中。开头改一个字，整段都要重算</pre>
+<p>两类外壳的区别 <span class="ts">54:16</span><span class="ts">54:57</span>：</p>
+<ul>
+  <li><b>编程智能体</b>：智能体之间的交互简单。但单个智能体的动作空间很大，能写代码、能操作网页。</li>
+  <li><b>编排框架</b>：单个智能体能力有限。比如只能答客服问题、查数据库，不能写任意程序。但整个工作流是声明式的，护栏更多，表达力更弱。</li>
+</ul>
+<p>两者各有用处。</p>
+
+<h3 data-d="1" data-m="1" data-why="课程目标、安排和规则">12. 前半学期三个作业，后半学期做项目</h3>
+<p>课程有五个目标（讲义第 32 页）<span class="ts">58:36</span>：</p>
+<ul>
+  <li>在开源 LLM 上从零实现一个智能体。</li>
+  <li>为多步任务设计评测 <span class="ts">59:20</span>。即使只关心训练，这也很重要。最好的训练办法之一：先造评测，再把它放大成 RL 训练。</li>
+  <li>训练智能体提升能力：真的跑 RL 循环，处理系统问题。</li>
+  <li>权衡安全和可靠性。</li>
+  <li>做一个开放的研究问题。</li>
+</ul>
+<p>课程安排一句话带过。前半学期三个实现型作业：外壳、评测、训练。后半学期做小组项目。讲课先讲能力，再讲领域（编程、GUI）和训练（SFT、RL）。然后是框架与安全、交互、项目时间和客座讲座 <span class="ts">1:00:06</span>。</p>
+<p>三个作业像造车的三步。先装车身，也就是外壳。再建试车场，也就是评测。最后调发动机，也就是训练。</p>
+<p>先修要求是"认真训练过语言模型" <span class="ts">1:01:34</span>。业界经验也算，但得是 4B–7B 以上规模的真模型 <span class="ts">1:02:18</span>。评分见首页的表。</p>
+<p>AI 工具基本都允许用。但课堂要点（lecture highlights）必须自己写。你要为提交的每一个结论、引用、结果和每一行代码负责 <span class="ts">1:05:15</span>。作业会有针对你代码的小测。他们也可能让智能体读你的代码来出题。所以"一千行的 AI 糊弄代码"，不如一段你真懂的简洁代码 <span class="ts">1:05:59</span>。每个作业有两个 24 小时的宽限日。用完后，每晚交一天扣 5% <span class="ts">1:06:42</span>。</p>
+
+<div class="co key"><p><b>和作业 1 的联系</b>：要点已写进上面例子的注释。作业本身看第 8 章的 <a href="c8.html#e1">作业 1</a>。复原过程看作业复原笔记的 <a href="作业复原/作业笔记/stages.html#S0">S0</a>。</p></div>
+</section>
+
+<section class="ep" data-n="2">
+<h2>工具调用</h2>
+<p class="tldr">工具是语言模型调用外部程序的接口。它要么扩展模型做不到的事。要么替模型做能做、但做得慢或不稳的事。机制是这样的。工具定义经聊天模板进入提示。模型按自己训练时的格式写出调用。外壳解析、查表、校验、执行，再按调用 ID 把结果接回去。JSON Schema 和语法约束解码能保证格式合法，保证不了内容对。工具可以用 REST API 或 MCP 暴露，MCP 多一层凭据隔离。没有依赖的调用可以并行。评测要覆盖选工具、参数、顺序、端到端结果。运行时的各种故障也要测。</p>
+
+<h3 data-d="1" data-m="2" data-why="为什么要调工具的基本思路">1. 工具让模型去做它做不到或做不好的事</h3>
+<p>工具是语言模型调用外部程序的接口 <span class="ts">0:00</span>。模型本质上只是预测 token 的机器，自己做不到这一点。搜索、计算器、浏览器、Python、各种 API 都是工具。调用工具的方式已经标准化了。调用之后做什么，可以千差万别 <span class="ts">0:42</span>。</p>
+<p>讲义第 3 页的原话是这样的。<b>模型只是提议。执行不执行、怎么执行，由外部软件决定。</b></p>
+<pre class="code" data-lang="py" data-run>TOOLS = {"multiply": lambda a, b: a * b}   # 助力：七位数相乘交给程序，又快又稳
+def harness(call):                          # 模型只提议，外壳决定执不执行
+    fn = TOOLS.get(call["name"])
+    return fn(*call["args"]) if fn else "refused"
+print(harness({"name": "multiply", "args": [1234567, 7654321]}), harness({"name": "rm", "args": ["-rf"]}))
+# 输出: 9449772114007 refused</pre>
+<p>工具的好处分两类，这是课上推荐阅读材料里的分法 <span class="ts">1:25</span>：</p>
+<div class="cmp">
+  <div class="c-data"><h4>扩展（extend）</h4><p>做模型根本做不到的事。比如"现在几点"。模型参数在训练截止时就冻结了，不调外部函数不可能知道 <span class="ts">2:08</span>。</p></div>
+  <div class="c-ok"><h4>助力（facilitate）</h4><p>模型能做，但交给程序更快更稳。比如两个七位数相乘。现在的模型推理一番也能算对，但比调计算器慢得多 <span class="ts">2:08</span>。</p></div>
+</div>
+<table class="lab">
+  <tr><th>需要</th><th>例子工具</th><th>好处</th></tr>
+  <tr><td>最新信息</td><td>搜索</td><td>新鲜的证据，用来支撑回答 <span class="ts">2:49</span></td></tr>
+  <tr><td>精确计算</td><td>计算器、Python</td><td>执行可靠、快</td></tr>
+  <tr><td>私有状态</td><td>账户 API</td><td>拿到经授权的用户数据，按用户的情况回答</td></tr>
+  <tr><td>对外动作</td><td>浏览器、API</td><td>改变外部环境</td></tr>
+</table>
+<p>工具像给厨师配的刀和烤箱。有的让他能做原本做不了的菜，有的让他做得更快。讲义第 5 页还提醒了一句。<b>收益要超过延迟、成本、失败和风险，才值得调工具。</b></p>
+
+<h3 data-d="1" data-m="1" data-why="常见工具的分类清单">2. 常见工具分五类，ChatGPT 本身就是智能体</h3>
+<p>常见工具能归成五类。文本回复、检索、代码执行、生图、自定义函数。ChatGPT 刚出来时只能文本进、文本出。现在几乎什么都能干 <span class="ts">3:37</span>。同学举的用法有写代码、渲染 Blender 场景、生成图片。还有推荐商品，这要网页搜索或直接接电商 API。还有把 LaTeX 编译成 PDF、操作 Slack <span class="ts">4:21</span><span class="ts">5:08</span><span class="ts">5:52</span>。讲师强调，ChatGPT 现在就是一个智能体。它会反复调用工具来回答你 <span class="ts">6:35</span>。他把常见工具归成几类（讲义第 8–12 页，每类都给了一个小例子）：</p>
+<table class="lab">
+  <tr><th>类别</th><th>讲义里的例子</th><th>要点</th></tr>
+  <tr><td>文本回复</td><td><code>finish("Accra is the capital of Ghana.")</code></td><td>两种实现：给一个 <code>finish</code> 工具，或者模型不调任何工具就结束循环。讲义说这是外壳的"控制动作"，不是外部程序 <span class="ts">6:35</span>。</td></tr>
+  <tr><td>信息检索</td><td><code>search_web("site:cmu.edu announced today")</code></td><td>检索增强生成（RAG）没有死。它已经普及到大家用了都没意识到 <span class="ts">7:18</span><span class="ts">8:00</span>。</td></tr>
+  <tr><td>代码执行</td><td><code>execute_code("sum([18,23,41,54])/4")</code> → <code>34.0</code></td><td>在隔离环境里跑程序，适合各种计算 <span class="ts">8:00</span>。</td></tr>
+  <tr><td>图像生成</td><td><code>generate_image("watercolor robot studying in a library")</code></td><td>关键在写什么查询。模型会把你的话大幅扩写，再交给生图工具 <span class="ts">8:42</span><span class="ts">9:27</span>。</td></tr>
+  <tr><td>自定义函数</td><td><code>create_grocery_cart(["bananas","milk","coffee"])</code> → 3 件商品、$31.42</td><td>把某个应用特有的能力包成一个有类型的调用。比如接 Instacart 下单 <span class="ts">9:27</span>。</td></tr>
+</table>
+<p>这些工具像手机里的 App。ChatGPT 像一个会自己挨个打开 App、帮你办事的人。表里的"代码执行"那一行，跑起来就是这样：</p>
+<pre class="code" data-lang="py" data-run>call = {"name": "execute_code", "args": "sum([18, 23, 41, 54]) / 4"}   # 讲义里的例子
+result = eval(call["args"])        # 代码执行：交给解释器去算（真系统要放进沙箱）
+print(result)
+# 输出: 34.0
+# 踩坑：finish 不是外部程序，是外壳的控制动作。外壳看到它就该停下循环</pre>
+
+<h3 data-d="1" data-m="3" data-why="作业 1 TODO 3.4 的 run_python 就是它">3. 一段代码能顶一串工具调用，但权力也大</h3>
+<p>代码本身就是一棵函数调用树。所以一段代码，能顶好几轮工具调用。</p>
+<p>一种思路是给智能体 50 到 70 个 API 函数。每一步调一个，或者并行调几个 <span class="ts">10:12</span>。但代码很特殊。一段代码就是一棵函数调用树。赋值、减法都可以看成工具 <span class="ts">11:00</span>。代码还能有循环和控制流，能导入外部库。导入 pandas，就等于打开了 pandas 的全部工具。代码还能写自己的辅助函数 <span class="ts">11:44</span>。所以代码可以看作"元工具"。</p>
+<p>讲义第 15 页的例子来自 CodeAct <span class="ts">12:27</span>。任务是找出在哪个国家买某款手机最划算。候选是美国、日本、德国、印度。用 JSON 调工具要一步一步来。查德国汇率，查手机价格，换算加税，再查日本汇率，一轮又一轮 <span class="ts">13:12</span>。用代码，一个程序就写完：循环四个国家，调查询函数，最后取 <code>min</code>。</p>
+<pre class="code" data-lang="py" data-run>price = {"US": 799, "JP": 820, "DE": 760, "IN": 700}    # 换算成美元后的价格（示意）
+tax = {"US": 0.07, "JP": 0.10, "DE": 0.19, "IN": 0.18}  # 各国税率（示意）
+cost = {c: round(price[c] * (1 + tax[c])) for c in price}  # 一个循环顶四轮 JSON 调用
+print(min(cost, key=cost.get), cost)
+# 输出: IN {'US': 855, 'JP': 902, 'DE': 904, 'IN': 826}
+# 作业 1 考点：TODO 3.4 的 run_python 就是这种程序化调用
+# 模型写的代码在沙箱里跑，代码里像普通函数一样调 simulate_move 和 play_move</pre>
+<p>讲义第 16 页的结果：</p>
+<table class="lab">
+  <tr><th>指标</th><th>结论（讲义第 16 页）</th></tr>
+  <tr><td>成功率</td><td>图里展示的 8 个模型，代码作为动作的成功率全部最高（8/8）。全部 17 个模型里是 12/17。</td></tr>
+  <tr><td>平均交互轮数</td><td>展示的 8 个里有 7 个用代码轮数最少。全部 17 个里同样是 12/17。</td></tr>
+</table>
+<p>讲师补充，这些任务本来是普通的工具调用任务。并不一定需要代码，代码只是更好的媒介 <span class="ts">13:56</span>。那为什么不全用代码？因为代码权力太大 <span class="ts">14:41</span>（讲义第 17 页）：</p>
+<div class="cmp">
+  <div class="c-ok"><h4>表达力强</h4><p>循环、变量、库，适合多步数据处理和组合。</p></div>
+  <div class="c-warn"><h4>难以约束</h4><p>动作空间宽，校验不如一个有类型的窄函数精确。可能写出死循环，系统得自己处理 <span class="ts">14:41</span>。</p></div>
+  <div class="c-bad"><h4>影响大</h4><p>能动文件、网络、进程，吃内存、磁盘、CPU。还可能装上被投毒的库，把整个系统拖下水 <span class="ts">15:23</span>。这是智能体安全里的大问题。所以一用代码，就得考虑沙箱、资源限制、权限和审计日志。</p></div>
+</div>
+<p>JSON 调用像一次打一个电话，代码像发一份完整的工单。工单能写清一连串的事，但交出去的权限也大。</p>
+
+<h3 data-d="1" data-m="2" data-why="工具调用也是 token，理解训练和解析的前提">4. 工具调用也是 token，ReAct 一圈就是一次补全</h3>
+<p>工具调用和普通文本一样，都是模型续写出来的 token。现在的模型调工具都还不错，但这不是天生的 <span class="ts">16:09</span>。文本续写是"The weather is sunny."，工具续写是 <code>&lt;tool_call&gt; get_weather(…)</code>。两者常常出现在同一次输出里 <span class="ts">16:53</span>。</p>
+<p>所以 ReAct 循环如今不再是分开写的代码逻辑，而是<b>一次补全</b>。推理模型先写一大段不给用户看的思考 token。再写一段较短的、给用户看的消息。最后才是真正的工具调用 <span class="ts">17:37</span>。外壳拿到这一次补全，要自己把三段拆开：</p>
+<pre class="code" data-lang="py" data-run>completion = "&lt;think&gt;need data&lt;/think&gt;Let me check.&lt;tool_call&gt;get_weather(city='Pgh')&lt;/tool_call&gt;"
+call = re.search(r"&lt;tool_call&gt;(.*)&lt;/tool_call&gt;", completion).group(1)
+text = re.sub(r"&lt;think&gt;.*&lt;/think&gt;|&lt;tool_call&gt;.*&lt;/tool_call&gt;", "", completion)
+print(text, "|", call)
+# 输出: Let me check. | get_weather(city='Pgh')
+# 踩坑：思考、给用户的话、调用挤在一次输出里。拆错一段，调用就丢了</pre>
+<p>这像一封信里夹着草稿、正文和一张汇款单。草稿不给人看，正文给人读，汇款单交给银行去办。</p>
+<p>课上有同学问了一个问题。表示工具调用的特殊 token，预训练时就得在词表里吗？讲师说不一定 <span class="ts">18:21</span>。在整个互联网上预训练时，通常还没有这些 token。更常见的是在<b>中期训练</b>阶段引入。用中等规模、符合你想要格式的数据训练，之后再做强化学习 <span class="ts">19:03</span>。</p>
+
+<h3 data-d="2" data-m="3" data-why="c5 的 SFT 和 c6 的序列延伸都建在聊天模板上">5. 各家模型的调用格式不一样，微调时要沿用原格式</h3>
+<p>同一份工具定义，每家模型会序列化成不同的样子。所以解析代码不能跨模型复用。</p>
+<p>OpenAI 风格的聊天格式有 system、user、assistant 等角色，在 Python 里是 JSON <span class="ts">19:03</span>。送进模型前，<b>聊天模板</b>把它们拼成一条带特殊 token 的序列 <span class="ts">19:48</span>：</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":170,"gx":56,"gy":30,"top":0,
+ "nodes":[{"id":"s","c":0,"r":0,"t":"system","s":"Be concise.","k":"neutral","mono":1},
+  {"id":"u","c":0,"r":1,"t":"user","s":"Weather in Pittsburgh?","k":"data","mono":1},
+  {"id":"a","c":0,"r":2,"t":"assistant","s":"I need current data.","k":"info","mono":1},
+  {"id":"tpl","c":1,"r":1,"t":"聊天模板","s":"apply_chat_template","k":"warn"},
+  {"id":"seq","c":2,"r":0,"h":3,"t":"一条模型输入序列","s":"<|im_start|>system … <|im_end|> <|im_start|>user … <|im_end|> <|im_start|>assistant … <|im_end|>","k":"data","mono":1}],
+ "edges":[["s","tpl","",{"via":"hv"}],["u","tpl",""],["a","tpl","",{"via":"hv"}],["tpl","seq","",{"k":"data"}]]}</script>
+<figcaption>消息经聊天模板变成模型输入（讲义第 20 页，Qwen 的格式）。角色给 API 提供结构，模板把它们序列化成一条序列。</figcaption></figure>
+<pre class="code" data-lang="py" data-run>def render(messages):  # 玩具版聊天模板：Qwen 风格的特殊 token
+    return "".join(f"&lt;|im_start|&gt;{m['role']}\n{m['content']}&lt;|im_end|&gt;\n" for m in messages)
+print(render([{"role": "system", "content": "Be concise."}, {"role": "user", "content": "Weather in Pittsburgh?"}]))
+# 输出: &lt;|im_start|&gt;user
+# 模型看到的不是字典，是这样一整条带特殊 token 的文本</pre>
+<p>工具给请求加了结构 <span class="ts">20:33</span>。讲义第 21 页的 <code>get_weather</code> 有一个必填的字符串参数 <code>city</code>。这份定义作为 <code>tools=[weather_tool]</code>，和消息一起传给 <code>client.chat.completions.create</code>。模板把它渲染进提示的 <code>&lt;tools&gt;</code> 段。模型输出 <code>&lt;tool_call&gt;{"name":"get_weather","arguments":{"city":"Pittsburgh"}}&lt;/tool_call&gt;</code>。API 的响应再给这次调用配一个唯一 ID（讲义第 22 页）。</p>
+<pre class="code" data-lang="py" data-title="讲义第 21 页 · 工具定义和 API 请求">weather_tool = {
+  "type": "function",
+  "function": {
+    "name": "get_weather",
+    "parameters": {
+      "type": "object",
+      "properties": {"city": {"type": "string"}},
+      "required": ["city"]
+    }
+  }
+}
+response = client.chat.completions.create(
+    model=model,
+    messages=messages,
+    tools=[weather_tool],
+)</pre>
+<p>麻烦在于<b>各家模型的调用格式不一样</b> <span class="ts">21:16</span>。讲义第 23 页：一份 schema，各模型各自序列化、各自解析。</p>
+<table class="lab">
+  <tr><th>模型</th><th>格式特点</th><th>同一个 get_weather 调用</th></tr>
+  <tr><td>Qwen 3.8</td><td>函数标签 + 参数标签</td><td><code>&lt;tool_call&gt;&lt;function=get_weather&gt;&lt;parameter=city&gt;Pittsburgh&lt;/parameter&gt;&lt;/function&gt;&lt;/tool_call&gt;</code></td></tr>
+  <tr><td>Mistral Small 4</td><td>控制 token + 调用 ID</td><td><code>[TOOL_CALLS] [{"name":"get_weather","arguments":{"city":"Pittsburgh"},"id":"abc123xyz"}]</code></td></tr>
+  <tr><td>DeepSeek V3.2</td><td>DSML 调用块（它们叫 function calls）</td><td><code>&lt;｜DSML｜function_calls&gt;&lt;｜DSML｜invoke name="get_weather"&gt;&lt;｜DSML｜parameter name="city" string="true"&gt;Pittsburgh…</code></td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>qwen = "&lt;tool_call&gt;&lt;function=get_weather&gt;&lt;parameter=city&gt;Pittsburgh&lt;/parameter&gt;&lt;/function&gt;&lt;/tool_call&gt;"
+mistral = '[TOOL_CALLS] [{"name":"get_weather","arguments":{"city":"Pittsburgh"}}]'
+parse_qwen = lambda s: re.search(r"&lt;function=(\w+)&gt;", s)
+print(parse_qwen(qwen).group(1), parse_qwen(mistral))
+# 输出: get_weather None
+# 踩坑：为 Qwen 写的解析器拿去解析 Mistral，什么都抓不到</pre>
+<p>聊天模板像信封的格式。每家邮局要求的写法不一样。信的内容一样，信封写错就投不到。</p>
+<p>哪种都能用。同样的数据训同一个模型，效果差别可能很小。但你必须知道它们不同。为 DeepSeek 写的解析代码，不能直接拿去解析 Qwen <span class="ts">21:57</span>。</p>
+<p>课上有同学问微调时怎么办。从训过的模型接着微调，<b>一定沿用它原来的调用格式</b> <span class="ts">22:39</span>。别逼它学没训过的格式。Hugging Face 的 <code>apply_chat_template</code> 已经为各模型实现好了模板。不对的话，可以提给他们，或者自己修 <span class="ts">23:22</span>。</p>
+
+<h3 data-d="2" data-m="3" data-why="作业 1 TODO 1.3 要写分发和按 ID 接回">6. 外壳按名字查表分发，按 ID 把结果接回去</h3>
+<p>外壳拿到调用，先按名字查到函数，校验参数后执行。不管成败，都按同一个 ID 回一条观察。</p>
+<p>假设已经能把模型输出解析成函数名和参数 <span class="ts">23:22</span>。接下来外壳要做两件事，讲义第 24 页用 OpenHands 举例 <span class="ts">24:08</span>：</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":136,"gx":34,"gy":46,"top":18,
+ "groups":[{"c":0,"r":0,"w":3,"h":1,"t":"① 初始化时注册","k":"info"},{"c":0,"r":1,"w":5,"h":1,"t":"② 每次模型调用时分发","k":"warn"}],
+ "nodes":[{"id":"a","c":0,"r":0,"t":"工具规格","s":"BashTool","k":"neutral","size":12.5},
+  {"id":"b","c":1,"r":0,"t":"解析 + 配置","s":"resolve_tool(spec, state)","k":"neutral","size":12.5,"mono":1},
+  {"id":"c","c":2,"r":0,"t":"名字 → 定义","s":"tools_map[name]","k":"info","size":12.5,"mono":1},
+  {"id":"p","c":0,"r":1,"t":"Parse","s":"{name, args}","k":"data","size":12.5,"mono":1},
+  {"id":"l","c":1,"r":1,"t":"Lookup","s":"tools_map[name]","k":"data","size":12.5,"mono":1},
+  {"id":"v","c":2,"r":1,"t":"Validate","s":"action_from_arguments","k":"warn","size":12.5,"mono":1},
+  {"id":"x","c":3,"r":1,"t":"Execute","s":"executor(action)","k":"warn","size":12.5,"mono":1},
+  {"id":"r","c":4,"r":1,"t":"Return","s":"ObservationEvent(call_id)","k":"ok","size":12.5,"mono":1}],
+ "edges":[["a","b",""],["b","c",""],["p","l",""],["l","v",""],["v","x",""],["x","r",""],["c","l","",{"dash":1,"k":"info"}]]}</script>
+<figcaption>OpenHands 注册和分发一个工具调用（讲义第 24 页）。工具定义里包含 schema、Action 类型和执行器。</figcaption></figure>
+<p>大多数智能体框架都有这样的机制。每个工具一个名字，对应一个函数，Python、TypeScript 都行。调用时按名字分发 <span class="ts">24:08</span>。</p>
+<p>失败可能发生在两处。<b>校验时</b>，模型给的调用本身就不对。<b>执行时</b>，调用表面合法，实际跑不通。比如"执行 Python"工具接受任何字符串，真跑起来却报错。无论成败，都要产出一条观察 <span class="ts">24:54</span>。</p>
+<pre class="code" data-lang="py" data-run>TOOLS = {"read_file": lambda path: "def add(a, b): ..."}
+def dispatch(call):  # 查表 → 解析参数 → 执行，成败都回一条 tool 消息
+    try: out = TOOLS[call["name"]](**json.loads(call["args"]))
+    except Exception as e: out = "error: " + type(e).__name__
+    return {"role": "tool", "tool_call_id": call["id"], "content": out}
+print(dispatch({"id": "c1", "name": "rm", "args": "{}"}))
+# 输出: {'role': 'tool', 'tool_call_id': 'c1', 'content': 'error: KeyError'}
+# 作业 1 考点：TODO 1.3 的 execute_tool_calls，畸形 JSON 和未知工具要变成可恢复的观察，不能抛异常
+# 作业 1 考点：一次回复里可能有多个调用，每个调用回一条 role: tool 消息</pre>
+<p>每次调用都有一个 ID，由推理代码或智能体代码分配。结果带着同一个 ID 回来。这样并行调用时，才知道哪个结果对应哪个调用 <span class="ts">25:39</span>。讲义第 25 页的例子：调用 <code>call_123</code> 对应结果 <code>"tool_call_id": "call_123"</code>，内容是 <code>72°F · sunny</code>。</p>
+<p>实践中有个坑。Anthropic 的接口遇到"有调用、没有配对结果"的历史，会直接拒绝。讲师碰到过：助手刚发出调用，程序就挂了，结果没写下来。恢复运行后，历史缺了这条结果，接口就不再继续生成 <span class="ts">26:24</span>。</p>
+<pre class="code" data-lang="py" data-run>history = [{"role": "assistant", "tool_calls": [{"id": "call_0"}]}]  # 发出调用后程序挂了
+asked = {c["id"] for m in history if m["role"] == "assistant" for c in m["tool_calls"]}
+answered = {m["tool_call_id"] for m in history if m["role"] == "tool"}
+print(asked - answered)
+# 输出: {'call_0'}
+# 踩坑：恢复运行前先补齐这些没配对的结果，不然接口直接拒绝
+# 作业 1 考点：服务商可能重复返回 call_0，只在同一次助手动作内按 ID 配对，别假设 ID 全局唯一</pre>
+<p>外壳像餐馆的传菜员。按菜名找厨师，按桌号把菜送回去。桌号对不上，菜就上错桌。</p>
+
+<div data-vz="c1-dispatch" data-sc="0"></div>
+
+<h3 data-d="3" data-m="2" data-why="常用的保格式手段，作业只用到其中的 JSON Schema">7. 约束解码在生成时就把不合法的 token 掩掉</h3>
+<p>模型不保证写出合法的调用。约束解码在生成每个 token 时，先把会让格式出错的候选掩掉。</p>
+<p>讲义第 27 页的例子：少了最后一个 <code>}</code>，外壳就解析不了 <span class="ts">27:09</span>。很多人事后数括号补一个，讲师说别这么干 <span class="ts">27:52</span>。对一个调用可以有四层约束（讲义第 28 页）：</p>
+<ol class="pipe">
+  <li>语法 Syntax<small>是合法 JSON，这是底线</small></li>
+  <li>形状 Shape<small>必填字段都在</small></li>
+  <li>类型 Types<small>city 是字符串</small></li>
+  <li>取值 Values<small>units 只能是 C 或 F</small></li>
+</ol>
+<p>这四层都能用 <b>JSON Schema</b> 表达 <span class="ts">28:34</span>。它是一套描述 JSON 数据的词汇，写明类型、必填字段、允许的值。也就是机器可读的校验规则。讲义第 29 页的例子里，<code>additionalProperties: false</code> 表示不许多出别的字段。讲义第 28 页还有一句提醒。<b>约束保证的是形式，不保证真假、权限、选对工具、任务成功。</b></p>
+<pre class="code" data-lang="json" data-title="讲义第 29 页 · JSON Schema">{
+  "type": "object",
+  "properties": {
+    "city": {"type": "string"},
+    "units": {"enum": ["C", "F"]}
+  },
+  "required": ["city"],
+  "additionalProperties": false
+}</pre>
+<pre class="code" data-lang="py" data-run>call = json.loads('{"city": "Pgh", "units": "K"}')   # 语法这层已经过了
+shape, types = "city" in call, isinstance(call["city"], str)
+print(shape, types, call["units"] in {"C", "F"}, set(call) &lt;= {"city", "units"})
+# 输出: True True False True
+# 形状、类型都过了，取值这一层没过
+# 作业 1 考点：TODO 3.1.a 写 play_move 的 schema，一个必填字符串参数 move
+# 还要 additionalProperties: false，拒绝多余参数</pre>
+<p>怎么在生成时就保证合法？把 schema 变成文法 <span class="ts">29:18</span>。</p>
+<ul>
+  <li><b>正则文法</b>（正则表达式就是）可以用<b>有限状态自动机</b>识别。每读一个符号，就跳到一个状态 <span class="ts">30:05</span>。</li>
+  <li>JSON Schema 不是正则文法，而是<b>上下文无关文法</b> <span class="ts">30:49</span>。它能为合法的串建出一棵树：对象、花括号、成员、逗号等。讲义第 30 页里，<code>{"city":"Pgh","units":"F"}</code> 能建出完整的树。<code>"units":"K"</code> 前面都对，到了 <code>unit</code> 节点推不出 <code>"K"</code>。因为文法规定 <code>unit → "C" | "F"</code> <span class="ts">31:36</span>。</li>
+  <li>有限状态自动机识别不了上下文无关文法，要用<b>下推自动机</b> <span class="ts">31:36</span>。它多一个栈。遇到 <code>{</code>、<code>[</code> 压栈，遇到 <code>]</code>、<code>}</code> 弹栈。栈能记住任意深的嵌套（讲义第 31 页）。</li>
+</ul>
+<pre class="code" data-lang="py" data-run>def depth(s):  # 下推自动机靠栈记嵌套，这里只数还没合上的层数
+    return sum({"{": 1, "[": 1, "}": -1, "]": -1}.get(ch, 0) for ch in s)
+print(depth('{"city": "Pgh"}'), depth('{"city": "Pgh"'))
+# 输出: 0 1
+# 踩坑：长度用完时栈还没清空，就吐出半截 JSON。别事后数括号硬补</pre>
+<p>生成时，从下推自动机的初始状态出发。模型从左到右每生成一点，就推进一步 <span class="ts">32:20</span>。课上举的是 XGrammar。它由 CMU 机器学习系的人开发，各大推理库都在用。它的做法是这样的 <span class="ts">33:05</span>。模型每算出下一个 token 的 logits，就用文法检查每个候选 token。合法记 1，不合法记 0。不合法的 logits 设成负无穷，再重新归一化。概率就只落在合法 token 上（讲义第 34 页）。</p>
+<p class="fx math">p<sub>i</sub> = <span class="frac"><span>m<sub>i</sub> · e<sup>z<sub>i</sub></sup></span><span><span class="lim"><b>Σ</b><small>j</small></span> m<sub>j</sub> · e<sup>z<sub>j</sub></sup></span></span><small>m<sub>i</sub> 是掩码，合法 1，不合法 0。这等于把不合法 token 的 logit z<sub>i</sub> 设成 −∞，再做 softmax。</small></p>
+<table class="lab">
+  <tr><th>这一步算什么</th><th>算式（讲义第 34 页的 8 个 logits，掩码 1 0 0 1 0 1 0 1）</th><th>结果（本机算的）</th></tr>
+  <tr><td>掩码后的 logits</td><td>不合法的 4 个设为 −∞</td><td>3, −∞, −∞, 5, −∞, 3.2, −∞, −1</td></tr>
+  <tr><td>指数</td><td>e<sup>3</sup>, e<sup>5</sup>, e<sup>3.2</sup>, e<sup>−1</sup></td><td>20.0855, 148.4132, 24.5325, 0.3679</td></tr>
+  <tr><td>归一化常数 Z</td><td>四项相加</td><td>193.3991</td></tr>
+  <tr><td>概率</td><td>各项 / Z</td><td>0.1039, 0, 0, 0.7674, 0, 0.1268, 0, 0.0019（讲义图上写作 0.1、0.76、0.13、1e-3）</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>z = np.array([3, 0.5, 2, 5, 1, 3.2, 4, -1])   # 8 个 logits，不合法位置上的值是示意
+mask = np.array([1, 0, 0, 1, 0, 1, 0, 1])      # 讲义第 34 页的掩码
+p = np.where(mask == 1, np.exp(z), 0)          # 不合法的直接记 0，等于 logit 设成负无穷
+print((p / p.sum()).round(4))
+# 输出: [0.1039 0.     0.     0.7674 0.     0.1268 0.     0.0019]</pre>
+<p>约束解码像填表时的下拉框。不合法的选项直接灰掉，你想填错都填不了。但下拉框管不了你选的对不对。</p>
+<p>为了快，XGrammar 用了两个技巧 <span class="ts">33:50</span>：</p>
+<ul>
+  <li><b>预先算好缓存</b>。有些 token 不管栈里是什么，都一定合法或一定不合法。这是上下文无关的那一大半，可以提前算好。只有少数要看当前栈的 token，才现场检查。流程分四步（讲义第 33、35 页）：解析前缀推进栈，取缓存，检查少数，合成掩码继续。</li>
+  <li><b>在字节层面检查</b>。文法检查发生在 token 之下（讲义第 32 页）。一个 token 可能跨好几个文法终结符。也可能在一个终结符中间结束。所以不能把 token 边界当文法边界。</li>
+</ul>
+<div class="co warn"><p>课上有个小测。开了约束解码、设好 schema，几乎总能得到合法的调用 <span class="ts">34:36</span>。<b>唯一例外</b>是生成长度用完了。这时还在自动机的合法路径上，只是没走到终止状态。于是输出了半截 JSON。理论上可以根据剩余 token 数提前收尾。讲师说没人实现，开玩笑说欢迎当加分作业 <span class="ts">35:19</span>。</p></div>
+<div data-vz="c1-grammar"></div>
+
+<h3 data-d="1" data-m="1" data-why="REST 接法的具体示例">8. REST API 能远程调，还白送一份 JSON Schema</h3>
+<p>把函数挂到 HTTP 接口上，别的机器就能调。接口描述里自带参数的 schema，正好拿给模型当工具定义。</p>
+<p>先看最直接的程序化调用 <span class="ts">36:03</span>。给模型一个 Python 文件 <code>weather_lib.py</code>，里面有带类型的 <code>get_weather(city, units)</code>。告诉它需要时就调，并允许它执行 Python。这能用，但调用方和函数在同一个进程里，<b>不能远程调用</b> <span class="ts">36:49</span>。网络客户端还需要地址、协议、序列化和认证（讲义第 37 页）。</p>
+<p>FastAPI 能把这个库函数绑到一个 REST 接口上。它还能声明 API 密钥的请求头 <span class="ts">36:49</span>：</p>
+<pre class="code" data-lang="py" data-title="讲义第 38 页 · api.py">from typing import Annotated, Literal
+from fastapi import FastAPI, Security
+from fastapi.security import APIKeyHeader
+from weather_lib import Weather, get_weather
+
+app = FastAPI(title="Weather API")
+key_header = APIKeyHeader(name="X-API-Key")
+
+@app.get("/weather", operation_id="get_weather")
+def weather(
+    city: str,
+    key: Annotated[str, Security(key_header)],
+    units: Literal["C", "F"] = "F",
+) -&gt; Weather:
+    verify(key)
+    return get_weather(city, units)</pre>
+<p>好处有两个 <span class="ts">37:31</span>。一是能要求 API 密钥，挡住不该访问的人。比如保护你的个人数据。二是<b>白送一份 JSON Schema</b>。整个 API 会发布成一份 OpenAPI 描述。OpenAPI 描述 HTTP 操作，里面嵌的 JSON Schema 描述参数取值（讲义第 39 页）。这份描述可以原样交给语言模型当工具定义。模型调用时，由外壳转发给 API 服务器。</p>
+<pre class="code" data-lang="py" data-run>def get_weather(city: str, units: str = "F"): ...
+names = list(get_weather.__annotations__)          # 从函数签名里读出参数名
+schema = {"properties": {n: {"type": "string"} for n in names},
+          "required": names[:len(names) - len(get_weather.__defaults__)]}
+print(json.dumps(schema))
+# 输出: {"properties": {"city": {"type": "string"}, "units": {"type": "string"}}, "required": ["city"]}
+# 有类型的签名就能推出 schema。框架发布 OpenAPI 时干的就是这件事（示意）</pre>
+<p>编程智能体还常常直接用 <code>curl</code> 调 REST API（讲义第 40 页）<span class="ts">38:13</span>。流程是读 API 描述，拼命令，发 HTTP 请求。拼命令时，shell 会展开环境变量 <code>$WEATHER_API_KEY</code>。简单，但有个代价：<b>智能体的 shell 拿到了 API 凭据</b>。有 shell 权限的智能体，可能读到甚至滥用它。</p>
+<p>REST API 像餐馆的外卖窗口。菜单就是 OpenAPI 描述，谁来点餐都得出示会员卡。</p>
+
+<h3 data-d="1" data-m="2" data-why="常用协议，不是作业前提">9. MCP 真正的好处，是让智能体碰不到真凭据</h3>
+<p>MCP 服务器夹在智能体和上游 API 中间。智能体只拿一把无害的 MCP 密钥，真凭据留在服务器里。</p>
+<p>MCP（Model Context Protocol）是 Anthropic 提出的标准，大约在一年半到两年前。它用来给模型提供额外的上下文 <span class="ts">38:56</span>。结构是这样的（讲义第 42 页）<span class="ts">39:40</span>。一个 AI 应用（MCP host）里开几个 MCP 客户端。每个客户端连一个 MCP 服务器。比如一个本地服务器，经标准输入输出（stdio）连文件系统。再比如一个远程服务器，经 HTTP 连过去。</p>
+<p>讲师一开始觉得没必要 <span class="ts">40:23</span>。调 API 已经有好办法了，为什么还要多跑一个程序？讲义第 42 页也写着，MCP 是另一种面向智能体的接口。它不是调 REST API 的必需品。</p>
+<p>FastMCP 之于 MCP，就像 FastAPI 之于 REST。把 FastAPI 换成 FastMCP，就能很快写一个 MCP 服务器。它也可以直接吃一份 OpenAPI 描述。每个路由都变成一个可被发现的 MCP 工具 <span class="ts">41:06</span>。讲义第 43 页的例子是 <code>GET /weather</code> 变成 <code>get_weather(city, units)</code>。</p>
+<p><b>MCP 真正的好处是多一层安全</b> <span class="ts">41:50</span>。MCP 服务器有自己的 MCP 密钥，交给运行智能体的进程。上游 API 的密钥只交给 MCP 服务器，不交给智能体。比如你的 GitHub token。假如智能体拿着 GitHub token。某天它心血来潮，把 token 推到公开仓库，你的账号就沦陷了。给它一个相对无害的 MCP 密钥，即使泄露损失也小。真正的凭据被保护起来 <span class="ts">42:34</span>。讲义第 45 页把这叫作<b>凭据中转（credential brokering）</b>。服务器接受一种凭据，对上游用另一种凭据。模型两个秘密都看不到。</p>
+<pre class="code" data-lang="py" data-title="讲义第 44 页 · 用两套凭据启动 MCP 服务器">import os, httpx2
+from fastmcp import FastMCP
+from fastmcp.server.auth.providers.jwt import StaticTokenVerifier
+
+upstream = httpx2.AsyncClient(
+    base_url="https://weather.example",
+    headers={"X-API-Key": os.environ["UPSTREAM_API_KEY"]})
+mcp_auth = StaticTokenVerifier(tokens={
+    os.environ["MCP_API_KEY"]: {"client_id": "course-agent"}})
+
+mcp = FastMCP.from_openapi(
+    openapi_spec=spec, client=upstream,
+    name="Weather MCP", auth=mcp_auth)
+mcp.run(transport="http", port=8001)</pre>
+<p>讲义第 44 页的注：静态 token 只适合教学和开发。生产环境应该校验 JWT，或者用 OAuth。客户端那边只带 MCP 密钥：<code>Client("https://mcp.example/mcp", auth=os.environ["MCP_API_KEY"])</code>。先 <code>list_tools()</code>，再 <code>call_tool("get_weather", {...})</code>（讲义第 45 页）。</p>
+<pre class="code" data-lang="py" data-run>server = {"mcp_key": "mcp-123", "upstream_key": "real-token"}   # 服务器手里有两套凭据（示意）
+agent = {"mcp_key": "mcp-123"}                                  # 智能体只拿 MCP 密钥
+def call_tool(key, tool): return tool + ": 72F" if key == server["mcp_key"] else "denied"
+print(call_tool(agent["mcp_key"], "get_weather"), "upstream_key" in agent)
+# 输出: get_weather: 72F False
+# 智能体泄露了 mcp-123 也只能查天气。用 curl 时 shell 里就有上游密钥，智能体能直接读到</pre>
+<p>MCP 像酒店前台发的房卡。你拿到的是一张房卡，不是酒店的总钥匙。房卡丢了，损失也就一间房。</p>
+<table class="lab">
+  <tr><th></th><th>OpenAPI / HTTP API</th><th>MCP</th></tr>
+  <tr><td>相同点</td><td colspan="2">名字、描述、用 JSON Schema 描述结构化输入</td></tr>
+  <tr><td>发现</td><td>取一份 OpenAPI 文档</td><td>运行时调用 <code>tools/list</code></td></tr>
+  <tr><td>调用</td><td>HTTP 动词 + 路径 + 参数</td><td>经 MCP 传输（stdio、HTTP 等）调用 <code>tools/call</code></td></tr>
+  <tr><td>认证</td><td>客户端直接向 API 认证</td><td>客户端向 MCP 认证，上游认证是另一回事</td></tr>
+  <tr><td>范围</td><td>描述 HTTP 操作</td><td>还支持资源（resources）、提示（prompts）和扩展</td></tr>
+</table>
+<p class="cap" style="font-size:13px;color:var(--fg-3)">讲义第 46 页：OpenAPI 描述一个 Web API。MCP 标准化的是 AI 应用怎么发现和调用能力 <span class="ts">42:34</span><span class="ts">43:19</span>。</p>
+<p>讲师还说了两点幻灯片外的事。一是有官方的 MCP 注册表（registry），可以找各种 MCP 服务器。此外还有大量按热度排行的 MCP 网站 <span class="ts">44:03</span>。二是一个巧合。他一直拿匹兹堡天气举例。上课当天，匹兹堡偏偏又下雨又出太阳。而他的天气 API 一次只能返回一种状态 <span class="ts">44:49</span>。</p>
+
+<div data-vz="c1-dispatch" data-sc="2"></div>
+
+<h3 data-d="1" data-m="2" data-why="常用的提速办法，作业 1 也要处理一次多个调用">10. 没有依赖的调用放进一次回复，同时执行</h3>
+<p>几个调用互不依赖，就让模型一次全写出来，外壳一起跑。总时间只看最慢的那个。</p>
+<p>一个一个调工具，简单的事也会很慢 <span class="ts">44:49</span>。讲义第 48 页算了一笔账。查天气、查日历、查航班，每次调用前模型都要生成一次。每次生成 0.8 秒，加起来约 6.4 秒。几个调用要是互相独立，就可以一起发。<b>一次回复里放多个工具调用块</b>，同时执行（讲义第 49 页）<span class="ts">45:33</span>：</p>
+<table class="lab">
+  <tr><th>方式</th><th>算式</th><th>结果</th></tr>
+  <tr><td>串行</td><td>0.8 + (0.8 + 1.2) + (0.8 + 0.9) + (0.8 + 1.1)</td><td>6.4 秒</td></tr>
+  <tr><td>并行</td><td>2 × 0.8 + max(1.2, 0.9, 1.1)：两次生成，加上最慢的那个工具</td><td>2.8 秒</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>gen, tools = 0.8, [1.2, 0.9, 1.1]            # 讲义第 48–49 页：每次生成 0.8 秒，三个工具的耗时
+serial = gen + sum(gen + t for t in tools)    # 串行：每个调用前都要生成一次
+parallel = 2 * gen + max(tools)               # 并行：两次生成，加上最慢的那个工具
+print(round(serial, 1), round(parallel, 1))
+# 输出: 6.4 2.8
+# 作业 1 考点：一次回复里可能有多个调用，结果要按各自的 ID 一一接回</pre>
+<p>只有没有依赖的调用才能并行（讲义第 50 页）<span class="ts">46:15</span>。查匹兹堡天气、读今天日历、查航班状态，可以一起做。"找客户 ID → 用 ID 查订单 → 给选中的订单退款"必须按顺序。执行时一般用 Python 的 <code>asyncio.gather</code> 同时跑。结果可能乱序完成，所以要<b>保留调用 ID</b> <span class="ts">46:58</span>：</p>
+<pre class="code" data-lang="py" data-title="讲义第 51 页 · 并发执行">async def execute(call):
+    args = json.loads(call.arguments)
+    value = await TOOLS[call.name](**args)
+    return call.call_id, value
+
+results = await asyncio.gather(
+    *(execute(call) for call in function_calls),
+    return_exceptions=True,
+)</pre>
+<p>这像同时下三份外卖单。三家店一起做，等最慢的那家送到就齐了。</p>
+<p>这也解释了一个怪现象。<b>按任务算，更贵的模型反而可能更便宜</b> <span class="ts">46:58</span><span class="ts">47:43</span>。一是贵的模型更聪明，更快找到对的办法。二是新模型更会并行调用。一次同时看好几张图，写好几个文件。为什么最近半年才突然擅长并行？同学答对了：强化学习。训练时对任务执行时长加了很重的"简短惩罚"。模型就被逼着多并行 <span class="ts">48:26</span>。</p>
+
+<div data-vz="c1-dispatch" data-sc="1"></div>
+
+<h3 data-d="1" data-m="2" data-why="评测工具调用要看哪几层，常用思路">11. 评测工具调用要分层看：选择、参数、顺序、结果</h3>
+<p>工具调用的错可能出在任何一层。评测要一层一层分开打分，再看运行时的效率和故障。</p>
+<p>这里先不评端到端的智能体任务，只评"会不会用工具" <span class="ts">48:26</span>。它是做好智能体任务的前提。最有名的是伯克利函数调用排行榜（BFCL），出到第 4 版 <span class="ts">49:10</span>（讲义第 53 页）：</p>
+<table class="lab">
+  <tr><th>类别</th><th>内容</th></tr>
+  <tr><td>单轮</td><td>simple · multiple · parallel · multiple-parallel（第 1 版就是单轮调用）</td></tr>
+  <tr><td>多轮</td><td>base · 缺函数 · 缺参数 · 长上下文</td></tr>
+  <tr><td>智能体式</td><td>网页搜索 · 记忆。面向工具调用智能体，不是端到端编程智能体。</td></tr>
+  <tr><td>鲁棒性</td><td>参数幻觉的测量 · 对格式的敏感度 <span class="ts">49:53</span></td></tr>
+</table>
+<p>评测要覆盖整个栈（讲义第 54 页）<span class="ts">49:53</span><span class="ts">50:35</span>：</p>
+<table class="lab">
+  <tr><th>层级</th><th>问的问题</th><th>例子指标</th><th>要执行吗</th><th>典型失败</th></tr>
+  <tr><td>选择</td><td>选对工具了吗</td><td>精确率 / 召回率</td><td>否</td><td>漏调或多调</td></tr>
+  <tr><td>参数</td><td>值对吗</td><td>AST / schema 匹配</td><td>否</td><td>字段或值错</td></tr>
+  <tr><td>轨迹</td><td>顺序对吗</td><td>序列成功率</td><td>通常要</td><td>依赖关系错</td></tr>
+  <tr><td>任务</td><td>目标达成了吗</td><td>端到端成功率</td><td>要</td><td>看似合理的错答案</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>expected = [("get_weather", {"city": "Pgh"}), ("read_calendar", {})]
+predicted = [("get_weather", {"city": "Pittsburgh"}), ("search_web", {})]
+hit = {n for n, _ in expected} &amp; {n for n, _ in predicted}
+print(len(hit) / len(predicted), len(hit) / len(expected), expected[0] == predicted[0])
+# 输出: 0.5 0.5 False
+# 选择层：精确率、召回率都是 0.5。参数层：工具选对了，值写法不同也判错（示意）</pre>
+<p>评测像驾照考试。科目一看你认不认得路标，科目三看你能不能真开到终点。</p>
+<p>质量还有运行层面的维度（讲义第 55 页）<span class="ts">50:35</span><span class="ts">51:20</span>：</p>
+<ul>
+  <li><b>效率</b>：延迟、调用次数、token、成本。正确但又慢又贵，也没法用。</li>
+  <li><b>可靠性</b>：超时会不会合理重试，工具挂了会不会换一个。部分失败怎么办。要在真实的服务商行为下报告成功率。</li>
+  <li><b>安全</b>：策略、权限、副作用。用对抗性输出测有后果的动作。</li>
+</ul>
+<p>故障的来源分三处（讲义第 56 页）：</p>
+<table class="lab">
+  <tr><th>来源</th><th>典型故障</th></tr>
+  <tr><td>模型</td><td>选错工具、参数错、无视结果</td></tr>
+  <tr><td>外壳</td><td>解析、认证、校验、ID 不匹配</td></tr>
+  <tr><td>服务商或工具</td><td>超时、限流、执行错误</td></tr>
+</table>
+<p>一个很有意思的数据：OpenRouter 的"各服务商工具调用错误率" <span class="ts">51:20</span>。同一个模型，课上说是 GLM 5.3。只是换了谁来提供推理服务，错误率从约 15% 到 0.01%–0.05% 不等 <span class="ts">52:04</span>。讲义第 57 页是 2026 年 8 月 27 日的截图。为什么？课上一起想出了几条 <span class="ts">52:47</span>：</p>
+<ul>
+  <li><b>量化</b>：讲师的经验是，FP8 的错误调用比 FP4 少得多。FP8 是默认的量化级别。FP4 压得太狠，给服务商省了钱，模型却变差 <span class="ts">52:47</span><span class="ts">53:29</span>。</li>
+  <li><b>投机解码</b>：用一个便宜的小模型猜大模型要说什么，用来加速。无损的不该有影响。有损的就可能有，但那其实已经不该叫同一个模型了 <span class="ts">53:29</span><span class="ts">54:13</span>。</li>
+  <li><b>约束解码</b>：很多服务商从零写自己的推理引擎，有的用 vLLM 或 SGLang。它们支持的语法约束算法不同。有的根本没实现，全靠模型自己写对 <span class="ts">54:56</span>。</li>
+  <li><b>服务商不稳定</b>：服务时不时挂掉，调用自然失败 <span class="ts">54:56</span><span class="ts">55:39</span>。</li>
+</ul>
+
+<h3 data-d="1" data-m="2" data-why="全讲五层的复习">12. 工具调用是一个五层的系统，每层管一件事</h3>
+<p>讲义第 59 页把这一讲收成五层 <span class="ts">55:39</span>：</p>
+<ol class="pipe">
+  <li>能力<small>工具带来检索、执行、生成、应用操作。正是它们让智能体成为智能体。</small></li>
+  <li>机制<small>schema 进提示，模型按各自协议写出调用。外壳校验、分发、按 ID 匹配结果。</small></li>
+  <li>约束<small>JSON Schema 和文法掩码保证形式，不保证语义正确。能解析的 Python 也可能是错的。</small></li>
+  <li>接口<small>直接调 REST 和 MCP，是暴露能力、管理凭据的两种选择。</small></li>
+  <li>系统<small>编排依赖和并发。评测选择、参数、结果、成本和运行时故障。</small></li>
+</ol>
+<p>把中间两层串起来，就是外壳每次拿到模型输出后干的事：</p>
+<pre class="code" data-lang="py" data-run>raw = '&lt;tool_call&gt;{"name": "get_weather", "arguments": {"city": "Pgh"}}&lt;/tool_call&gt;'
+call = json.loads(re.search(r"&lt;tool_call&gt;(.*)&lt;/tool_call&gt;", raw).group(1))   # 机制：解析
+legal = set(call["arguments"]) &lt;= {"city", "units"}                             # 约束：不许多字段
+print(call["name"], legal)
+# 输出: get_weather True
+# 踩坑：legal 为 True 只说明形式对，城市写错了它也照样放行</pre>
+<p>五层像寄一个包裹。能力是寄什么，机制是填单子，约束是查单子的格式。接口是走哪家快递，系统是调度和验收。</p>
+
+<div class="co key"><p><b>和作业 1 的联系</b>：要点已写进上面例子的注释。作业本身看第 8 章的 <a href="c8.html#e1">作业 1</a>。复原过程看作业复原笔记的 <a href="作业复原/作业笔记/stages.html#S0">S0</a>。</p></div>
+</section>
+
+<nav class="pager">
+  <a href="index.html"><span>← 首页</span>课程总览与资料</a>
+  <a class="nx" href="c2.html"><span>下一章 →</span>02 · 长上下文、记忆与技能</a>
+</nav>
+</main>
+<script src="assets/vz.js"></script>
+<script src="assets/viz/c1-loop.js"></script>
+<script src="assets/viz/c1-react.js"></script>
+<script src="assets/viz/c1-dispatch.js"></script>
+<script src="assets/viz/c1-grammar.js"></script>
+</body>
+</html>

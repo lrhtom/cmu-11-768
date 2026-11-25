@@ -1,0 +1,36 @@
+出处：Shao, Wang, Ahuja, Wang, Liu, Yang. CollabSkill: Evaluating Human-Agent Collaboration On Real-World Tasks. COLM 2026, arXiv:2606.09833v2.
+用途：CMU 11-768 笔记第 10 章第 3 讲（第 19 讲，预写）第 7、8 节；第 11 章第 1 讲（第 20 讲）第 8 节的表格里站内引用。
+
+【claim 1】（第 7 节）模拟用户过度配合、风格单一、没有真实的挫败感；在本文的职业任务里现成模拟器用不上。
+p.2："LLM simulators tend to be excessively cooperative, stylistically uniform, and devoid of realistic frustration"
+p.16 Limitations："we find current user simulators cannot be applied in our setting ... our setting involves professional workers completing complex, real-world occupational tasks through rich, multimodal interactions spanning agent interfaces (terminal, desktop, web app) and direct task-completion actions."
+
+【claim 2】（第 8 节）数据：Upwork 招 93 位美国从业者，平均 9.6 年经验，每任务 20 美元；任务来自 GDPval、APEX、APEX-Agents，165 个，10 个职业门类；按背景匹配任务、随机配智能体；386 次会话，1,500 多条提示；会话时长中位数 76.7 分钟；五个智能体。
+p.5 §3.3："We recruit U.S.-based participants via Upwork, compensating $20 per completed task" 表 1："# Participants 93 / # Data points 386 / # Distinct Tasks Executed 165 / Avg. Years of Experience 9.6" "Together, the sourced tasks cover 10 out of 20 O*NET work sectors" "participants are randomly paired with an AI agent"
+p.4 §3.1："(i) three terminal-based agents—Codex, Gemini CLI, and Claude Code ... (ii) Claude Cowork, a desktop agent sharing the same implementation as Claude Code but with a graphical interface designed for non-developers; and (iii) Manus, a general-purpose browser-accessible agent."
+p.16："386 sessions with a median duration of 76.7 minutes, yielding over 1,500 prompts"
+
+【claim 3】（第 8 节，第 20 讲第 8 节表格）打分：智能体生成 rubric（正确性 40、完整性 20、任务要求 25、技术质量 15）；两个不同家族的评审（Gemini CLI、Claude Code）各打分取平均，减轻自偏好；rubric 召回 82.1%、精确 92.2%；135 对 r = 0.72（去 3 个离群）/ 0.66。
+p.5 §3.2："the grader invokes N independent agents ... The final score y is the average ... This multi-agent design mitigates self-preference bias in LLM-as-a-judge evaluation" 脚注 3："N = 2 and we employ Gemini CLI and Claude Code as the judges."
+p.19 图 7："Correctness & Accuracy (40 pts) ... Deliverable Completeness (20 pts) ... Task Requirements (25 pts) ... Technical Quality (15 pts)"
+p.5 / p.26 附录 I："82.1% recall and 92.2% precision against official criteria"；附录 I："a Pearson correlation of r = 0.72 (excluding three outlier pairs based on author review; r = 0.66 over all 135 pairs)"
+
+【claim 4】（第 8 节）模型 y = s_A + s_H + ε；先验 N(0,1)；卡尔曼测量更新 r = y − xᵀm、K = Σx/(xᵀΣx + β²)、m′ = m + Kr；不确定性大的调得多；配对连通；排名用 μ − 3σ（约 1% 下分位）。
+p.6 §4："y = sA + sH + ϵ, ϵ ∼ N(0, β²)" "r = y − x⊤m, K = Σx / (x⊤Σx + β²), m′ = m + Kr" "with larger adjustments assigned to the entity with greater uncertainty σ²" "What matters is the connectivity of the human-agent interaction graph" "we initialize all entities with µ0 = 0 and σ0 = 1" "CollabSkill score ≜ µi − 3σi as a conservative measure ... (approximately the 1% lower quantile under a Gaussian)"
+（笔记代码用最小二乘代替贝叶斯更新，标明是示意。）
+
+【claim 5】（第 8 节）表 2、表 5 的数；Claude Code 在三个终端智能体里协作第一，而单干和三个公开榜单是 Codex 领先；Cowork 排在 Code 前；只看熟悉度 ≥4 的 81 人结论不变；bootstrap 10,000 次 Cowork 71.3% 排第一；留一法前两名和最后一名不变；直接平均顺序一样但 σ > 19。
+p.8 表 2：Claude Cowork 76.738（µ 77.206，σ 0.156）；Claude Code 74.778；Codex 71.267；Manus 71.204；Gemini CLI 69.555。
+p.9 表 5：Claude Code 单干 77.17、SWE-bench Verified 71.40、GDPval 42.5%、SciCode 46.8；Codex 78.02、72.80、49.7%、54.6；Gemini CLI 79.44、69.60、40.3%、56.1。
+p.8："Claude Code performs best in the human-agent collaboration setting ... a ranking that diverges from both our autonomous evaluation and the rankings reported by SWE-bench Verified, GDPVal, and SciCode" "Claude Cowork ranks strictly above Claude Code" "(N = 81); the comparison between Claude Cowork and Claude Code remains unchanged" "the top-ranked agent (Claude Cowork) retained rank 1 in 71.3% of resamples" 表 4 留一法。
+p.2："Codex consistently leads Claude Code across our own evaluation in the solo agent setting and public leaderboards like SWE-bench Verified, GDPVal, and SciCode"
+p.24 附录 G："While the resulting agent ranking order matches that of CollabSkill, the high variance (σ > 19 for all agents) makes it difficult to draw statistically meaningful conclusions"
+
+【claim 6】（第 8 节）人这一侧：Q4 赢 74%、Q1 赢 27%；11 种 AI 熟练行为里 6 种显著相关，说清受众 84.7 vs 68.1；轮数 r = 0.046；LLM 熟悉度 ρ = 0.297（p 值前后不一致）；态度大多不相关；合作后信任升、觉得能更自主，但希望的自主程度不变。
+p.9 §6.2："top-quartile workers (Q4) achieve a 74% win rate against the autonomous baseline, while bottom-quartile workers (Q1) win only 27% of the time." "user turn count shows no significant correlation (r = 0.046, p = 0.371)" "self-reported LLM familiarity showed a significant positive correlation with collaboration skill (Spearman ρ = 0.297, p = 0.010)" "none of the remaining attitudinal measures reached significance" "Participants reported increased trust (∆= 0.58, p = 0.004) ... (HAS belief ∆= −0.50, p < 0.001), the preferred autonomy level did not change (∆= −0.16, p = 0.105)"
+p.2 引言："Practical LLM experience correlates with collaboration skill (Spearman ρ = 0.297, p = 0.041)"
+p.27 附录 J："Six of the eleven behaviors were significantly correlated with higher session scores, including (1) defining the audience for the output (r = 0.345, p < 0.001), where sessions exhibiting this behavior scored 16.5 points higher on average (84.7 vs. 68.1)"
+
+【claim 7】（第 8 节）局限：只招美国 Upwork；10/20 门类；LLM 评审；没分开任务技能和协作技能；别用估出的人的分数筛选员工。
+p.16 Limitations："recruited through Upwork and targets US-based workers only" "spanning 10 of the 20 O*NET sectors" "For task scoring, we use LLM judges rather than human graders." "the estimated CollabSkill score does not separately identify task skill and collaboration skill"
+p.11 Ethics："We caution against using estimated human skill scores to screen or evaluate individual workers for employment or other consequential decisions."

@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02 长上下文、记忆与技能 · 11-768</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/site.css">
+<script>window.PAGE = { key: 'c2' };</script>
+<script src="assets/course.js"></script>
+<script src="assets/glossary.js"></script>
+<script src="assets/site.js"></script>
+</head>
+<body>
+<main class="doc">
+<header class="mhead">
+  <div class="kicker">02 · Long Context · Memory &amp; Skills</div>
+  <h1>上下文越来越长怎么扛，经验怎么存成记忆和技能</h1>
+  <p class="lede">智能体每走一步，都把全部历史重新送进模型。上下文和费用一起飞涨。第 3 讲从三层讲怎么扛。第一层是模型结构和训练。具体有混合注意力、线性注意力和 DeltaNet 家族、稀疏注意力。还有 KV 压缩、位置编码、长数据。第二层是推理系统：prefill 和 decode、KV 缓存、跨调用的前缀缓存。第三层是外壳自己的上下文压缩。第 4 讲把视线放到上下文之外。经验可以存成经历、事实或技能。人写的技能靠渐进披露按需加载。智能体还能从成功和失败里归纳出文本或代码技能。最后讲技能的整个生命周期。</p>
+  <div class="chips"><span class="chip">共 <b>2</b> 讲</span><span class="chip">视频 <b>2 小时 31 分</b></span><span class="chip">动画演示 <b>4</b> 个</span><span class="chip">对应 <b>作业 1</b></span></div>
+</header>
+
+<section class="ep" data-n="1">
+<h2>长上下文与上下文管理</h2>
+<p class="tldr">智能体每走一步，都要把全部历史重新送进模型。历史线性增长，处理量就按平方增长。这一讲从三层讲怎么扛住。第一层是模型结构和训练。结构上有混合注意力、线性注意力和 DeltaNet 家族。还有稀疏注意力和 KV 压缩。训练上要长数据、位置编码、上下文并行。第二层是推理系统：prefill 和 decode、KV 缓存、跨调用的前缀缓存。第三层是外壳自己的办法，也就是上下文压缩。它为什么让人又爱又怕，最后一节细说。</p>
+
+<h3 data-d="1" data-m="2" data-why="上下文按平方增长，是整讲的出发点">1. 历史线性增长，送进模型的总量按平方增长</h3>
+<p>每次调用的输入，是固定前缀加上之前全部的动作和观察。所以历史线性增长，送进模型的总量按平方增长。</p>
+<p>讲师一开始说，这一讲很多内容是通用的大模型知识 <span class="ts">0:01</span>。但长上下文对智能体特别重要。先修课又讲得不多，所以单独细讲 <span class="ts">0:44</span>。讲义第 3 页里，5 次调用的输入是 6K、11K、16K、21K、26K。加起来要处理 80K token <span class="ts">1:28</span>。他自己用编程智能体时，一个会话连着用好几天的情况也有 <span class="ts">2:11</span>。</p>
+<pre class="code" data-lang="py" data-run>P, d, T = 6, 5, 5          # 讲义第 3 页：第一次 6K，之后每次多 5K，共 5 次（单位 K token）
+inputs = [P + d * t for t in range(T)]
+print(inputs, sum(inputs), T * P + d * T * (T - 1) // 2)
+# 输出: [6, 11, 16, 21, 26] 80 80
+# 总量 = T·P + d·T(T−1)/2，里面有 T 的平方。调用次数翻倍，总量差不多翻四倍</pre>
+<p>这像每次开会，都把之前所有会议记录从头念一遍。会开得越多，念的时间涨得越快。</p>
+<p>上下文里到底是什么？讲师统计了自家编程智能体 OpenHands 的 1,500 个会话 <span class="ts">2:53</span>。每个都只是解决一个任务的短会话。平均每个用了约 78,000 token，讲义写的是 77,922。</p>
+<figure class="dg"><script type="application/json">{"type":"bars","title":"OpenHands 1,500 个会话的提示组成（占比 %）","max":40,"fmt":0,"lw":150,"rows":[["工具结果",37,"data"],["系统提示 + 工具定义",23,"neutral"],["工具调用",20,"warn"],["用户消息",9,"data"],["推理（思考）",9,"info"],["直接回复用户",2,"ok"]]}</script>
+<figcaption>讲义第 4 页。"直接回复用户 2%"讲义上没标出，是讲师口头补的 <span class="ts">3:37</span>。</figcaption></figure>
+<ul>
+  <li>系统提示加工具定义占 23%。OpenHands 的系统提示大约 15,000–18,000 token，因为它"对怎么干活很有主见"。一般的编程智能体在 8,000–20,000 token 之间，取决于加载了多少工具 <span class="ts">2:53</span>。</li>
+  <li>花在推理上的 token，大约是直接回复用户的 5 倍 <span class="ts">3:37</span>。</li>
+  <li>最大的一块是工具结果，比如读文件的返回，占 37% <span class="ts">3:37</span><span class="ts">4:18</span>。</li>
+</ul>
+
+<div data-vz="c2-context" data-sc="0"></div>
+
+<h3 data-d="1" data-m="2" data-why="prefill 和 decode 的分工，c6 还会用到">2. 推理分两段：prefill 一口气读完，decode 一个一个写</h3>
+<p>推理先把全部输入一次读完，再一步只写一个 token。每写一个，它的 K、V 就追加进缓存。</p>
+<p>长上下文有两个挑战（讲义第 5 页）<span class="ts">4:18</span>：</p>
+<div class="cmp">
+  <div class="c-bad"><h4>容量（capacity）</h4><p>模型能不能用上需要的证据？这由结构、位置编码、训练数据决定，要靠评测来衡量。把模型训练到能处理超长上下文很难 <span class="ts">4:18</span><span class="ts">4:58</span>。</p></div>
+  <div class="c-data"><h4>效率（efficiency）</h4><p>系统供得起吗？注意力、KV 内存、缓存、压缩决定了成本和延迟。讲师提醒，平时用 Claude Code、Codex 觉得理所当然。背后其实是工程壮举。几万亿参数的模型，要在几秒内反复服务给海量用户。他说 Codex 有 2,500 万用户 <span class="ts">4:58</span><span class="ts">5:39</span>。</p></div>
+</div>
+<p>推理分两个阶段（讲义第 7–8 页）<span class="ts">7:05</span>：</p>
+<figure class="dg"><script type="application/json">{"type":"flow","cw":128,"gx":30,"gy":40,"top":18,
+ "groups":[{"c":2,"r":0,"w":2,"h":1,"t":"模型执行","k":"info"}],
+ "nodes":[{"id":"rq","c":0,"r":0,"t":"请求","s":"提示 + 控制","k":"data"},
+  {"id":"sc","c":1,"r":0,"t":"调度器","s":"排队 · 合批 · 路由","k":"warn"},
+  {"id":"pf","c":2,"r":0,"t":"Prefill","s":"全部提示位置","k":"info"},
+  {"id":"dc","c":3,"r":0,"t":"Decode","s":"每步一个新位置","k":"info"},
+  {"id":"rs","c":4,"r":0,"t":"响应","s":"流式输出 token","k":"ok"},
+  {"id":"kv","c":2.5,"r":1,"t":"KV 缓存","s":"每个请求一直保留的状态","k":"neutral","w":1.2}],
+ "edges":[["rq","sc",""],["sc","pf",""],["pf","dc",""],["dc","rs",""],["pf","kv","写",{"via":"v","k":"warn","dash":1}],["kv","dc","读 + 追加",{"via":"hv","k":"data","dash":1}]]}</script>
+<figcaption>服务栈的组成（讲义第 7 页重画）</figcaption></figure>
+<table class="lab">
+  <tr><th>阶段</th><th>做什么</th><th>瓶颈</th></tr>
+  <tr><td>Prefill（也叫编码）</td><td>一次批量处理全部输入 token，它们不用生成。算出每个位置的 K、V <span class="ts">7:05</span>。</td><td>算力密集，延迟随提示长度增长</td></tr>
+  <tr><td>Decode</td><td>每步读全部 K、V，生成一个输出 token。再把它的 K、V 追加进去，逐个递进。</td><td>串行、内存带宽密集，每步只出一个 token</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>kv = ["kv%d" % i for i in range(6)]   # prefill：6 个提示 token 一次算出 K、V（示意）
+for step in range(3):                  # decode：每步读全部 K、V，出一个 token
+    kv.append("kv%d" % len(kv))        # 新 token 的 K、V 追加进缓存
+print(len(kv), kv[-1])
+# 输出: 9 kv8
+# KV 缓存跟着请求走，越聊越大。decode 每步都要把它整个读一遍，所以吃显存带宽</pre>
+<p>这像餐馆出菜。prefill 是厨师一口气看完整张单子备料，decode 是一道一道往外端。</p>
+<p>衡量一个推理服务的指标（讲义第 9 页）<span class="ts">7:53</span>：</p>
+<ul>
+  <li><b>TTFT</b>（time to first token）：从请求到达，到看见第一个输出 token。输入越长，等得越久 <span class="ts">7:53</span>。</li>
+  <li><b>TPOT</b>（time per output token）：相邻两个输出 token 的间隔。OpenRouter 上显示的每秒 token 数量的就是它，正好是它的倒数。讲师认为这个数不含 prefill。同一个 GLM 5.2，有的服务商每秒 63、48、24 个。有的只有 3 个，有的上百个。这对用智能体的体验差别巨大 <span class="ts">8:35</span><span class="ts">9:15</span>。</li>
+  <li><b>吞吐</b>：完成的 token 或请求数 ÷ 墙钟时间，看的是整个系统。<b>成本</b>：输入、缓存输入、输出 token 分别计费 <span class="ts">10:51</span>。</li>
+</ul>
+<p>用法不同，在意的指标也不同。和编程 CLI 交互式地一起干活，TTFT、TPOT 非常重要。让智能体在后台通宵跑任务，可能完全不在乎。吞吐、成本和出 token 的速度之间有取舍。讲师的公司也在服务编程智能体。服务商常常问他更在意哪个，好针对性地优化 <span class="ts">9:59</span>。</p>
+
+<div data-vz="c2-context" data-sc="1"></div>
+
+<h3 data-d="1" data-m="2" data-why="能用的上下文比宣称的短，长会话会忘指令">3. 能吃下 100 万 token，不等于能用好 100 万 token</h3>
+<p>服务系统能装下多长，和模型能用好多长，是两回事。长会话里，模型会漏掉埋在中间的事实，也会忘掉早先的指令。</p>
+<p>复习一下注意力（讲义第 10 页）：Q = XW<sub>Q</sub>，K = XW<sub>K</sub>，V = XW<sub>V</sub>。</p>
+<p class="fx math">A = softmax<span class="frac"><span>QKᵀ + M</span><span>√<span class="sqrt">d<sub>k</sub></span></span></span>，O = AV<small>M 是因果掩码：j ≤ i 时为 0，否则为 −∞。</small></p>
+<p>全注意力的计算随长度平方增长 <span class="ts">10:51</span>。这一讲的大部分内容，都在解决这个效率问题 <span class="ts">11:32</span>。另一面是效果。<b>系统能吃下 100 万 token，不等于模型能用好 100 万 token</b> <span class="ts">11:32</span>。</p>
+<p>讲义第 11 页是"大海捞针"（needle in a haystack）测试 <span class="ts">12:14</span>。做法是把一堆 Paul Graham 的随笔拼起来。在中间某处塞一句"旧金山最好吃三明治的地方是某某"。再问模型这个问题。上下文越拉越长，较弱的模型就开始答不对 <span class="ts">12:57</span>。</p>
+<pre class="code" data-lang="py" data-run>essays = ["essay text. "] * 1000                    # 一堆随笔拼起来（示意）
+needle, depth = "Best sandwich in SF: X. ", 0.3       # 把"针"塞在 30% 深度处
+cut = int(len(essays) * depth)
+haystack = essays[:cut] + [needle] + essays[cut:]
+print(len(haystack), haystack.index(needle))
+# 输出: 1001 300
+# 接着问模型三明治在哪。拉长上下文、挪动深度，看它还答不答得对</pre>
+<p>这像一本 1000 页的书。你能把它整本搬回家，不代表你记得第 300 页写了什么。</p>
+<p>讲义上那张热力图是 GPT-4。上下文很长、事实又放在文档 10%–50% 深度时，检索准确率下降。这类测试常用的基准还有 RULER、HELMET <span class="ts">12:57</span>。</p>
+<p>课上同学说了长会话里的常见毛病 <span class="ts">13:40</span>。一是忘了一开始的指令。二是会话中途告诉它别做某事，它还是做了。第 1 讲的删邮件事故就是这样 <span class="ts">14:23</span>。在智能体里这尤其要命。用户的指令是一点一点追加进来的。</p>
+
+<h3 data-d="1" data-m="1" data-why="模型结构总览，各模型的配比了解即可">4. 现在的模型几乎都是"几层局部 + 一层全局"</h3>
+<p>几乎所有省算力的结构都在做同一件事。给每一步的比较次数设个上限，再隔几层做一次全局计算。</p>
+<p>现在的前沿模型上下文一般是 256K 到 100 万 <span class="ts">15:05</span>。大家都在往 100 万靠，谁也不想当那个"只有 256K"的模型。课上心算了一下。100 万长度的序列，两两比较大约 10<sup>12</sup> 次，也就是一万亿次。每次还是大向量相乘，单个序列就是天文数字的计算量 <span class="ts">15:05</span><span class="ts">15:47</span>。</p>
+<p>几乎所有解法都是同一个思路。<b>每个时间步的比较次数，设一个常数上限。</b>这样 O(n²) 就降到了 O(wn)。w 写成"窗口"，但不一定是窗口。只要是比较次数的上限就行 <span class="ts">15:47</span><span class="ts">16:32</span>。</p>
+<pre class="code" data-lang="py" data-run>n, w = 1_000_000, 512
+full, local = n * n, w * n          # 全注意力要两两比较，局部每步最多比 w 次
+print(f"{full:.0e} {local:.0e} {full // local}")
+# 输出: 1e+12 5e+08 1953</pre>
+<div class="cmp">
+  <div class="c-data"><h4>局部模型</h4><p>上限作用在一个局部窗口里，每一步很便宜。</p></div>
+  <div class="c-warn"><h4>全局模型</h4><p>计算可能有上限也可能没有，但不局限在附近。信息能在整个序列里传递。</p></div>
+</div>
+<p>现在流行的模型几乎都是<b>混合模型</b>。N 层局部计算，接 1 层全局计算，如此重复（讲义第 15 页）<span class="ts">16:32</span><span class="ts">17:14</span>。讲义第 16 页列了 6 个模型：</p>
+<table class="lab">
+  <tr><th>模型</th><th>局部 / 有状态的计算</th><th>全局计算</th><th>局部 : 全局</th></tr>
+  <tr><td>Qwen3.8-Flash-Next</td><td>Gated DeltaNet</td><td>QSA 稀疏检索</td><td>36 : 12 ≈ 3 : 1</td></tr>
+  <tr><td>GLM-5.3-Flash</td><td>Kimi Delta Attention</td><td>DSA + IndexPool</td><td>34 : 11 ≈ 3 : 1</td></tr>
+  <tr><td>Kimi K3</td><td>Kimi Delta Attention</td><td>稠密 Gated MLA</td><td>69 : 24 ≈ 3 : 1</td></tr>
+  <tr><td>Nemotron 3 Ultra</td><td>Mamba-2</td><td>稠密 GQA</td><td>48 : 12 = 4 : 1</td></tr>
+  <tr><td>Inkling-Small</td><td>512-token 窗口</td><td>稠密 GQA</td><td>35 : 7 = 5 : 1</td></tr>
+  <tr><td>DeepSeek-V4-Pro-0813</td><td>128-token 窗口分支</td><td>压缩的稀疏 / 稠密</td><td>交错的分支</td></tr>
+</table>
+<p>混合模型像读一本厚书。大部分时候只看眼前几行，每隔几页再把全书扫一遍。</p>
+<p>标准做法就是"某种局部机制 + 稀疏或稠密的全局注意力" <span class="ts">18:36</span>。讲义第 17 页把反复出现的机制归成四种。滑动窗口，线性注意力或循环模型，稀疏注意力，KV 压缩。</p>
+
+<h3 data-d="2" data-m="1" data-why="模型内部结构，跳过不影响后面各章">5. 线性注意力去掉 softmax，把整段历史压进一个固定大小的状态</h3>
+<p>滑动窗口只看附近几块。线性注意力干脆去掉 softmax，把整段历史累加进一个矩阵 S。每步只要常数时间更新。</p>
+<p><b>滑动窗口注意力</b>概念上最简单 <span class="ts">18:36</span>。把序列切成块，比如 512 token 一块。当前块只看自己和前面固定几块 <span class="ts">19:19</span>。注意力公式不用改。好处是层层叠加后，感受野会慢慢变大。第一层从前一两块拿信息。而前面的块在上一层，已经拿过它们更前面的信息 <span class="ts">19:19</span>。</p>
+<p>讲义第 18 页：掩码 M<sup>(w)</sup><sub>ij</sub> = 0 当 0 ≤ i − j &lt; w，否则 −∞。代价是<b>局部层不能直接取到远处的 token</b>。</p>
+<pre class="code" data-lang="py" data-run>n, w = 6, 3
+mask = [[0 if 0 &lt;= i - j &lt; w else "-inf" for j in range(n)] for i in range(n)]
+print(mask[5])
+# 输出: ['-inf', '-inf', '-inf', 0, 0, 0]
+# 第 6 个位置只看自己和前 2 个。更远的信息只能靠下面几层一层层传上来</pre>
+<p>现在更流行的是各种<b>线性注意力</b> <span class="ts">20:02</span>。标准注意力难算，是因为 softmax 要取指数再归一化。于是只能把所有查询和键两两乘一遍 <span class="ts">20:02</span><span class="ts">20:48</span>。线性注意力干脆去掉 softmax，只留 qᵀk。</p>
+<p>这确实让<b>表达力更弱</b>。softmax 能把一堆实数变成和为 1 的概率。这样模型就能只盯着少数相关的历史。这正是注意力的卖点。去掉它，就失去了"相对比较" <span class="ts">21:52</span>。换来的好处是：乘法有结合律，可以把求和重排 <span class="ts">22:34</span>：</p>
+<p class="fx math">o<sub>t</sub> = <span class="lim"><small>t</small><b>Σ</b><small>i=1</small></span>(q<sub>t</sub>ᵀk<sub>i</sub>) v<sub>i</sub> = <span class="lim"><small></small><b>(Σ</b><small>i</small></span> k<sub>i</sub>v<sub>i</sub>ᵀ)ᵀ q<sub>t</sub> = S<sub>t</sub>ᵀ q<sub>t</sub>，&nbsp; S<sub>t</sub> = S<sub>t−1</sub> + k<sub>t</sub>v<sub>t</sub>ᵀ<small>讲义第 20 页。S<sub>t</sub> 是 d<sub>k</sub> × d<sub>v</sub> 的固定大小矩阵。</small></p>
+<p>S 是一个从查询映射到值的线性函数。注意力本来也是这样的函数。但 S 可以<b>保留下来，每来一个新值就用常数时间更新</b>。模型就变成了一个循环神经网络 <span class="ts">22:34</span><span class="ts">23:14</span>。于是 O(n²) 直接变成 O(n)，连 w 都没有 <span class="ts">23:57</span>。</p>
+<pre class="code" data-lang="py" data-run>k, v, q = np.random.randn(5, 2), np.random.randn(5, 2), np.random.randn(2)
+direct = sum((q @ k[i]) * v[i] for i in range(5))   # 去掉 softmax 后，直接两两乘
+S = np.zeros((2, 2))
+for i in range(5): S += np.outer(k[i], v[i])        # 递推：每来一个 token，S 加一次 k vᵀ
+print(np.allclose(direct, S.T @ q))
+# 输出: True
+# 两种算法结果一样。递推版只存一个 2×2 的 S，不用留着全部历史</pre>
+<p>线性注意力像记账。不再每次翻遍所有旧账单，只在一本总账上累加。讲义第 20 页还提醒，这种状态只加不擦。旧的干扰不会被显式抹掉。</p>
+
+<div data-vz="c2-attn" data-sc="0,1"></div>
+
+<h3 data-d="3" data-m="1" data-why="具体的结构改进，跳过不影响后面各章">6. DeltaNet 先预测再改错，旧值被改写而不是越叠越多</h3>
+<p>DeltaNet 先用状态预测这个键对应的值，再只把误差写进去。同一个键的旧值被修正，不再累加。</p>
+<p>后来的改进，数学上大多可以理解成一件事 <span class="ts">24:40</span>。<b>让 S 成为对注意力输出更好的预测器。</b>讲师按机制讲：</p>
+<table class="lab">
+  <tr><th>方法</th><th>做法（讲义第 21–23 页）</th><th>直观理解</th></tr>
+  <tr><td>DeltaNet</td><td>v̂<sub>t</sub> = S<sub>t−1</sub>ᵀk<sub>t</sub>，e<sub>t</sub> = v<sub>t</sub> − v̂<sub>t</sub>。S<sub>t</sub> = S<sub>t−1</sub> + β<sub>t</sub>k<sub>t</sub>e<sub>t</sub>ᵀ。</td><td>先用当前状态预测这个键对应的值，再只把误差写进去。修正后再用 k<sub>t</sub> 去读，就没有误差了。β 像学习率，防止一步改太大 <span class="ts">25:23</span><span class="ts">26:54</span>。只沿 k<sub>t</sub> 方向修，无关的记忆保留。</td></tr>
+  <tr><td>Gated DeltaNet</td><td>S̃<sub>t−1</sub> = α<sub>t</sub>S<sub>t−1</sub>，再做同样的修正。α<sub>t</sub> ∈ [0, 1]。</td><td>线性注意力没法阻止很久以前的怪键，一直影响后面的预测。所以每步让整个矩阵衰减一点 <span class="ts">28:20</span>。衰减越强，忘得越快，越"局部" <span class="ts">29:02</span>。α = 1 就退回 DeltaNet。Qwen 用的就是它 <span class="ts">29:47</span>。</td></tr>
+  <tr><td>Kimi Delta Attention（KDA）</td><td>D<sub>t</sub> = Diag(α<sub>t</sub>)。S<sub>t</sub> = (I − β<sub>t</sub>k<sub>t</sub>k<sub>t</sub>ᵀ)D<sub>t</sub>S<sub>t−1</sub> + β<sub>t</sub>k<sub>t</sub>v<sub>t</sub>ᵀ。</td><td>每个通道一个衰减速度。有的部分记很久，有的很快忘。GLM 和 Kimi 用的是这种更有表达力的版本 <span class="ts">29:47</span>。</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>k, v_new = np.array([1.0, 0.0]), np.array([1.0, 2.0])
+S = np.outer(k, [5.0, 5.0])                    # 键 k 下原来存的值是 [5, 5]
+S_lin = S + np.outer(k, v_new)                 # 线性注意力：只加不擦
+S_delta = S + np.outer(k, v_new - S.T @ k)     # DeltaNet（β = 1）：只把误差写进去
+print(S_lin.T @ k, S_delta.T @ k)
+# 输出: [6. 7.] [1. 2.]
+# 用同一个键去读：线性注意力读出旧值加新值，DeltaNet 读出的正好是新值
+# Gated DeltaNet 再在修正前把 S 乘上 α，整张表一起慢慢褪色</pre>
+<p>线性注意力像在便利贴上不停叠着写。DeltaNet 像先擦掉同一格的旧字，再写新的。Gated 版还让整张纸慢慢褪色。</p>
+<p>一句话总结。这些方法都是把注意力变成能在上下文里递推的东西。Mamba 思路类似，但数学更复杂，讲师跳过了 <span class="ts">30:28</span>。</p>
+
+<div data-vz="c2-attn" data-sc="2"></div>
+
+<h3 data-d="2" data-m="1" data-why="省算力和显存的结构手段，了解即可">7. 稀疏注意力少看一些，KV 压缩少存一些</h3>
+<p>稀疏注意力只挑一部分历史来看。KV 压缩让每个 token 存的 K、V 变小。</p>
+<p><b>稀疏注意力</b>不看全部历史，只看其中一部分，并限制看的数量 <span class="ts">31:14</span>（讲义第 24 页）：</p>
+<div class="cmp">
+  <div class="c-data"><h4>固定模式</h4><p>和输入无关，比如每隔 512 个 token 看一个。仍然是平方复杂度，但比全看少 512 倍。这已经够在需要的长度上算了 <span class="ts">31:14</span><span class="ts">31:57</span>。代价可预测，但不会随查询调整。</p></div>
+  <div class="c-warn"><h4>和内容相关</h4><p>先用很便宜的方式算一遍注意力。比如把向量投影到很小的维度。挑出 top-K 个位置，再在这 K 个上做完整注意力。DeepSeek 用的是这种 <span class="ts">31:57</span><span class="ts">32:37</span>。它能自适应，但选择器选错就会漏掉相关的键。要算两遍，但可能更准 <span class="ts">33:23</span>。</p></div>
+</div>
+<pre class="code" data-lang="py" data-run>scores = np.array([0.1, 2.0, -1.0, 3.0, 0.5, 2.5])   # 用便宜的低维投影先打一遍分（示意）
+topk = np.argsort(scores)[-2:]                        # 只挑分最高的 K = 2 个位置
+print(sorted(topk.tolist()))
+# 输出: [3, 5]
+# 再只在这 2 个位置上做完整注意力。位置 1 的分也不低，被挤掉了</pre>
+<p>课上有同学问，挑 top-K 用的是不是余弦相似度？讲师说一般就是点积，也可能事先归一化过，他不确定细节 <span class="ts">32:37</span>。</p>
+<p><b>KV 压缩</b>（讲义第 25 页）<span class="ts">33:23</span>。标准的多头注意力（MHA）每个头都有自己的 K、V，KV 缓存很大。大到会限制一张卡能同时服务多少请求 <span class="ts">34:49</span>。</p>
+<table class="lab">
+  <tr><th>做法</th><th>怎么省</th></tr>
+  <tr><td>GQA（分组查询注意力）</td><td>K、V 的组数比头数 H 少，通常是 H 除以 2 的幂。KV 缓存一般能省到 1/4、1/8 <span class="ts">34:05</span><span class="ts">34:49</span>。</td></tr>
+  <tr><td>MQA（多查询注意力）</td><td>GQA 的极端：所有头共用一组 K、V。</td></tr>
+  <tr><td>MLA（多头潜在注意力）</td><td>不减头数，而是把每个头的 K、V 降维。缓存一个小的潜变量 c<sub>t</sub><sup>KV</sup>，用时再投影回各头的 K、V <span class="ts">34:49</span><span class="ts">35:37</span>。</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>H, d, n = 32, 128, 100_000                          # 头数、每头维度、上下文长度（示意）
+kv_mb = lambda groups: 2 * groups * d * n * 2 // 2**20   # K 和 V，fp16 每个数 2 字节，单层，单位 MB
+print([kv_mb(g) for g in (H, H // 8, 1)])           # MHA、GQA（8 个头共用一组）、MQA
+# 输出: [1562, 195, 48]</pre>
+<p>稀疏注意力像考前只翻重点页。KV 压缩像把笔记缩印。这些可以组合使用。靠这些结构手段，模型能处理到 100 万 token <span class="ts">35:37</span>。</p>
+
+<h3 data-d="2" data-m="1" data-why="训练长上下文模型的配方，了解即可">8. 长上下文要靠连贯的长数据，位置编码还得能外推</h3>
+<p>长上下文训练的关键有两样。一是连贯的长数据，二是能外推到更长的位置编码。</p>
+<p>训练长上下文很难。互联网上<b>连贯的</b> 128K token 数据并不多。那已经是一本书的长度了 <span class="ts">36:22</span>。所以通常分阶段训练（讲义第 27 页）<span class="ts">37:04</span>：</p>
+<ol class="pipe">
+  <li>短的预训练<small>4K–8K，数据多、成本低</small></li>
+  <li>用更长文档继续训练<small>32K–128K</small></li>
+  <li>长适配<small>128K 以上：任务轨迹、合成课程</small></li>
+</ol>
+<p>讲师特别纠正了讲义上写的"打包序列" <span class="ts">37:04</span>。把 10 篇文档塞进一个序列，能提高效率。也能教模型处理窗口末尾的位置。但它学不到<b>跨文档的长程关联</b>，本来也不该跨文档关联。要真正适配长上下文，需要连贯的长数据 <span class="ts">46:18</span>。</p>
+<p>长数据从哪来（讲义第 34 页）<span class="ts">47:02</span>？</p>
+<ul>
+  <li>书。</li>
+  <li>代码库：天然连贯，下一个大仓库就是长 token。</li>
+  <li>同一主题的多文档语料。</li>
+  <li>专利：讲师见过拿专利训练。公开数据多，还能互相链接。</li>
+  <li><b>智能体轨迹</b>：现在的一大来源。和智能体交互一会儿，就能产生很长的轨迹。</li>
+  <li>合成任务：很多评测本身就是合成的 <span class="ts">47:42</span>。</li>
+</ul>
+<p>闭源公司连结构都不公开。开源公司必须公开结构，不然别人没法跑。所以它们保密的是数据配比和训练策略 <span class="ts">47:42</span><span class="ts">48:25</span>。讲义第 35 页能看到的配方：</p>
+<table class="lab">
+  <tr><th>模型</th><th>自然的长数据</th><th>构造的监督</th><th>长度课程</th></tr>
+  <tr><td>Kimi K3</td><td>清洗、上采样的文档 + 视频</td><td>打乱顺序的多模态子任务，证据分布在整个上下文里</td><td>8K → 64K → 256K → 1M</td></tr>
+  <tr><td>GLM-5</td><td>文档，仓库文件、issue、PR、diff</td><td>合成的依赖关系 + 智能体轨迹</td><td>32K → 128K → 200K</td></tr>
+  <tr><td>Nemotron 3 Ultra</td><td>长文档问答</td><td>多文档推理、顺序扫描、合成表格</td><td>33B token 的 1M 继续预训练，SFT 到 512K</td></tr>
+  <tr><td>DeepSeek V4</td><td>科学论文 + 技术报告</td><td>长上下文预训练之后的智能体后训练</td><td>4K → 16K → 64K → 1M</td></tr>
+</table>
+<p>讲义总结的共同配方有三条。<b>连贯的长来源。答案依赖远处证据的任务。渐进地加长。</b></p>
+<p><b>位置编码</b> <span class="ts">37:45</span>：</p>
+<ul>
+  <li><b>绝对位置编码</b>：每个词向量加一个位置向量，常用正弦、余弦。它在投影成 Q、K、V 之前加入（讲义第 28 页）。</li>
+  <li><b>RoPE</b>：设计目标是让编码<b>只由两个 token 的相对距离决定</b> <span class="ts">38:26</span>。绝对位置不影响它们会不会互相关注。做法是按位置旋转 q 和 k：q̃ᵢ = R(i)qᵢ，k̃ⱼ = R(j)kⱼ。于是 q̃ᵢᵀk̃ⱼ = qᵢᵀR(j − i)kⱼ。V 不动（讲义第 29 页）<span class="ts">39:10</span>。</li>
+  <li><b>NoPE</b>：干脆不用位置编码，很反直觉 <span class="ts">39:10</span><span class="ts">40:00</span>。Transformer 课上常说一句话。"没有位置编码，第 1 位和第 5 位的同一个词，表示完全一样。"这在当年的编码器-解码器里也许成立，现在不成立了。课上同学答出了原因：<b>因果掩码</b>。第 2 位的 cat 只能看前 1 个 token，第 5 位的 cat 看前 4 个。从第一层注意力开始，它们就不一样了 <span class="ts">40:44</span><span class="ts">41:28</span>。这只适用于自回归的 Transformer。所有 token 互相关注的模型，仍然需要位置编码。Gated DeltaNet 这种有衰减项的局部机制，更是自带了位置信息 <span class="ts">42:11</span>。</li>
+</ul>
+<pre class="code" data-lang="py" data-run>tokens = ["the", "cat", "sat", "on", "cat"]
+seen = {i: tokens[:i + 1] for i in (1, 4)}   # 因果掩码：第 i 位只能看到自己和前面的
+print(len(seen[1]), len(seen[4]))
+# 输出: 2 5
+# 两个 cat 看到的上下文长度不同，第一层的输出就不同。不加位置编码也分得清顺序</pre>
+<p>讲义第 33 页各模型的做法大约一半一半 <span class="ts">42:52</span>。Qwen、DeepSeek 用（部分）RoPE，GLM、Kimi 用 NoPE。Nemotron 靠 Mamba 的隐式顺序，Inkling 用相对位置嵌入。</p>
+<table class="lab">
+  <tr><th>模型</th><th>上下文长度的训练</th><th>位置方法</th><th>怎么到达最大长度</th></tr>
+  <tr><td>Qwen3.8-Flash-Next</td><td>原生 262K，完整课程未公开</td><td>部分 RoPE</td><td>YaRN 扩到 1M</td></tr>
+  <tr><td>DeepSeek V4</td><td>4K → 16K → 64K → 1M</td><td>部分 RoPE</td><td>渐进训练 + YaRN</td></tr>
+  <tr><td>GLM-5.3-Flash</td><td>原生 1M，具体课程未公开</td><td>主注意力用 NoPE</td><td>不做 RoPE 缩放</td></tr>
+  <tr><td>Kimi K3</td><td>8K → 64K → 256K → 1M</td><td>NoPE</td><td>渐进训练到 1M</td></tr>
+  <tr><td>Nemotron 3 Ultra</td><td>1M 长上下文继续预训练，SFT 到 512K</td><td>Mamba 的隐式顺序，无 RoPE</td><td>在长长度上训练和评测</td></tr>
+  <tr><td>Inkling</td><td>1M 上下文，课程未公开</td><td>相对位置嵌入</td><td>学到的相对表示</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>def rot(x, pos, theta=0.3):   # RoPE：按位置把二维向量转 pos × theta 弧度（示意）
+    c, s = math.cos(pos * theta), math.sin(pos * theta)
+    return np.array([c * x[0] - s * x[1], s * x[0] + c * x[1]])
+q, k = np.array([1.0, 0.5]), np.array([0.2, 1.0])
+print(round(rot(q, 5) @ rot(k, 2), 6) == round(rot(q, 13) @ rot(k, 10), 6))
+# 输出: True
+# 两对位置的相对距离都是 3，点积就一样。绝对位置不影响</pre>
+<p>RoPE 像钟表的两根指针。夹角只看差了几格，不看现在几点。</p>
+<p>用 RoPE 时要处理<b>位置外推</b> <span class="ts">42:52</span><span class="ts">43:33</span>。"只看相对位置"并不能直接延长，原因有二。一是训练时长度只有 L。模型从没见过距离超过 L 的 token 对。用到 sL 时就超纲了。二是相对位置编码只是一部分。因果掩码等其他因素也有影响 <span class="ts">43:33</span><span class="ts">44:15</span>。</p>
+<p>常用办法是<b>位置插值</b> <span class="ts">44:55</span>。把每一步的旋转角 θ 除以扩展倍数 s，s = L′/L。这相当于把位置拉伸。新上下文里的第 5s 位，转到原来第 5 位的角度（讲义第 31 页）。更精细的 <b>YaRN</b> 和 KDA 思路相近。长波长的维度完全插值，短波长的维度保持不动，中间的混合。它还加一个注意力温度 √(1/τ) = 0.1 ln s + 1 <span class="ts">45:35</span>。讲义第 32 页提醒，这个式子是在 LLaMA 上拟合的配方。它不是普适常数。</p>
+<pre class="code" data-lang="py" data-run>L, L_new, theta = 4096, 16384, 0.3     # 训练长度、想用的长度、每步旋转角（示意）
+s = L_new / L                          # 扩展倍数 s = L′/L
+print(math.isclose(5 * s * (theta / s), 5 * theta), round(0.1 * math.log(s) + 1, 4))
+# 输出: True 1.1386
+# 位置插值：角度除以 s，第 5s 位就转到原来第 5 位的角度
+# 后一个数是 s = 4 时 YaRN 的注意力温度，套的是讲义第 32 页的配方</pre>
+
+<div data-vz="c2-attn" data-sc="3"></div>
+
+<h3 data-d="2" data-m="1" data-why="训练大模型时才碰到的并行方式">9. 上下文并行把一条长序列切给几台设备，K、V 轮流传</h3>
+<p>上下文并行把一条很长的序列切成几段，每台设备算一段。K、V 沿着环一台传一台。</p>
+<p>做项目想训大一点的模型时会碰到它 <span class="ts">49:05</span>。课上先复习了几种并行 <span class="ts">49:51</span>：</p>
+<ul>
+  <li>数据并行。</li>
+  <li>专家并行：不同专家放不同机器。</li>
+  <li>张量并行：切参数。</li>
+  <li>流水线并行：不同层放不同设备。</li>
+</ul>
+<p>后三种都是模型并行。<b>上下文并行</b>对智能体越来越重要。智能体要在很长的上下文上训练 <span class="ts">50:33</span>。一台设备算一段上下文的 K、V，传给下一台。下一台再算自己那段，依次传下去。超过约 32K 上下文就很重要了。讲义第 36 页的 Ring Attention：每台设备内存 O(nd<sub>h</sub>/P)。通信和块注意力重叠。总计算仍是精确的 O(n²d<sub>h</sub>)。</p>
+<pre class="code" data-lang="py" data-run>P = 4
+seen = [{dev} for dev in range(P)]                 # 每台设备先只有自己那段的 K、V
+for step in range(1, P):                           # 每一步把手里的 K、V 传给下一台
+    for dev in range(P): seen[dev].add((dev - step) % P)
+print([sorted(s) for s in seen][:2])
+# 输出: [[0, 1, 2, 3], [0, 1, 2, 3]]
+# 传 P-1 步后每台都见过全部 K、V，结果仍是精确的全注意力。每台只存 1/P 的序列</pre>
+<p>这像几个人接力读一本厚书。每人只读自己那几章，把笔记传给下一个人。传完一圈，每个人都看过全书的笔记。</p>
+<div class="co warn"><p>工程上有冲突。做模型的人想用 Kimi Delta Attention。做基础设施的人，就得先为它写一个内核。这个内核要支持上下文并行，还要能反向传播。讲师自己就碰到过 <span class="ts">50:33</span>。他想对一个较小的 Qwen 模型做上下文并行。结果网上找不到 Gated DeltaNet 的上下文并行内核 <span class="ts">51:14</span>。标准注意力、滑动窗口这类就容易得多 <span class="ts">51:56</span>。</p></div>
+
+<h3 data-d="2" data-m="3" data-why="这一讲的中心概念，c6 讲 RL 推理端时也用到">10. 缓存命中的 token 只要查表，价钱只有十分之一</h3>
+<p>上一次调用算过的 K、V 存起来。下一次只要前缀一样，就直接查表，不用重算。</p>
+<p>这部分哪怕你只是用智能体的人也要懂 <span class="ts">51:56</span>。一次调用里，输入做 prefill，输出做 decode，过程中算出每个位置的 K、V。调用结束时，<b>到输出末尾为止的 KV 都能放进缓存</b>。下次不用再算 <span class="ts">52:40</span>。只有新回来的工具结果要重新 prefill <span class="ts">53:21</span>。讲义第 38 页把这画成一条越滚越长的可复用前缀。到第 50 步时，缓存部分是新输入加输出的约 50 倍 <span class="ts">53:21</span>。</p>
+<p>讲义第 39 页的实测：不缓存时，计算量随长度平方增长。缓存后基本线性 <span class="ts">54:03</span>。钱上也一样（讲义第 40 页，每百万 token 美元，2026-08-30 查的价）：</p>
+<table class="lab">
+  <tr><th>模型</th><th>缓存输入</th><th>常规输入</th><th>输出</th></tr>
+  <tr><td>DeepSeek V4 Flash</td><td>$0.007–0.014</td><td>$0.22–0.44</td><td>$0.66–1.32</td></tr>
+  <tr><td>GLM-5.2</td><td>$0.26</td><td>$1.40</td><td>$4.40</td></tr>
+  <tr><td>Kimi K3</td><td>$0.30</td><td>$3.00</td><td>$15.00</td></tr>
+  <tr><td>GPT-5.6 Luna</td><td>$0.02</td><td>$0.20</td><td>$1.20</td></tr>
+  <tr><td>GPT-5.6 Sol</td><td>$0.40</td><td>$4.00</td><td>$20.00</td></tr>
+  <tr><td>Claude Opus 5</td><td>$0.50</td><td>$5.00</td><td>$25.00</td></tr>
+</table>
+<p class="cap" style="font-size:13px;color:var(--fg-3)">DeepSeek 的区间是闲时到高峰。"缓存"指缓存读取命中，写入缓存可能另计费。</p>
+<p>讲师的总结 <span class="ts">54:44</span>：缓存 token 通常是未缓存的 <b>1/10</b>。输出又通常是输入的 5 倍。于是输出和缓存输入之间，差了约 50 倍 <span class="ts">56:10</span>。所以要时刻留意 token 有没有命中缓存，否则会白花很多钱。</p>
+<p><b>好的命中率是多少？</b>课上有人说 80%–90%，有人说 95% 以上。讲师的经验是 90%–95% 就说明一切正常。低于这个也许没事，但可能哪里在漏 <span class="ts">55:26</span>。缓存便宜的原因很直接。只要查表，不用重算，尤其省掉了很贵的前馈网络计算 <span class="ts">56:10</span><span class="ts">56:53</span>。讲义第 39 页还提醒一点。测出来的物理成本，和服务商的 API 标价是两回事。</p>
+<pre class="code" data-lang="py" data-run>price = {"cached": 0.50, "input": 5.00, "output": 25.00}       # 讲义第 40 页 Claude Opus 5，美元 / 百万 token
+tokens = {"cached": 50_000, "input": 4_000, "output": 1_000}   # 某一步的一次调用（示意）
+hit = sum(price[k] * tokens[k] for k in price) / 1e6
+miss = (5.00 * 54_000 + 25.00 * 1_000) / 1e6                   # 同一步要是没命中，前缀全按常规价
+print(round(hit, 3), round(miss, 3), round(50_000 / 54_000, 3))
+# 输出: 0.07 0.295 0.926
+# 命中率 92.6%，在讲师说的 90%–95% 正常范围里。命中率一掉，账单就翻几倍</pre>
+<p>缓存像饭店提前熬好的高汤。同一锅接着用很便宜，换一锅就得从头熬。</p>
+<p>推理系统怎么管理这些缓存 <span class="ts">56:53</span>：</p>
+<table class="lab">
+  <tr><th>技术</th><th>思路</th></tr>
+  <tr><td>PagedAttention（vLLM 的核心创新）</td><td>像操作系统管理内存页一样管理 KV。逻辑块经块表，映射到不连续的物理显存块 <span class="ts">57:33</span>。这样能并行生成很多序列。某个序列生成完，就整块释放 <span class="ts">58:14</span>。</td></tr>
+  <tr><td>RadixAttention（SGLang 的核心创新）</td><td>用一棵前缀树（radix tree）查找已经算过的前缀并复用 <span class="ts">58:55</span>。它最早是为聊天机器人设计的，同一会话接着聊。现在对智能体重要得多：智能体的对话更长、更频繁 <span class="ts">59:39</span>。</td></tr>
+  <tr><td>缓存感知路由</td><td>一个数据中心有几十上百台机器。请求要路由到 KV 缓存匹配最好的那台 <span class="ts">59:39</span>。讲义第 43 页：分数 = 可复用前缀 − 排队惩罚 <span class="ts">1:00:21</span>。</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>servers = {"A": {"prefix": 18_000, "queue": 2}, "B": {"prefix": 2_000, "queue": 0}}   # 讲义第 43 页
+penalty = 1_000                                   # 每个排队请求扣多少分（示意，讲义没给权重）
+score = {s: v["prefix"] - penalty * v["queue"] for s, v in servers.items()}
+print(max(score, key=score.get), score)
+# 输出: A {'A': 16000, 'B': 2000}
+# A 虽然在排队，能复用的前缀长得多，还是发给 A</pre>
+<p>OpenRouter 上还有各服务商的缓存命中率排名 <span class="ts">1:00:21</span>。讲师说其中 Mistral 最低，Alibaba Cloud、SiliconFlow 等较高。但这不完全反映服务商好坏，也和各家的负载有关 <span class="ts">1:01:05</span>。</p>
+<p>影响命中率的因素有两个。一是路由做得好不好。二是<b>多久被驱逐</b>：服务商不会永远替你留着缓存。讲师记得 Anthropic 以前是 5 分钟。只要对话不停，就一直在缓存里，停了就被清掉。现在应该可以选到 1 小时，但要多付一点 <span class="ts">1:01:48</span>。对用户来说有个坏消息。不管服务商路由和驱逐做得多差，价格都一样。被过早驱逐也得你买单 <span class="ts">1:02:29</span>。</p>
+<p>课上有同学问，服务商会不会分层缓存，显存一层、磁盘一层？讲师说不确定 <span class="ts">1:02:29</span>。但闭源服务商的内部方案，很可能比开源库更复杂。那是它们的竞争力。另一位同学补充，一般会卸载到 CPU 内存，因为显存太宝贵 <span class="ts">1:03:52</span>。</p>
+
+<div data-vz="c2-context" data-sc="2,3"></div>
+
+<h3 data-d="1" data-m="2" data-why="写外壳的实用守则：别破坏前缀缓存">11. 前缀一个字都不能变，否则后面整段缓存作废</h3>
+<p>缓存只在整个前缀完全一样时才有效。写外壳时，千万别无意中改动前缀 <span class="ts">1:03:52</span>（讲义第 44 页）。如果你只是写外壳、不部署模型，这一节最重要。</p>
+<ul>
+  <li><b>绝不要每一步都改系统消息</b>。一个很自然的想法，是把当前时间加进系统消息。这样智能体就知道几点了 <span class="ts">1:04:39</span>。别这么做。时间每步都变，整段缓存就废了。真需要的话，附在最后一条用户消息或工具结果后面 <span class="ts">1:05:19</span>。</li>
+  <li><b>每一步换一个模型来省钱</b>，也是个看似合理的坏主意 <span class="ts">1:05:19</span>。比如难的一步用最强的模型，接下来三步用便宜的模型。可等你再切回强模型时，前面的前缀它没缓存过。又得按 10 倍的价格付一次 <span class="ts">1:06:02</span>。真要切换，得非常节制。</li>
+  <li>讲义第 44 页还有四条。稳定前缀：指令、工具、例子。变化的状态往后追加：新的用户回合、观察。避免无谓的改动：时间戳、重新排序的 schema。度量复用：缓存 token、TTFT、驱逐。</li>
+</ul>
+<pre class="code" data-lang="py" data-run>def build(now, history, at_end):  # 当前时间放进系统消息，还是附在最后
+    system = "system: you are an agent" + ("" if at_end else " now=" + now)
+    return [system] + history + (["now=" + now] if at_end else [])
+a, b = build("10:00", ["user: fix"], False), build("10:01", ["user: fix"], False)
+print(a[0] == b[0], build("10:00", ["user: fix"], True)[0] == build("10:01", ["user: fix"], True)[0])
+# 输出: False True
+# 时间写进系统消息，第一条就变了，后面整段缓存作废。附在最后，前缀纹丝不动</pre>
+<p>这像快递柜的取件码。错一个数字，柜门就不开。</p>
+<div class="co warn"><p>字幕在 1:05:19 处的转写是这样的。"在对话中途动态改变工具……你可以这么做，没关系。"这和讲义第 44 页"避免重新排序的 schema"方向相反。工具定义在提示前部。改动它就会改变前缀，让后面的缓存失效。这里可能是语音识别把 can't 听成了 can。建议看原视频确认。</p></div>
+
+<h3 data-d="2" data-m="3" data-why="作业 1 TODO 2.1 要写上下文压缩">12. 压缩就是保住开头、留下结尾、把中间压成摘要</h3>
+<p>压缩就是把旧历史压成精华，好腾出地方接着干。开头原样留，最近几步原样留，中间那段换成摘要。</p>
+<p>课上问有多少人看到"正在压缩上下文"时很兴奋，没人举手 <span class="ts">1:06:02</span>。压缩做得不好，智能体就会忘事，开始做完全不同的事 <span class="ts">1:06:45</span>。甚至会删掉你的文件系统 <span class="ts">1:07:26</span>。</p>
+<p>讲义第 47 页把它看成<b>状态估计</b>。历史 H<sub>t</sub> 经压缩器 C<sub>B</sub> 得到工作状态 ŝ<sub>t</sub>，要求三点：</p>
+<table class="lab">
+  <tr><th>要求</th><th>含义</th></tr>
+  <tr><td>行为保真</td><td>p(A<sub>future</sub> | H<sub>t</sub>) ≈ p(A<sub>future</sub> | ŝ<sub>t</sub>)。压缩后接下来的动作，和看着完整历史时一样，甚至更好 <span class="ts">1:07:26</span>。</td></tr>
+  <tr><td>有界</td><td>ŝ<sub>t</sub> = C(H<sub>t</sub>; B)，|ŝ<sub>t</sub>| ≤ B。小到你愿意接着干活 <span class="ts">1:08:08</span>。</td></tr>
+  <tr><td>可恢复</td><td>锚点原样复制，保留指向源证据的指针</td></tr>
+</table>
+<p>常见的保留策略（讲义第 48 页）<span class="ts">1:08:08</span>：</p>
+<ul>
+  <li><b>锚点</b>原样留下，比如用户会话开头说的话。前面有同学抱怨，智能体会忘记会话开头的指令。讲师说这可能是外壳的设计缺陷 <span class="ts">1:08:49</span>。好的外壳会刻意不删会话开头，因为那部分更重要。当然有时也无法避免。</li>
+  <li><b>中间部分</b>编码成检查点，放回去。</li>
+  <li><b>最近的尾部</b>，也就是最近的动作，常常原样保留。</li>
+  <li><b>证据</b>通常放进证据库。用 CLI 编程智能体时，完整历史一般都存在磁盘上某处。即使压缩丢了东西，也可以让它回去读历史，找之前的结果 <span class="ts">1:09:35</span>。</li>
+</ul>
+<pre class="code" data-lang="py" data-run>msgs = ["system", "task", "a1", "obs1", "a2", "obs2", "a3", "obs3a", "obs3b"]
+head, tail = 2, msgs.index("a3")      # 锚点：系统和任务。尾部：最近一个完整动作和它的全部观察
+summary = "summary(" + ",".join(msgs[head:tail]) + ")"   # 中间那段交给模型压成摘要（示意）
+print(msgs[:head] + [summary] + msgs[tail:])
+# 输出: ['system', 'task', 'summary(a1,obs1,a2,obs2)', 'a3', 'obs3a', 'obs3b']
+# 作业 1 考点：TODO 2.1 的 compact_context 只压一段旧前缀，系统和任务消息原样保留
+# 作业 1 考点：至少留最近一个完整的助手动作，连同它的全部工具观察
+# 作业 1 考点：摘要要保住目标、约束、文件、命令、编辑、具体结果、失败过的办法、测试、阻碍和下一步</pre>
+<p>压缩策略要做四个决定（讲义第 49 页）<span class="ts">1:10:16</span>：</p>
+<table class="lab">
+  <tr><th>决定</th><th>怎么做</th></tr>
+  <tr><td>触发</td><td>token 阈值，比如最多用 200K，超了就压。服务商强制的上限。手动请求，很多编程工具有 <code>/compact</code> 命令。</td></tr>
+  <tr><td>选择</td><td>保护开头，保留尾部，压缩中间较旧的部分 <span class="ts">1:11:04</span>。</td></tr>
+  <tr><td>替换</td><td>可以是结构化摘要。有时要求用一个工具调用，规定摘要必须包含哪些项。也可以是自由文本。讲师说，可能只有 OpenAI 会压成你读不了的加密内容。它不想让人偷走自己的压缩算法。</td></tr>
+  <tr><td>恢复</td><td>压坏了时怎么办，要事先定义。</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>def maybe_compact(msgs, limit=6_000):      # 粗估：4 个字符约 1 个 token（示意）
+    used = sum(len(m) // 4 for m in msgs)
+    return "compact" if used &gt; limit else "keep"
+print(maybe_compact(["x" * 20_000]), maybe_compact(["x" * 30_000]))
+# 输出: keep compact
+# 作业 1 考点：TODO 2.2 每次请求新动作之前调 maybe_compact_context()
+# 作业里用 6,000 token 的阈值跑 django__django-15368，和不压缩的基线比 token 用量，写进报告
+# 不许用服务商自带的压缩接口</pre>
+<p>压缩像搬家前收拾行李。证件原样带走，最近要用的放手边，其余的装箱贴标签。标签写得太粗，到新家就找不到东西。</p>
+<p>风险是<b>反复压缩</b> <span class="ts">1:11:46</span>。第一次还行，压的次数多了，丢得越来越多。讲义第 50 页的例子：Use CUDA 12.4 → 12.x → recent CUDA → 约束丢失。这也是大家不喜欢压缩的原因。</p>
+<div class="co bad"><p><b>只看基准分会上当</b>。OpenHands 早期做了可能是最早的生产级压缩算法，当时叫 compression <span class="ts">1:12:29</span>。作为研究项目，它花了大约一个月。在 SWE-bench 上分数一点没掉，还省了很多 token。结果放进真实系统，犯了很蠢的错。每压缩一次就提交一个 PR。它忘了自己已经提交过，同一个功能来了 5 个 PR。它还会忘掉会话中途用户追加的指令 <span class="ts">1:13:09</span>。因为评测只有单轮，只有一条用户消息。他们就把后来的多条用户消息都压掉了。除非基准真的覆盖每种用法，否则还得在真实使用中测 <span class="ts">1:13:52</span>。讲义第 51 页给的评测方式是"基于续写"。先植入约束、决定和产物，再用生产策略压缩，然后继续干。最后看四样：状态回忆、任务成功、效率、反复压缩时的稳定性。</p></div>
+<p>最后的小结（讲义第 53 页）<span class="ts">1:13:52</span>。智能体循环让上下文迅速增长。推理有一堆挑战。结构和缓存解决效率。超出能处理的范围后，再用压缩。课上有同学问，子智能体算不算一种管理上下文的办法？算，后面专门讲 <span class="ts">1:14:32</span>。</p>
+
+<div data-vz="c2-compact"></div>
+
+<div class="co key"><p><b>和作业 1 的联系</b>：要点已写进上面例子的注释。作业本身看第 8 章的 <a href="c8.html#e1">作业 1</a>。复原过程看作业复原笔记的 <a href="作业复原/作业笔记/stages.html#S0">S0</a>。</p></div>
+</section>
+
+
+<section class="ep" data-n="2">
+<h2>记忆与技能</h2>
+<p class="tldr">上一讲管的是一个任务之内的上下文。这一讲管跨任务。把经验存到上下文窗口外面，比如数据库、文件。以后的任务就用得上。外部产物有三种：完整的经历、事实、技能。技能可以是人写的说明，也就是 Agent Skills 标准。它靠渐进披露按需加载。技能也可以由智能体从自己成功或失败的经历里归纳出来。存成文本灵活。存成代码可测试、又省步数，但死板。最后讲技能的整个生命周期。怎么学、怎么用、怎么修补和遗忘。还有能不能直接训练模型去归纳技能。</p>
+
+<h3 data-d="1" data-m="1" data-why="这一讲的动机和三个问题">1. 好不容易摸清的做法，要存到上下文外面留给下次</h3>
+<p>一个任务里学到的东西，任务结束就跟着上下文一起没了。想让下个任务用上，就得存到外面。</p>
+<p>上一讲是智能体在<b>一个任务里</b>挑哪些东西留在上下文 <span class="ts">0:01</span>。这一讲要跨过上下文窗口。把对以后的任务有用的信息，存在外部 <span class="ts">0:44</span>。</p>
+<p>讲师预告了两种看法 <span class="ts">1:26</span>。一是从经验里<b>归纳技能</b>，建立在早年的记忆系统研究之上。二是技能作为人写给智能体的说明，编码最佳实践。两者是互补的。比如让智能体从经验里提议最佳实践，人来改。或者人写的技能，让智能体根据经验去完善。</p>
+<p>动机在讲义第 2 页 <span class="ts">2:07</span>。在网店里"把 Sony 耳机加入心愿单"。步骤是打开商店 → 找搜索框 → 输入 → 点搜索。之后"找无线键盘的价格区间"，又要做一遍同样的搜索。只是最后一步不同。智能体好不容易才搞明白怎么搜。这个知识就该留到以后用 <span class="ts">2:49</span>。</p>
+<pre class="code" data-lang="py" data-run>task1 = ["open_shop", "find_search_box", "type('Sony headphones')", "click_search", "add_to_wishlist"]
+task2 = ["open_shop", "find_search_box", "type('wireless keyboard')", "click_search", "read_price_range"]
+shared = [a.split("(")[0] for a, b in zip(task1, task2) if a.split("(")[0] == b.split("(")[0]]
+print(shared)
+# 输出: ['open_shop', 'find_search_box', 'type', 'click_search']
+# 前四步一模一样，只有搜的词不同。值得存成一个"搜索"技能，搜索词留成参数</pre>
+<p>这像做菜记笔记。第一次摸索出怎么调酱汁，写在本子上，下次直接翻。由此引出三个问题 <span class="ts">3:30</span><span class="ts">4:11</span>：</p>
+<table class="lab">
+  <tr><th>问题</th><th>具体问什么</th></tr>
+  <tr><td>表示</td><td>共享的结构存成原始动作、文本，还是代码函数？代码函数能当黑盒调用、能测试、能层层调用。</td></tr>
+  <tr><td>归纳</td><td>智能体怎么判断，任务的哪一部分值得以后复用？</td></tr>
+  <tr><td>生命周期</td><td>记忆一直往里加吗？信息冲突、找到更好的办法时怎么改？不再适用的怎么删？</td></tr>
+</table>
+
+<h3 data-d="1" data-m="2" data-why="上下文、外部产物、权重三处更新的取舍">2. 经验能存在三处：上下文、外部产物、模型权重</h3>
+<p>经验可以存在三个地方，各有取舍（讲义第 3 页）<span class="ts">4:11</span>：</p>
+<table class="lab">
+  <tr><th>位置</th><th>优点</th><th>缺点</th></tr>
+  <tr><td>上下文窗口（上一讲）</td><td>对发生过的事保真度最高</td><td>贵、嘈杂，而且不会自己决定什么重要。就算有 100 万 token，连着做多个任务也会超 <span class="ts">4:52</span><span class="ts">5:33</span>。</td></tr>
+  <tr><td>外部产物（这一讲）</td><td>可检查、可编辑、可检索、可移植</td><td>要归纳、挑选、维护</td></tr>
+  <tr><td>模型权重（SFT 那讲）</td><td>推理更快，行为改变更广</td><td>更新慢、不透明、绑定某一个模型</td></tr>
+</table>
+<p>上下文像桌面，外部产物像书架上的笔记本，权重像肌肉记忆。桌面看得最全，但放不下多少。笔记本谁都能翻。肌肉记忆最快，可换个人就没了。</p>
+<p>外部产物最大的好处是<b>能跨模型移植</b>。一份"怎么在这个网站搜商品"的说明，换哪个模型都能用。改权重只对那一个模型有效 <span class="ts">6:16</span>。它还<b>能被人检查</b>。智能体可以提议一段文字，你看一眼再改。可解释的记忆方式，让人和系统之间有了接口 <span class="ts">6:58</span>。外部存储可以是要管理的数据库。也可以是智能体能访问的文件系统 <span class="ts">5:33</span>。</p>
+<p>课上调查 <span class="ts">6:58</span>：大多数人用过技能。其中约一半自己写过技能。很多人让智能体替自己写过 <span class="ts">7:39</span>。</p>
+<p>有同学的经验是：模型写技能常常<b>写得太多</b>，过度推断。交给另一个模型时，它会照着字面做远超你想要的事。另一位同学让模型"写给另一个智能体看的说明"，效果还行。讲师的体会是，模型不太会揣摩别人怎么读说明。读的人可以是另一个人，也可以是另一个智能体。这叫心智理论 <span class="ts">8:22</span>。但明确提示它这么做，会好很多 <span class="ts">9:05</span>。</p>
+
+<h3 data-d="1" data-m="2" data-why="经历、事实、技能三类经验的区分">3. 能存的经验有三种：经历、事实、技能</h3>
+<p>经历是整条录像。事实是一句关于环境或用户的话。技能是去掉细节后的"怎么做"。</p>
+<p>讲义第 4 页的三类经验 <span class="ts">9:05</span>：</p>
+<div class="cmp">
+  <div class="c-data"><h4>经历（episode）</h4><p>完整的观察和动作序列。保真度最高，保留了环境和指令的全部细节。也最贵，最费 token，而且大多用不上。就像监督学习，要抽象出对泛化重要的东西 <span class="ts">9:47</span>。适用于具体的商品、价格或顺序还会再用到时。</p></div>
+  <div class="c-ok"><h4>事实（fact）</h4><p>关于环境或用户的知识。比如"这家店只在商品页显示价格"，用户多大、住哪。早期记忆系统多是存事实。ChatGPT、Claude 的"记忆"功能也是这样。设置里能看到这些文字，是模型从你过去的对话里写出的。有点像压缩 <span class="ts">10:27</span>。</p></div>
+  <div class="c-warn"><h4>技能（skill）</h4><p>任务中可复用的一部分怎么做，并且和具体细节分开。只记"怎么搜"，不记"搜了什么"。可以是文本、实际动作，甚至代码。只有同一个子任务会反复出现时才有用 <span class="ts">11:11</span>。</p></div>
+</div>
+<pre class="code" data-lang="py" data-run>episode = [("type", "search_box", "Sony headphones"), ("click", "search_btn", ""), ("read", "price", "$58")]
+skill = [(op, target, "{query}" if op == "type" else arg) for op, target, arg in episode[:2]]
+print(len(episode), skill)
+# 输出: 3 [('type', 'search_box', '{query}'), ('click', 'search_btn', '')]
+# 经历整条原样存，最全也最占地方。技能只留"怎么搜"，搜了什么换成变量（示意）</pre>
+<p>三类经验像三种笔记。经历是录像，事实是便利贴，技能是菜谱。</p>
+<p>记忆和技能有交集（讲义第 5 页）<span class="ts">11:52</span>。记忆是从智能体自己的交互里存下来的。比如之前买过的商品。技能是关于怎么做的可复用知识。比如人写的"上线前检查清单"。两者的交集是<b>归纳出的技能</b>。也就是从智能体自己成功的经历里抽出来的技能 <span class="ts">12:33</span>。技能有两种来源（讲义第 6 页）：</p>
+<table class="lab">
+  <tr><th></th><th>作为指令的技能</th><th>作为学习的技能</th></tr>
+  <tr><td>作者</td><td>人或组织（个人偏好、公司规范）</td><td>智能体</td></tr>
+  <tr><td>来源</td><td>已有的专业知识、政策、文档</td><td>它自己的经历和结果</td></tr>
+  <tr><td>强项</td><td>意图和来历清楚，质量更可控 <span class="ts">13:15</span></td><td>能自动化：归纳 → 用它重做任务 → 看指标有没有变好</td></tr>
+  <tr><td>主要负担</td><td>专家写和维护都费时间</td><td>评判结果、验证、整理。可能有噪声，用到别的智能体上还可能有意外后果。</td></tr>
+</table>
+
+<h3 data-d="1" data-m="3" data-why="作业 1 TODO 1.4 要解析 SKILL.md">4. 技能就是一个文件夹，SKILL.md 开头写名字和什么时候用</h3>
+<p>一个技能就是一组智能体能读的文件。核心是 SKILL.md，开头的元数据告诉模型什么时候该用它。</p>
+<p>讲义第 8 页取自 OpenHands 的博客 <span class="ts">14:00</span><span class="ts">14:40</span>。假如你每次都对编程智能体说同样的话。比如用某几种 linter 检查、所有公开 API 加类型标注。再比如用 Google 风格的 docstring、新函数都写 pytest。与其每次都打一遍，不如把它存成一个文本文件。智能体把它当作指令来用。</p>
+<p><b>什么时候该写技能？当你要按固定规范反复做一件事时。</b>比如加测试、审 PR、升级依赖。智能体会结合上下文去解释这份规范 <span class="ts">15:21</span>。</p>
+<p>现在的标准叫 Agent Skills。技能就是<b>一组智能体能读的文件</b>（讲义第 9 页）<span class="ts">15:21</span><span class="ts">16:01</span>：</p>
+<pre class="code" data-lang="text" data-title="讲义第 9 页 · 一个人写的技能包">python-review/
+├── SKILL.md       # 必需：指令 + 元数据
+├── scripts/       # 可选：可执行代码（比如跑 linter 的脚本）
+├── references/    # 可选：补充文档，用到时才读
+└── assets/        # 可选：模板、资源
+
+# SKILL.md
+---
+name: python-review
+description: This skill should be used when the user asks to
+  "review Python code", "check Python style", "lint Python",
+  or mentions code quality.
+triggers:
+  - python review
+  - code review
+  - lint python
+---
+# Python Code Review
+Review Python code using company standards ...</pre>
+<p>SKILL.md 是一个 Markdown 文件，开头是 YAML 元数据 <span class="ts">16:01</span>。必须有名字，和一句简短的描述。描述告诉模型<b>什么时候该用这个技能</b>。元数据之后是详细的做法，比如用哪些 linter、怎么测试 <span class="ts">16:45</span>。</p>
+<pre class="code" data-lang="py" data-run>text = "---\nname: python-review\ndescription: Use when asked to review Python code.\n---\n# Python Code Review\n..."
+_, front, body = text.split("---\n", 2)            # 开头两个 --- 之间是 YAML 元数据
+meta = dict(line.split(": ", 1) for line in front.strip().split("\n"))   # 示意：真 YAML 要用 yaml 库解析
+print(meta["name"], "|", body.split("\n")[0])
+# 输出: python-review | # Python Code Review
+# 作业 1 考点：TODO 1.4 的 load_skills，每个子目录找一个 SKILL.md，解析开头 --- 之间的 YAML
+# 作业 1 考点：按 frontmatter 的 name 建映射。重名、缺 frontmatter、格式坏了，都要报清楚的 ValueError</pre>
+<p>SKILL.md 像菜谱卡片。卡片顶上写菜名和"什么时候做这道菜"，下面才是步骤。</p>
+<p>课上几个问答 <span class="ts">18:52</span>：</p>
+<ul>
+  <li><b>技能多了会不会拖累表现？</b>会。要让技能数量少一点、按需加载。讲师说，开源智能体 Hermes 的系统提示里，技能描述总共约 3,000 token <span class="ts">19:33</span>。后面会看到，加进不相关的技能会让表现下降。上下文变长，模型会被无关的东西分心。不过有一千、一万个技能的情况很少见 <span class="ts">20:14</span>。</li>
+  <li><b>触发有多灵敏？</b>触发就是模型生成的工具调用。它完全取决于模型，取决于你写的描述，所以需要评测 <span class="ts">20:14</span>。</li>
+  <li><b>SKILL.md 这个名字是固定的吗？</b>是标准名，智能体框架就是按它去加载的 <span class="ts">20:55</span>。其他格式尽量向它靠拢。也可以在 SKILL.md 里描述清楚，反正都是给模型看的说明 <span class="ts">21:38</span>。</li>
+  <li><b>为什么用 Markdown？</b>它兼顾机器和人的可读性，能放链接、能嵌图 <span class="ts">21:38</span>。但它是线性的，难以表达动态的东西。比如交互式的数据可视化 <span class="ts">22:19</span>。这类可以写成代码文件，在 Markdown 里引用 <span class="ts">23:00</span>。</li>
+  <li><b>会从很大的技能库里检索吗？</b>研究里会 <span class="ts">23:41</span>。可以用文本嵌入检索，也可以按领域限定。比如这些技能只用于这个网站 <span class="ts">24:22</span>。</li>
+</ul>
+
+<h3 data-d="1" data-m="3" data-why="作业 1 TODO 1.4 要实现渐进披露">5. 渐进披露：系统提示只放目录，正文用到才读</h3>
+<p>系统提示里只放每个技能的名字和描述。模型觉得相关，才用工具调用去读正文。</p>
+<p>把所有技能的全部内容塞进上下文，太多了。所以有<b>渐进披露</b>（progressive disclosure）：只在需要时，露出技能的相关部分 <span class="ts">17:27</span>。</p>
+<table class="lab">
+  <tr><th>级别</th><th>内容</th><th>什么时候进上下文</th></tr>
+  <tr><td>1</td><td>SKILL.md 的元数据（名字 + 描述）</td><td>总是在系统提示里，所以描述要简洁 <span class="ts">17:27</span><span class="ts">18:09</span>。</td></tr>
+  <tr><td>2</td><td>SKILL.md 的 Markdown 正文</td><td>模型判断相关、用工具调用去读时</td></tr>
+  <tr><td>3</td><td>打包的文件（文本、脚本、数据）</td><td>模型读这些文件时。所以 SKILL.md 里要写清楚，还有哪些资源可以看 <span class="ts">18:09</span><span class="ts">18:52</span>。</td></tr>
+</table>
+<p>第 1 级常驻上下文。技能一多，描述就占地方，还让模型分心。所以描述要短。</p>
+<pre class="code" data-lang="py" data-run>skills = {"python-review": {"metadata": "Use when asked to review Python code.", "content": "# Python Code Review\n..."}}
+catalog = "\n".join(f"- {n}: {s['metadata']}" for n, s in skills.items())   # 第 1 级：系统提示里只放目录
+def invoke_skill(name): return skills[name]["content"]                       # 第 2 级：调用时才给正文
+print(catalog, "|", len(invoke_skill("python-review")))
+# 输出: - python-review: Use when asked to review Python code. | 24
+# 作业 1 考点：技能目录放进系统提示，模型调用 invoke_skill 才拿到全文
+# 作业 1 考点：没有技能时，提示里不许出现 patch.txt 或提交说明。用到的 submit-task 就是下面索引里那条</pre>
+<p>渐进披露像图书馆。书架上只露书脊，想看哪本再抽出来翻。附录要用时才去查。</p>
+<p>讲义第 10 页是 Hermes 的系统提示（节选）<span class="ts">24:22</span><span class="ts">25:04</span>：</p>
+<pre class="code" data-lang="text" data-title="讲义第 10 页 · 技能索引（节选自 Hermes 的 prompt_builder.py）">## Skills
+Before replying, scan the skills below. If a skill matches or is even
+partially relevant to your task, you MUST load it with skill_view(name)
+and follow its instructions. ...
+
+&lt;available_skills&gt;
+  code-quality:
+    - python-review: This skill should be used when the user asks to
+      "review Python code", "check Python style", "lint Python", or
+      mentions code quality.
+  workflow:
+    - submit-task: When the task is complete, take the required steps to
+      submit the solution. DO NOT submit without invoking this skill.
+    - release-notes: ...
+&lt;/available_skills&gt;
+
+Only proceed without loading a skill if genuinely none are relevant.</pre>
+<p>之后的回合（讲义第 11 页）<span class="ts">25:04</span><span class="ts">25:47</span>：</p>
+<ol class="pipe">
+  <li>回合 2<small>模型调用 <code>skill_view('python-review')</code>，正文作为工具结果进来。作业 1 里叫 <code>invoke_skill</code>，只调一次。</small></li>
+  <li>回合 3<small>跑 <code>python scripts/run_checks.py src/</code>。进上下文的是脚本输出，也就是 Black 和 Ruff 的发现。<b>代码本身从不进上下文。</b></small></li>
+  <li>回合 4<small><code>skill_view('python-review', 'references/docstring-style.md')</code>。docstring 规则只在模型点名时才进来。</small></li>
+</ol>
+
+<div data-vz="c2-skills" data-sc="0"></div>
+
+<h3 data-d="1" data-m="1" data-why="一个基准的结果，结论是技能要少而准">6. 挑好的技能平均有用，但要少而准，有时反而帮倒忙</h3>
+<p>挑好的技能能把平均通过率从 33.9% 提到 50.5%。但技能越多、越长，收益越小，有的还帮倒忙。</p>
+<p>"技能多了会不会有害""触发得对不对"，这类问题要靠评测回答 <span class="ts">25:47</span>。这方面的工作还很新 <span class="ts">26:28</span>。SkillsBench 是不错的第一步（讲义第 12 页）。</p>
+<p>它的做法是这样的 <span class="ts">27:09</span>。先从网上收集了约 200 万个技能。另外请人写了 400 个可能用得上技能的任务。这些任务和技能是独立写的。再让标注者从技能池里，挑出适用于每个任务的技能。筛到最后是 8 个领域、87 个任务。在 18 种"模型 × 外壳"配置上，对比"不给技能"和"给挑好的技能"。为了确保挑的技能有用，还先用一小部分模型检查过。给了技能，表现确实能提高 <span class="ts">27:53</span>。</p>
+<p>结果（讲义第 13 页）<span class="ts">27:53</span><span class="ts">28:36</span>：</p>
+<ul>
+  <li>挑好的技能让平均通过率从 <b>33.9% 提到 50.5%</b>。</li>
+  <li><b>聚焦的技能收益更大</b>。只需要 1–3 个技能的任务，比需要 4 个以上的提升多。SKILL.md 更短的也提升更多。部分是难度原因，部分是技能多了会让模型分心。</li>
+  <li>87 个任务里有 <b>13 个</b>，技能反而有害 <span class="ts">29:18</span>。技能可能挤掉了更好的默认做法。模型就用跟你要求不一样的方式做任务了。所以写完技能，要检查它是不是真的让结果变好了。</li>
+</ul>
+<pre class="code" data-lang="py" data-run>before, after = 33.9, 50.5             # 讲义第 13 页：不给技能 vs 给挑好的技能，平均通过率 %
+harmful, total = 13, 87                # 87 个任务里有 13 个，技能反而有害
+print(round(after - before, 1), round(harmful / total * 100, 1))
+# 输出: 16.6 14.9
+# 平均涨了 16.6 个百分点，可约 15% 的任务变差了。写完技能要回头测</pre>
+<p>技能像给新同事的交接文档。写得准，他上手快。写多了、写偏了，他反而照着错的做。</p>
+
+<h3 data-d="1" data-m="1" data-why="技能来源和维护的实践案例">7. 技能要从真做过的事里提炼，再靠真实反馈修补</h3>
+<p>凭空写的技能常常没用。先真做一遍，再把做法存下来，之后看真实反馈反复修。</p>
+<p>技能的来源（讲义第 14 页）<span class="ts">29:18</span>：</p>
+<ul>
+  <li>随外壳捆绑的默认集。</li>
+  <li>人写或安装的。放进仓库的 <code>.agents/skills/</code>，或者从别的仓库、注册表装。</li>
+  <li>智能体自己创建的 <span class="ts">29:59</span>。Hermes 有 <code>skill_manage</code> 工具，可以创建、修补、删除技能。OpenHands 有 <code>/skill-creator</code> 命令，引导你创建。</li>
+</ul>
+<div class="co key"><p><b>建技能要基于之前真实的交互，别凭空写</b>。SkillsBench 里有个结果。只给任务描述、让模型凭空创建技能，做得很差 <span class="ts">29:59</span>。表现反而下降。人可能好一些，因为你知道自己想要怎么做。但最好还是基于做过的事。做任务的过程，会暴露出你事先没意识到的要求 <span class="ts">30:39</span>。OpenHands 的建议是这样的。智能体刚做完一个你想重复的流程，就马上创建技能。然后再测几次。</p></div>
+<p>OpenHands 维护代码审查技能的案例（讲义第 15 页）<span class="ts">30:39</span><span class="ts">31:21</span>：</p>
+<ol class="pipe">
+  <li>审查技能<small>每个 PR 都跑 python-review 这类技能</small></li>
+  <li>记录每次运行<small>智能体给出审查意见</small></li>
+  <li>给每次打分<small>PR 合并后，人会采纳或忽略各条意见。用模型评审数出被采纳了多少。</small></li>
+  <li>找反复出现的失败<small>几百上千个例子后，用推理模型总结。无视仓库惯例约 15%，批准了有严重缺陷的 PR 约 10%。</small></li>
+  <li>修补 SKILL.md<small>同一个模型起草修改。发现严重问题就要求修改。发建议前，先对照仓库检查。</small></li>
+</ol>
+<pre class="code" data-lang="py" data-run>runs = ["ok"] * 75 + ["ignored_repo_conventions"] * 15 + ["approved_bad_pr"] * 10   # 比例照讲义第 15 页（示意）
+failures = collections.Counter(r for r in runs if r != "ok")
+print(failures.most_common())
+# 输出: [('ignored_repo_conventions', 15), ('approved_bad_pr', 10)]
+# 第 4 步：先找出反复出现的失败，第 5 步再让模型照着改 SKILL.md</pre>
+<p>这像改菜谱。照着做几遍，记下哪步总翻车，再改菜谱。凭空写的菜谱，往往漏了关键火候。</p>
+
+<h3 data-d="1" data-m="2" data-why="记忆系统的两个经典做法：分层存储和记忆更新">8. MemGPT 让模型自己调工具读写记忆，Mem0 还会改和删</h3>
+<p>MemGPT 把记忆分成快慢两层。读写都是模型自己发的工具调用。Mem0 在此之上加了更新和删除。</p>
+<p>接下来讲怎么让模型自动记住过去的经历 <span class="ts">32:03</span>。<b>MemGPT</b> 是 2023 年很有影响的工作。它是最早在上下文窗口之外管理记忆的方法之一。思路来自系统里的存储层次。快的一层是上下文窗口，大而慢的一层是外部的事实库 <span class="ts">32:45</span>。当时上下文只有约 8,000 token。现在窗口大了，要存的东西也多了，对智能体同样适用 <span class="ts">33:27</span>。</p>
+<p>它的结构在讲义第 17 页 <span class="ts">34:09</span>。系统指令只读，工作上下文可读写，还有一个 FIFO 消息队列。外面是归档存储和召回存储。<b>读写都是模型自己发出的工具调用</b>。例子：用户提到 Six Flags。模型调用 <code>recall_storage.search("six flags")</code>。过去 3 条提到它的消息进了工作上下文，它再回答 <span class="ts">34:09</span><span class="ts">34:50</span>。</p>
+<pre class="code" data-lang="py" data-run>recall = ["I love Six Flags rides", "lunch was ok", "Six Flags trip next week", "six flags tickets?"]
+def recall_search(q): return [m for m in recall if q in m.lower()]   # 模型自己发起的工具调用
+working_context = recall_search("six flags")                        # 搜到的消息放进工作上下文
+print(len(working_context))
+# 输出: 3
+# 召回存储在上下文外面。模型不主动搜，这些旧消息就看不见（示意）</pre>
+<p>MemGPT 像书桌和档案柜。桌上放正在用的，柜子里放旧的，要用时自己去柜子里翻。</p>
+<p>只能往里加是不够的 <span class="ts">34:50</span>。你说过"我在 X 公司工作"，后来换了工作。系统应该用最新的信息。<b>Mem0</b> 引入了记忆更新（讲义第 18 页）<span class="ts">35:32</span>。流程分三步。先用 LLM 从每条新消息里抽出可能要存或要改的事实。再用嵌入检索，从数据库里取出最相似的 top-k 条旧记忆。最后让 LLM 对比，选一种操作：</p>
+<table class="lab">
+  <tr><th>操作</th><th>什么时候</th></tr>
+  <tr><td>ADD</td><td>还没存过类似的</td></tr>
+  <tr><td>UPDATE</td><td>新消息改变了已有的记忆（换了工作）<span class="ts">36:15</span></td></tr>
+  <tr><td>DELETE</td><td>新消息否定了已有的记忆。比如"我被裁了"，与其改，不如删掉"在 X 公司工作"。</td></tr>
+  <tr><td>NOOP</td><td>已经存过，或者无关 <span class="ts">36:56</span></td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>memory = {"employer": "X Corp"}
+def decide(key, value):   # 真系统里由 LLM 对比新旧记忆后选（示意）
+    old = memory.get(key)
+    return "ADD" if old is None else "NOOP" if old == value else "DELETE" if value is None else "UPDATE"
+print([decide("city", "Pgh"), decide("employer", "X Corp"), decide("employer", "Y Inc"), decide("employer", None)])
+# 输出: ['ADD', 'NOOP', 'UPDATE', 'DELETE']
+# 换工作是 UPDATE，"我被裁了"是 DELETE。只会 ADD 的记忆，迟早自相矛盾</pre>
+<p>讲师问：上一讲有什么东西目标类似？同学答出了"哈希 / 键值存储"。更具体地说是 <b>DeltaNet</b>。线性注意力只能往状态里加。DeltaNet 会先按键取出已存的值，再修改它。Mem0 可以看成它在文本层面的类比 <span class="ts">36:56</span><span class="ts">38:18</span>。改权重的那种学习里也需要"遗忘"，比如遗忘学习（unlearning）这类方法 <span class="ts">38:18</span>。</p>
+
+<div data-vz="c2-skills" data-sc="3"></div>
+
+<h3 data-d="1" data-m="2" data-why="Reflexion 简单有效，讲师推荐做项目时实现">9. Reflexion 把"哪里错了"写成一句话，下次带着它重做</h3>
+<p>做错一次后，让模型用自然语言写下错在哪。第二次把这句话放进上下文，再做一遍。</p>
+<p><b>Reflexion</b> 简单而有效，做项目时很值得实现 <span class="ts">39:01</span>。设定是同一个任务允许多次尝试。做一次，拿到"大概对不对"的反馈，反馈来自人或 LLM 评审。再让模型重做 <span class="ts">39:43</span>。关键发现是<b>用自然语言描述哪里错了</b>。把它作为第二次的条件，帮助很大。</p>
+<p>讲义第 19 页的例子 <span class="ts">40:24</span>。问题是"1776 年 10 月 28 日，在纽约 White Plains 附近打的是哪一系列战役"。第一次答了 <code>Finish[Battle of White Plains]</code>，错了，只答了一场战役。生成的反馈是"问的是一系列战役，我只给了一场的名字……"。第二次答 <code>Finish[The New York and New Jersey campaign]</code>，对了。只要反馈足够通用，它也能帮到相似的其他任务 <span class="ts">41:06</span>。</p>
+<pre class="code" data-lang="py" data-run>def attempt(task, reflection=""):     # 假模型：带上反思就答对（示意）
+    return "New York and New Jersey campaign" if "series" in reflection else "Battle of White Plains"
+first = attempt("which series of battles ...")
+reflection = "The question asks for a series of battles. I only named one battle."   # 讲义第 19 页的反馈
+print(first, "-&gt;", attempt("which series of battles ...", reflection))
+# 输出: Battle of White Plains -&gt; New York and New Jersey campaign</pre>
+<p>Reflexion 像考完试写错题本。错在哪写成一句话，下次考前翻一下。</p>
+<p>另一类做法是<b>记住整条轨迹</b>，用来引导以后的任务（讲义第 20 页）<span class="ts">41:06</span><span class="ts">41:47</span>：</p>
+<table class="lab">
+  <tr><th></th><th>做法</th></tr>
+  <tr><td>存什么</td><td>完整轨迹，成功和失败的都有。有时存之前先改写、加注释，类似 Reflexion 生成的反馈文字。</td></tr>
+  <tr><td>经验池从哪来</td><td>离线训练阶段收集的示范。智能体一个个做任务时积累的。和 / 或事先手写的。</td></tr>
+  <tr><td>怎么用</td><td>新任务来了，用文本嵌入按任务描述检索最相似的旧轨迹。也可以限定在同一领域。检索出的轨迹作为少样本例子，放进上下文 <span class="ts">43:17</span>。</td></tr>
+</table>
+<pre class="code" data-lang="py" data-run>pool = {"buy headphones on shop": "traj_17", "fix failing test": "traj_42", "buy keyboard on shop": "traj_08"}
+words = lambda s: set(s.split())
+query = "buy a keyboard on shop"
+best = max(pool, key=lambda t: len(words(t) &amp; words(query)))   # 真系统用文本嵌入，这里拿重合词数代替（示意）
+print(pool[best])
+# 输出: traj_08
+# 检索出的旧轨迹当作少样本例子放进上下文。这就是"给智能体用的 RAG"</pre>
+<p>讲师说这就像"给智能体用的 RAG"，相当有效 <span class="ts">41:47</span><span class="ts">42:28</span>。课上有同学问轨迹具体指什么。就是智能体从环境或用户收到的消息，也就是观察。还有它做的动作，也就是工具调用。可能还有思维链。基本上就是上下文窗口里的全部消息序列 <span class="ts">42:28</span>。</p>
+
+<h3 data-d="1" data-m="2" data-why="从轨迹归纳可复用工作流的基本做法">10. 归纳工作流：从成功轨迹里抽出几步，具体的词换成变量</h3>
+<p>归纳技能，就是从成功的轨迹里抽出可复用的几步。具体的词换成变量。</p>
+<p>技能可以看成"在不同任务间可复用的一块任务"（讲义第 22 页）<span class="ts">43:58</span><span class="ts">44:39</span>。比如"给我看 {query} 的结果"。智能体写一段思维链，然后 <code>fill('element145', {query})</code>、<code>click('element147')</code>。以后问"{query} 的价格区间是多少"，就复用这几步。再加上读价格、报告最低最高 <span class="ts">45:24</span>。</p>
+<p>课上问这种表示有什么问题。同学答：<b>页面元素的 ID 一变，技能就坏了</b> <span class="ts">45:24</span>。比如同一页面编号变了，或者换到搜索界面不同的网站 <span class="ts">46:05</span>。</p>
+<p>以往的基础工作（讲义第 23 页）<span class="ts">46:49</span>：</p>
+<ul>
+  <li><b>Voyager</b>：在 Minecraft 里，把"合成某物品""打僵尸"这类子任务写成代码函数。函数之间可以互相调用。学会简单的，就能组合出越来越复杂的。</li>
+  <li><b>DreamCoder</b> 及后续的程序归纳工作 <span class="ts">47:32</span>。它们在底层函数构造出的对象里，找反复出现的模式。再把模式抽象成函数，一遍遍地"压缩程序"。后来又结合了 LLM、Python 和自然语言描述 <span class="ts">48:13</span>。</li>
+</ul>
+<p>评测这类方法，通常用<b>在线学习</b>的设定（讲义第 24 页）<span class="ts">48:13</span><span class="ts">48:55</span>。任务一个接一个到来，有的彼此相似。每成功一个，就在下一个任务到来之前更新技能记忆。最后评估截至目前全部任务的累计成功率 <span class="ts">49:38</span>。看它能不能随经验越做越好，解出越来越复杂的任务。之后看的工作，都在研究这条链上的不同环节 <span class="ts">50:19</span>。学：归纳、准入。用：检索、执行。维护：删掉不用的、泛化太具体的、合并 <span class="ts">51:01</span>。</p>
+<p><b>Agent Workflow Memory（AWM）</b>是 CMU 的工作 <span class="ts">51:01</span>。讲师和 Graham 参与了，主导者 Zora Wang 之后会来做客座讲座 <span class="ts">51:43</span>。流程在讲义第 26 页：</p>
+<ol class="pipe">
+  <li>经历<small>"告诉我店里至今收到多少条提到 satisfied 的评价"。click("Marketing") → click("All Reviews") → fill(757, "satisfied") → click("Search") → send_msg_to_user("2")</small></li>
+  <li>评判<small>评审模型判断最终状态对不对，不对就跳过。别记住错误的东西，否则会把以后带偏 <span class="ts">53:06</span>。</small></li>
+  <li>归纳<small>让 LM 看工具调用序列，挑出可能复用的部分 <span class="ts">51:43</span>。输出"工作流"：子任务描述 + 动作序列，具体的词换成变量 {term} <span class="ts">52:23</span>。</small></li>
+  <li>存进记忆<small>直接放进模型的上下文窗口，和 Agent Skills 标准很像。可以全放，也可以只放描述 <span class="ts">53:47</span>。</small></li>
+</ol>
+<pre class="code" data-lang="py" data-run>episode = ['click("Marketing")', 'click("All Reviews")', 'fill(757, "satisfied")', 'click("Search")', 'send_msg_to_user("2")']
+judge_ok = True                                   # 第 2 步：评审先判最终状态对不对，不对就不记
+workflow = [a.replace('"satisfied"', "{term}") for a in episode[:4]] if judge_ok else []
+print(workflow[2], len(workflow))
+# 输出: fill(757, {term}) 4
+# 具体的词换成了变量。可 757 这种元素 ID 还写死在里面，页面一改就坏
+# 作业 1 考点：Part 3 第 5 节的 select-move 技能也是文字写的流程
+# 用 run_python + simulate_move 搜两步，最后 play_move 一次</pre>
+<p>工作流像填空模板。"搜索 ___"这几步固定，空里填什么每次不同。</p>
+<pre class="code" data-lang="text" data-title="讲义第 27 页 · AWM 的归纳提示（附录）">Given a list of web navigation tasks, your task is to extract the common workflows.
+
+Each given task contains a natural language instruction, and a series of actions
+to solve the task. You need to find the repetitive subset of actions across
+multiple tasks, and extract each of them out as a workflow.
+
+Each workflow should be a commonly reused sub-routine of the tasks. Do not
+generate similar or overlapping workflows. Each workflow should have at least
+two steps. Represent the non-fixed elements (input text, button strings) with
+descriptive variable names as shown in the example.</pre>
+<p>讲义第 28 页是一个地图工具的任务流 <span class="ts">54:30</span>。没有记忆的基线，最后停在约 10% 的准确率。加了工作流记忆的曲线明显更高。差距在 40 个例子后扩大到 22.5 个百分点。它还能做出基线做不了的、越来越复杂的任务。最后它能做到这样的事。"在这个位置附近找一家酒店，再给出步行到附近超市的路线。" <span class="ts">55:11</span></p>
+
+<h3 data-d="1" data-m="2" data-why="代码技能和文本技能的取舍">11. 代码技能一次调用顶好几步，还能单独测，但网站一变就脆</h3>
+<p>代码技能把好几步打包成一个函数。一次调用就做完，还能单独测试。代价是死板，网站一变就可能失败。</p>
+<p>同一个"搜索商品"可以写成两种技能（讲义第 29 页）<span class="ts">55:11</span><span class="ts">55:54</span>：</p>
+<div class="cmp">
+  <div class="c-data"><h4>文本 + 例子</h4><p>放在上下文里，模型照着它在新环境里自己生成工具调用。它很灵活，可以换搜索词。网站改了、搜索框不是那个元素了，模型也能改用对的。但<b>每个底层动作，还得模型自己发出来</b>。</p></div>
+  <div class="c-bad"><h4>代码</h4><p>模型直接把函数当工具调用。参数对、函数对，就什么都不用做了 <span class="ts">55:54</span><span class="ts">56:36</span>。课上同学说出了主要缺点：<b>死板</b>，调用了就只会做那三步 <span class="ts">56:36</span>。优点是可以嵌套、分层。可以脱离整条轨迹，单独为它生成测试。还可以重构 <span class="ts">57:20</span>。</p></div>
+</div>
+<p><b>代码技能的归纳</b>（ASI，讲义第 30 页）<span class="ts">57:20</span><span class="ts">58:00</span>。做法和归纳文本工作流类似，但利用 LLM 擅长写代码。让它从轨迹里抽象出函数。真实例子是带 docstring 的 <code>search_reviews(search_box_id, search_button_id, search_term)</code> 和 <code>open_marketing_reviews()</code>。<b>同时改写原轨迹，让它调用这些函数。</b></p>
+<p>代码的好处是能执行来测试。不再只评判原轨迹。而是执行改写后的代码，再评判它的最终结果。这更能说明归纳出的技能是对的。对了才放进记忆，以后作为工具用。相当于在积累一个工具库 <span class="ts">58:40</span>。</p>
+<p>SkillWeaver 的做法（讲义第 31 页）<span class="ts">59:24</span><span class="ts">1:00:04</span>：提议技能，用它们练习这个任务，得到一段经历。奖励模型判断成功就准入，否则修订。修订的反馈可以来自 linter。一个给药品网站归纳的 <code>identify_pill(page, imprint, color)</code>，第一版根本没用到 <code>color</code> 参数。linter 报出"color 定义了却没用"。再以此为条件改出新版本，像 Reflexion 那样。也可以用奖励模型的反馈来修订 <span class="ts">1:00:45</span>。</p>
+<pre class="code" data-lang="py" data-run>src = "def identify_pill(page, imprint, color):\n    return search(page, imprint)"   # 第一版技能（示意）
+params = re.search(r"\((.*?)\)", src).group(1).split(", ")
+body = src.split(":", 1)[1]
+print([p for p in params if p not in body])
+# 输出: ['color']
+# 这就是 linter 报的"color 定义了却没用"。拿这条反馈当条件，让模型改出新版本</pre>
+<p>代码技能还能大幅减少和环境交互的次数（讲义第 32 页）<span class="ts">1:00:45</span><span class="ts">1:01:27</span>。任务是搬家后改地址。账单地址改成芝加哥的，收货地址改成费城的。基础智能体要在各种表单里做一大堆底层操作。冗余步骤很多，撞上 50 步的上限。有了代码技能，调用 <code>navigate_to_address_settings</code> 和 <code>update_address_details</code> 两次就做完了。智能体快得多。它不用"看一眼网页 → 生成一个调用 → 再看新网页……" <span class="ts">1:02:12</span>。GUI 智能体的大瓶颈正是交互次数。截图占很多 token，每个动作前的思维链也占很多 token。</p>
+<div class="co warn"><p>步数对不上。讲师口头说代码技能"三步就能解决" <span class="ts">1:01:27</span>。讲义第 32 页写的是"code skills · 4 steps"。图上是导航一次、改两次地址，再加起点。以讲义上的图为准是 4 步，口头的"三步"可能没算起点。</p></div>
+<p>受控对比在有较多重复结构的网页任务上（讲义第 33 页）<span class="ts">1:02:54</span>。到达检查点的比例：无记忆 41.3%，文本技能 59.5%，<b>代码技能 80.2%</b>。每个任务的步数：24.5、20.6、<b>15.0</b>。</p>
+<figure class="dg"><script type="application/json">{"type":"bars","title":"到达检查点（%），五个 WebArena 站点平均","max":100,"fmt":1,"lw":110,"rows":[["无记忆",41.3,"neutral"],["文本技能",59.5,"data"],["代码技能",80.2,"bad"]]}</script>
+<figcaption>讲义第 33 页（ASI 的表 2）。步数分别是 24.5、20.6、15.0。</figcaption></figure>
+<p><b>通用性是大问题</b>（讲义第 34 页）<span class="ts">1:03:34</span>。在一个网站上归纳出的代码技能，拿到真实的 Target 网站上用。<code>search_product</code> 还能正确复用。可 <code>sort_listings</code> 假设排序是个下拉菜单。Target 上却是一组单选按钮，讲义说是打开一个侧栏。于是失败了。必须让模型能根据环境反馈去改技能。</p>
+<p>代码本身有解法：<b>抽象类</b>。PolySkill（讲义第 35 页）第一次接触新网站时，先写一个抽象类。里面只有方法桩，比如搜索、加购物车、结账。再写一个针对这个网站的实现，比如 Amazon。遇到另一个网站，先按元数据或让模型判断。这个具体实现不适用了，就再写一份新的 <span class="ts">1:04:20</span><span class="ts">1:05:02</span>。组合技能只针对抽象方法写一次。而且能有很多具体技能，同一时间只激活相关的一部分。这就是软件工程的最佳实践用到了智能体上。</p>
+<pre class="code" data-lang="py" data-run>class Shop:                                       # PolySkill：抽象类只定接口
+    def search(self, q): raise NotImplementedError
+    def buy(self, q): return self.search(q) + " -&gt; add_to_cart -&gt; checkout"   # 组合技能只写一次
+class Amazon(Shop):
+    def search(self, q): return f"amazon.search({q!r})"   # 每个网站各写一份底层实现
+print(Amazon().buy("mouse"))
+# 输出: amazon.search('mouse') -&gt; add_to_cart -&gt; checkout
+# 换到 Target，只要再写一个 Target(Shop) 实现 search。buy 一行不用改</pre>
+<table class="lab">
+  <tr><th>表示</th><th>强项</th><th>弱点</th></tr>
+  <tr><td>检索出的经历</td><td>保留具体行为</td><td>长，难迁移</td></tr>
+  <tr><td>文本技能</td><td>提供灵活的指导</td><td>不提高效率</td></tr>
+  <tr><td>代码技能</td><td>可执行、可组合、高效</td><td>可能脆</td></tr>
+</table>
+<p class="cap" style="font-size:13px;color:var(--fg-3)">讲义第 36 页：行为有多少交给模型、多少固化在产物里？Agent Skills 标准允许两者结合，Markdown 正文加 scripts/。怎么结合最好，还有很多研究可做 <span class="ts">1:05:43</span>。</p>
+<p>文本技能像口头指路。代码技能像一键直达的快捷方式。快捷方式省事，可路一改就失灵。</p>
+
+<div data-vz="c2-skills" data-sc="2"></div>
+
+<h3 data-d="2" data-m="1" data-why="前沿研究的快速串讲">12. 技能库要会从失败里学、会忘，还能直接训练出来</h3>
+<p>技能库不能只往里加。要从失败里学，要剔掉用不上的，还可以直接训练模型去归纳。</p>
+<p>这是很开放的研究方向，讲师快速过了几篇（讲义第 37–43 页）<span class="ts">1:05:43</span>。</p>
+<p><b>从失败里学</b>，代表是 ReasoningBank <span class="ts">1:06:26</span>。任务是"给出 Sony 蓝牙耳机的完整名称和价格区间"。这个网站的搜索词是"或"而不是"且"。搜 "Bluetooth headphones Sony"，出来五千多条全店的结果，讲义写 5,578 条。每页 12 条。智能体一页页翻，忘了任务是什么。最后撞上步数上限，什么都没发给用户。</p>
+<p>看着这条失败轨迹，可以像 Reflexion 那样写出避免它的指导 <span class="ts">1:07:08</span>。用更具体的搜索词。调大每页显示的数量，让上下文一次看到更多。用侧栏现成的类别筛选。这种文字策略，也正是你自己写技能时会写的东西。</p>
+<figure class="dg"><script type="application/json">{"type":"bars","title":"成功率（%）：只用成功经验 vs 加入失败经验（无记忆 39.0）","max":55,"fmt":1,"lw":190,"rows":[["Synapse · 只用成功",40.6,"data"],["Synapse · 加失败",41.7,"warn"],["AWM · 只用成功",44.4,"data"],["AWM · 加失败",42.2,"warn"],["ReasoningBank · 只用成功",46.5,"data"],["ReasoningBank · 加失败",49.7,"warn"]]}</script>
+<figcaption>讲义第 39 页（WebArena 购物站，Gemini-2.5-flash）</figcaption></figure>
+<p>三种记忆形式的结果不一样。存完整轨迹（Synapse）或工作流（AWM）时，加入失败经验<b>帮助不大</b>。有时甚至变差。存文字策略（ReasoningBank）时，帮助明显 <span class="ts">1:07:52</span>。因为文字能用通用的话说清"怎么不失败"。而不是让模型对着失败的轨迹照猫画虎 <span class="ts">1:08:33</span>。</p>
+<p><b>评审准不准有多重要？</b>这些方法大多用 LLM 评审看最终状态来判断成败，决定存不存。ReasoningBank 做了控制实验 <span class="ts">1:09:14</span>。用真实标签当"完美评审"。再按固定概率翻转，模拟不同的准确率。表现确实随评审准确率下降。但在相当宽的准确率范围内，用评审来归纳记忆仍然有帮助 <span class="ts">1:09:56</span>：</p>
+<figure class="dg"><script type="application/json">{"type":"plot","w":470,"h":250,"x":[48,102],"y":[47,53],"xt":[50,60,70,80,90,100],"yt":[47,49,51,53],"xl":"模拟的评审准确率（%）","yl":"成功率（%）",
+ "curves":[{"pts":[[100,52.4],[90,49.7],[80,48.7],[70,49.7],[60,47.6],[50,47.6]],"k":"data","dots":1}],
+ "hl":[{"y":47.6,"k":"neutral","t":"抛硬币"}]}</script>
+<figcaption>讲义第 40 页：100 → 52.4，90 → 49.7，80 → 48.7，70 → 49.7，60 → 47.6，50 → 47.6</figcaption></figure>
+<p><b>检索得越多不一定越好</b>（讲义第 41 页）<span class="ts">1:10:40</span>。取 0 条经验是 39，1 条是 49.7，2 条是 46，3 条是 45.5，4 条是 44.4。多取反而下降。SkillsBench 对人挑的技能，也发现了同样的现象。原因可能有两个 <span class="ts">1:11:21</span>。一是任务还没做几个，记忆里本来就没有相关的。多放进来的，只能是无关的。这是方法本身的局限。二是模型被上下文里的无关东西带偏了。这可以通过训练模型、让它更会判断什么相关来改善。</p>
+<p><b>主动缩小记忆</b> <span class="ts">1:11:21</span><span class="ts">1:12:03</span>。讲师组的工作 TroVE 用类似缓存淘汰的办法。看记忆里每一项过去被用了多少次，用得少就丢掉。具体是丢掉使用次数少于 ⅓·log<sub>10</sub>(n) 的函数（讲义第 42 页）。n 是目前见过的例子数。在三个数据集上，函数库缩小了 74%–90%。这既提高效率，因为上下文里要放的少了。也可能提高成功率，因为少了干扰。</p>
+<pre class="code" data-lang="py" data-run>n = 1000                                                  # 目前见过的例子数
+usage = {"search": 5, "sort": 0, "filter": 2, "login": 1}   # 每个函数被用了几次（示意）
+threshold = math.log10(n) / 3                             # 讲义第 42 页：少于 ⅓·log10(n) 次就丢
+print(threshold, [f for f, c in usage.items() if c &gt;= threshold])
+# 输出: 1.0 ['search', 'filter', 'login']
+# sort 一次没用过，丢掉。见过的例子越多，门槛越高</pre>
+<p>这像清理衣柜。一年没穿过的衣服送走，柜子空了，找衣服也快了。</p>
+<p><b>直接训练技能归纳器</b>（讲义第 43 页）<span class="ts">1:12:44</span>。前面这些都有点"临时拼凑"。都是提示语言模型，去预测以后可能有用的东西。能不能直接训练它去做？可以，这是刚刚开始的方向，今年 ACL 上的论文。做法是在一串相似的任务上做强化学习。像前面评测那样，边做边归纳，边用记忆 <span class="ts">1:13:25</span>。整个过程很复杂。用了好几个模型，要存取记忆。但<b>强化学习不在乎</b>，它能用在这种不可微的复杂流程上。</p>
+<p>难点在奖励。任务 1 的奖励只说明任务 1 成没成功。它说明不了存下的这部分解法值不值。只有后面的任务能说明。所以把后面的任务放进同一个训练样本里。SAGE 在一次 rollout 里放两个相关任务。AgeMem 用一条长轨迹。奖励里再加上"后面的任务复用了它的技能" <span class="ts">1:14:08</span>：</p>
+<p class="fx math">任务 1 的奖励 = r<sub>1</sub> + 𝟙[两个都成功] · 𝟙[任务 2 复用了它的技能]<small>（讲义第 43 页）</small></p>
+<pre class="code" data-lang="py" data-run>def task1_reward(r1, both_ok, reused):   # 讲义第 43 页：后面的任务复用了它的技能才加分
+    return r1 + int(both_ok) * int(reused)
+print(task1_reward(1, True, True), task1_reward(1, True, False))
+# 输出: 2 1
+# 只看 r1 的话，两种情况一样高。加上复用项，模型才会学着存真正有用的技能</pre>
+<figure class="dg"><script type="application/json">{"type":"bars","title":"场景完成率（AppWorld test-normal，Qwen2.5-32B）","max":65,"fmt":1,"lw":150,"rows":[["只看结果",55.4,"data"],["两个任务都成功",56.6,"data"],["成功复用技能",60.7,"bad"]]}</script>
+<figcaption>讲义第 43 页：奖励里加入"复用"这一项最好 <span class="ts">1:14:08</span>。</figcaption></figure>
+<p>还可以想象别的奖励项。比如惩罚技能库太大，防止过拟合 <span class="ts">1:14:49</span>。</p>
+<p>讲义最后两页是讨论题。该留下什么？精确的经历还是通用的技能，灵活的指导还是固定的执行。复用已有还是探索替换，让记忆增长还是更新、合并、删除。还有，记忆的各项决定该由人还是智能体负责：</p>
+<table class="lab">
+  <tr><th>决定</th><th>人出力更有价值，当……</th><th>智能体出力更有价值，当……</th></tr>
+  <tr><td>写还是归纳</td><td>技能或政策已经知道</td><td>必须通过交互去发现</td></tr>
+  <tr><td>验证和准入</td><td>正确性是规范性的，或者风险高</td><td>结果可执行、测试便宜</td></tr>
+  <tr><td>挑选和使用</td><td>罕见的例外需要结合情境判断</td><td>路由会重复、会产生反馈</td></tr>
+  <tr><td>维护</td><td>问责需要一个负责人</td><td>漂移在结果里看得见、能修补</td></tr>
+</table>
+<p class="cap" style="font-size:13px;color:var(--fg-3)">讲义第 45 页</p>
+
+<div data-vz="c2-skills" data-sc="1"></div>
+
+<div class="co key"><p><b>和作业 1 的联系</b>：要点已写进上面例子的注释。作业本身看第 8 章的 <a href="c8.html#e1">作业 1</a>。复原过程看作业复原笔记的 <a href="作业复原/作业笔记/stages.html#S0">S0</a>。</p></div>
+</section>
+
+<nav class="pager">
+  <a href="c1.html"><span>← 上一章</span>01 · 智能体入门与工具调用</a>
+  <a class="nx" href="c3.html"><span>下一章 →</span>03 · 规划与多智能体协作</a>
+</nav>
+</main>
+<script src="assets/vz.js"></script>
+<script src="assets/viz/c2-context.js"></script>
+<script src="assets/viz/c2-attn.js"></script>
+<script src="assets/viz/c2-compact.js"></script>
+<script src="assets/viz/c2-skills.js"></script>
+</body>
+</html>

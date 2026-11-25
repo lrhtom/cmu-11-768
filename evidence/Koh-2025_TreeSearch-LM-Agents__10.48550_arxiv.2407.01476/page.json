@@ -1,0 +1,1284 @@
+{
+ "arxiv_api_atom": "<?xml version='1.0' encoding='UTF-8'?>\n<feed xmlns:opensearch=\"http://a9.com/-/spec/opensearch/1.1/\" xmlns:arxiv=\"http://arxiv.org/schemas/atom\" xmlns=\"http://www.w3.org/2005/Atom\">\n  <id>https://arxiv.org/api/bgz6wZGKpavNeXrZh5frjaxLv8Q</id>\n  <title>arXiv Query: search_query=&amp;id_list=2407.01476&amp;start=0&amp;max_results=10</title>\n  <updated>2026-10-29T15:27:20Z</updated>\n  <link href=\"https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=10&amp;id_list=2407.01476\" type=\"application/atom+xml\"/>\n  <opensearch:itemsPerPage>10</opensearch:itemsPerPage>\n  <opensearch:totalResults>1</opensearch:totalResults>\n  <opensearch:startIndex>0</opensearch:startIndex>\n  <entry>\n    <id>http://arxiv.org/abs/2407.01476v4</id>\n    <title>Tree Search for Language Model Agents</title>\n    <updated>2026-02-08T15:06:40Z</updated>\n    <link href=\"https://arxiv.org/abs/2407.01476v4\" rel=\"alternate\" type=\"text/html\"/>\n    <link href=\"https://arxiv.org/pdf/2407.01476v4\" rel=\"related\" type=\"application/pdf\" title=\"pdf\"/>\n    <summary>Autonomous agents powered by language models (LMs) have demonstrated promise in their ability to perform decision-making tasks such as web automation. However, a key limitation remains: LMs, primarily optimized for natural language understanding and generation, struggle with multi-step reasoning, planning, and using environmental feedback when attempting to solve realistic computer tasks. Towards addressing this, we propose an inference-time search algorithm for LM agents to explicitly perform exploration and multi-step planning in interactive web environments. Our approach is a form of best-first tree search that operates within the actual environment space, and is complementary with most existing state-of-the-art agents. It is the first tree search algorithm for LM agents that shows effectiveness on realistic web tasks. On the challenging VisualWebArena benchmark, applying our search algorithm on top of a GPT-4o agent yields a 39.7% relative increase in success rate compared to the same baseline without search, setting a state-of-the-art success rate of 26.4%. On WebArena, search also yields a 28.0% relative improvement over a baseline agent, setting a competitive success rate of 19.2%. Our experiments highlight the effectiveness of search for web agents, and we demonstrate that performance scales with increased test-time compute. We conduct a thorough analysis of our results to highlight improvements from search, limitations, and promising directions for future work. Our code and models are publicly released at https://jykoh.com/search-agents.</summary>\n    <category term=\"cs.AI\" scheme=\"http://arxiv.org/schemas/atom\"/>\n    <category term=\"cs.CL\" scheme=\"http://arxiv.org/schemas/atom\"/>\n    <category term=\"cs.LG\" scheme=\"http://arxiv.org/schemas/atom\"/>\n    <published>2024-07-01T17:07:55Z</published>\n    <arxiv:comment>13 pages. Models and code available at https://jykoh.com/search-agents</arxiv:comment>\n    <arxiv:primary_category term=\"cs.AI\"/>\n    <author>\n      <name>Jing Yu Koh</name>\n    </author>\n    <author>\n      <name>Stephen McAleer</name>\n    </author>\n    <author>\n      <name>Daniel Fried</name>\n    </author>\n    <author>\n      <name>Ruslan Salakhutdinov</name>\n    </author>\n  </entry>\n</feed>\n",
+ "openalex": {
+  "id": "https://openalex.org/W4400337884",
+  "doi": "https://doi.org/10.48550/arxiv.2407.01476",
+  "title": "Tree Search for Language Model Agents",
+  "display_name": "Tree Search for Language Model Agents",
+  "publication_year": 2024,
+  "publication_date": "2024-07-01",
+  "ids": {
+   "openalex": "https://openalex.org/W4400337884",
+   "doi": "https://doi.org/10.48550/arxiv.2407.01476"
+  },
+  "language": "en",
+  "primary_location": {
+   "id": "pmh:oai:arXiv.org:2407.01476",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "http://arxiv.org/abs/2407.01476",
+   "pdf_url": "https://arxiv.org/pdf/2407.01476",
+   "source": {
+    "id": "https://openalex.org/S4306400194",
+    "display_name": "arXiv (Cornell University)",
+    "issn_l": "2331-8422",
+    "issn": [
+     "2331-8422"
+    ],
+    "is_oa": true,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/I205783295",
+    "host_organization_name": "Cornell University",
+    "host_organization_lineage": [
+     "https://openalex.org/I205783295"
+    ],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": null,
+   "license_id": null,
+   "version": "submittedVersion",
+   "is_accepted": false,
+   "is_published": false,
+   "raw_source_name": null,
+   "raw_type": "text"
+  },
+  "volume": null,
+  "type": "preprint",
+  "indexed_in": [
+   "arxiv",
+   "datacite"
+  ],
+  "open_access": {
+   "is_oa": true,
+   "oa_status": "green",
+   "oa_url": "https://arxiv.org/pdf/2407.01476",
+   "any_repository_has_fulltext": true
+  },
+  "authorships": [
+   {
+    "author_position": "first",
+    "author": {
+     "id": "https://openalex.org/A5009550511",
+     "display_name": "Jing Yu Koh",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Koh, Jing Yu",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5064779744",
+     "display_name": "Stephen McAleer",
+     "orcid": "https://orcid.org/0000-0003-0118-6874",
+     "observed_orcids": [
+      "https://orcid.org/0000-0003-0118-6874"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "McAleer, Stephen",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5003637850",
+     "display_name": "Daniel Fried",
+     "orcid": "https://orcid.org/0000-0002-5327-2558",
+     "observed_orcids": [
+      "https://orcid.org/0000-0002-5327-2558"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Fried, Daniel",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "last",
+    "author": {
+     "id": "https://openalex.org/A5071983998",
+     "display_name": "Ruslan Salakhutdinov",
+     "orcid": "https://orcid.org/0000-0002-3752-2756",
+     "observed_orcids": [
+      "https://orcid.org/0000-0002-3752-2756"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Salakhutdinov, Ruslan",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   }
+  ],
+  "institutions": [],
+  "countries_distinct_count": 1,
+  "institutions_distinct_count": 1,
+  "corresponding_author_ids": [],
+  "corresponding_institution_ids": [
+   "https://openalex.org/I74973139"
+  ],
+  "apc_list": null,
+  "apc_paid": null,
+  "fwci": null,
+  "has_fulltext": true,
+  "cited_by_count": 2,
+  "citation_normalized_percentile": null,
+  "cited_by_percentile_year": null,
+  "biblio": {
+   "volume": null,
+   "issue": null,
+   "first_page": null,
+   "last_page": null
+  },
+  "is_retracted": false,
+  "is_paratext": false,
+  "is_xpac": false,
+  "primary_topic": {
+   "id": "https://openalex.org/T10906",
+   "display_name": "AI-based Problem Solving and Planning",
+   "score": 0.3871999979019165,
+   "subfield": {
+    "id": "https://openalex.org/subfields/1702",
+    "display_name": "Artificial Intelligence"
+   },
+   "field": {
+    "id": "https://openalex.org/fields/17",
+    "display_name": "Computer Science"
+   },
+   "domain": {
+    "id": "https://openalex.org/domains/3",
+    "display_name": "Physical Sciences"
+   }
+  },
+  "topics": [
+   {
+    "id": "https://openalex.org/T10906",
+    "display_name": "AI-based Problem Solving and Planning",
+    "score": 0.3871999979019165,
+    "subfield": {
+     "id": "https://openalex.org/subfields/1702",
+     "display_name": "Artificial Intelligence"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/17",
+     "display_name": "Computer Science"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/3",
+     "display_name": "Physical Sciences"
+    }
+   },
+   {
+    "id": "https://openalex.org/T10286",
+    "display_name": "Information Retrieval and Search Behavior",
+    "score": 0.28439998626708984,
+    "subfield": {
+     "id": "https://openalex.org/subfields/1710",
+     "display_name": "Information Systems"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/17",
+     "display_name": "Computer Science"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/3",
+     "display_name": "Physical Sciences"
+    }
+   },
+   {
+    "id": "https://openalex.org/T12016",
+    "display_name": "Web Data Mining and Analysis",
+    "score": 0.2011999934911728,
+    "subfield": {
+     "id": "https://openalex.org/subfields/1710",
+     "display_name": "Information Systems"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/17",
+     "display_name": "Computer Science"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/3",
+     "display_name": "Physical Sciences"
+    }
+   }
+  ],
+  "keywords": [
+   {
+    "id": "https://openalex.org/keywords/tree-search",
+    "display_name": "tree search",
+    "score": 0.8569999933242798
+   },
+   {
+    "id": "https://openalex.org/keywords/language-model-agents",
+    "display_name": "language model agents",
+    "score": 0.9100000262260437
+   },
+   {
+    "id": "https://openalex.org/keywords/best-first-search",
+    "display_name": "best-first search",
+    "score": 0.8209999799728394
+   },
+   {
+    "id": "https://openalex.org/keywords/multi-stage-planning",
+    "display_name": "multi-stage planning",
+    "score": 0.8999999761581421
+   },
+   {
+    "id": "https://openalex.org/keywords/browser-automation",
+    "display_name": "browser automation",
+    "score": 0.6449999809265137
+   },
+   {
+    "id": "https://openalex.org/keywords/gpt-4o",
+    "display_name": "GPT-4o",
+    "score": 0.902999997138977
+   },
+   {
+    "id": "https://openalex.org/keywords/autonomous-agents",
+    "display_name": "autonomous agents",
+    "score": 0.5379999876022339
+   }
+  ],
+  "concepts": [
+   {
+    "id": "https://openalex.org/C113174947",
+    "wikidata": "https://www.wikidata.org/wiki/Q2859736",
+    "display_name": "Tree (set theory)",
+    "level": 2,
+    "score": 0.5943967700004578
+   },
+   {
+    "id": "https://openalex.org/C41008148",
+    "wikidata": "https://www.wikidata.org/wiki/Q21198",
+    "display_name": "Computer science",
+    "level": 0,
+    "score": 0.5174094438552856
+   },
+   {
+    "id": "https://openalex.org/C54286561",
+    "wikidata": "https://www.wikidata.org/wiki/Q397350",
+    "display_name": "Agroforestry",
+    "level": 1,
+    "score": 0.32595956325531006
+   },
+   {
+    "id": "https://openalex.org/C33923547",
+    "wikidata": "https://www.wikidata.org/wiki/Q395",
+    "display_name": "Mathematics",
+    "level": 0,
+    "score": 0.2138081192970276
+   },
+   {
+    "id": "https://openalex.org/C39432304",
+    "wikidata": "https://www.wikidata.org/wiki/Q188847",
+    "display_name": "Environmental science",
+    "level": 0,
+    "score": 0.10843834280967712
+   },
+   {
+    "id": "https://openalex.org/C114614502",
+    "wikidata": "https://www.wikidata.org/wiki/Q76592",
+    "display_name": "Combinatorics",
+    "level": 1,
+    "score": 0.08422061800956726
+   }
+  ],
+  "mesh": [],
+  "locations_count": 2,
+  "locations": [
+   {
+    "id": "pmh:oai:arXiv.org:2407.01476",
+    "doi": null,
+    "is_oa": true,
+    "landing_page_url": "http://arxiv.org/abs/2407.01476",
+    "pdf_url": "https://arxiv.org/pdf/2407.01476",
+    "source": {
+     "id": "https://openalex.org/S4306400194",
+     "display_name": "arXiv (Cornell University)",
+     "issn_l": "2331-8422",
+     "issn": [
+      "2331-8422"
+     ],
+     "is_oa": true,
+     "is_in_doaj": false,
+     "is_core": false,
+     "listed_in": [],
+     "host_organization": "https://openalex.org/I205783295",
+     "host_organization_name": "Cornell University",
+     "host_organization_lineage": [
+      "https://openalex.org/I205783295"
+     ],
+     "host_organization_lineage_names": [],
+     "type": "repository"
+    },
+    "license": null,
+    "license_id": null,
+    "version": "submittedVersion",
+    "is_accepted": false,
+    "is_published": false,
+    "raw_source_name": null,
+    "raw_type": "text"
+   },
+   {
+    "id": "doi:10.48550/arxiv.2407.01476",
+    "doi": "https://doi.org/10.48550/arxiv.2407.01476",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.48550/arxiv.2407.01476",
+    "pdf_url": null,
+    "source": {
+     "id": "https://openalex.org/S4306400194",
+     "display_name": "arXiv (Cornell University)",
+     "issn_l": "2331-8422",
+     "issn": [
+      "2331-8422"
+     ],
+     "is_oa": true,
+     "is_in_doaj": false,
+     "is_core": false,
+     "listed_in": [],
+     "host_organization": "https://openalex.org/I205783295",
+     "host_organization_name": "Cornell University",
+     "host_organization_lineage": [
+      "https://openalex.org/I205783295"
+     ],
+     "host_organization_lineage_names": [],
+     "type": "repository"
+    },
+    "license": null,
+    "license_id": null,
+    "version": null,
+    "is_accepted": false,
+    "is_published": false,
+    "raw_source_name": null,
+    "raw_type": "Preprint"
+   }
+  ],
+  "best_oa_location": {
+   "id": "pmh:oai:arXiv.org:2407.01476",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "http://arxiv.org/abs/2407.01476",
+   "pdf_url": "https://arxiv.org/pdf/2407.01476",
+   "source": {
+    "id": "https://openalex.org/S4306400194",
+    "display_name": "arXiv (Cornell University)",
+    "issn_l": "2331-8422",
+    "issn": [
+     "2331-8422"
+    ],
+    "is_oa": true,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/I205783295",
+    "host_organization_name": "Cornell University",
+    "host_organization_lineage": [
+     "https://openalex.org/I205783295"
+    ],
+    "host_organization_lineage_names": [],
+    "type": "repository"
+   },
+   "license": null,
+   "license_id": null,
+   "version": "submittedVersion",
+   "is_accepted": false,
+   "is_published": false,
+   "raw_source_name": null,
+   "raw_type": "text"
+  },
+  "sustainable_development_goals": [],
+  "sustainable_development_goals_aurora": [],
+  "study_designs": [],
+  "awards": [],
+  "funders": [],
+  "has_content": {
+   "pdf": true,
+   "grobid_xml": true
+  },
+  "content_urls": {
+   "pdf": "https://content.openalex.org/works/W4400337884.pdf",
+   "grobid_xml": "https://content.openalex.org/works/W4400337884.grobid-xml"
+  },
+  "referenced_works_count": 0,
+  "referenced_works": [],
+  "related_works": [
+   "https://openalex.org/W4404401752",
+   "https://openalex.org/W4416248888",
+   "https://openalex.org/W4389422760",
+   "https://openalex.org/W4409362971",
+   "https://openalex.org/W4403580146",
+   "https://openalex.org/W4414834065",
+   "https://openalex.org/W4402427562",
+   "https://openalex.org/W7129478590",
+   "https://openalex.org/W4417449948",
+   "https://openalex.org/W4403572220"
+  ],
+  "abstract_inverted_index": {
+   "Autonomous": [
+    0
+   ],
+   "agents": [
+    1,
+    62,
+    107
+   ],
+   "powered": [
+    2
+   ],
+   "by": [
+    3
+   ],
+   "language": [
+    4,
+    31
+   ],
+   "models": [
+    5,
+    215
+   ],
+   "(LMs)": [
+    6
+   ],
+   "have": [
+    7
+   ],
+   "demonstrated": [
+    8
+   ],
+   "promise": [
+    9
+   ],
+   "in": [
+    10,
+    70,
+    135
+   ],
+   "their": [
+    11
+   ],
+   "ability": [
+    12
+   ],
+   "to": [
+    13,
+    46,
+    63,
+    139,
+    200
+   ],
+   "perform": [
+    14,
+    65
+   ],
+   "decision-making": [
+    15
+   ],
+   "tasks": [
+    16
+   ],
+   "such": [
+    17
+   ],
+   "as": [
+    18
+   ],
+   "web": [
+    19,
+    72,
+    113,
+    180
+   ],
+   "automation.": [
+    20
+   ],
+   "However,": [
+    21
+   ],
+   "a": [
+    22,
+    77,
+    127,
+    131,
+    146,
+    157,
+    162,
+    166,
+    194
+   ],
+   "key": [
+    23
+   ],
+   "limitation": [
+    24
+   ],
+   "remains:": [
+    25
+   ],
+   "LMs,": [
+    26
+   ],
+   "primarily": [
+    27
+   ],
+   "optimized": [
+    28
+   ],
+   "for": [
+    29,
+    60,
+    105,
+    179,
+    209
+   ],
+   "natural": [
+    30
+   ],
+   "understanding": [
+    32
+   ],
+   "and": [
+    33,
+    40,
+    67,
+    90,
+    182,
+    206,
+    214
+   ],
+   "generation,": [
+    34
+   ],
+   "struggle": [
+    35
+   ],
+   "with": [
+    36,
+    93,
+    188
+   ],
+   "multi-step": [
+    37,
+    68
+   ],
+   "reasoning,": [
+    38
+   ],
+   "planning,": [
+    39
+   ],
+   "using": [
+    41
+   ],
+   "environmental": [
+    42
+   ],
+   "feedback": [
+    43
+   ],
+   "when": [
+    44
+   ],
+   "attempting": [
+    45
+   ],
+   "solve": [
+    47
+   ],
+   "realistic": [
+    48,
+    112
+   ],
+   "computer": [
+    49
+   ],
+   "tasks.": [
+    50,
+    114
+   ],
+   "Towards": [
+    51
+   ],
+   "addressing": [
+    52
+   ],
+   "this,": [
+    53
+   ],
+   "we": [
+    54,
+    183
+   ],
+   "propose": [
+    55
+   ],
+   "an": [
+    56
+   ],
+   "inference-time": [
+    57
+   ],
+   "search": [
+    58,
+    82,
+    103,
+    122,
+    154,
+    178
+   ],
+   "algorithm": [
+    59,
+    104,
+    123
+   ],
+   "LM": [
+    61,
+    106
+   ],
+   "explicitly": [
+    64
+   ],
+   "exploration": [
+    66
+   ],
+   "planning": [
+    69
+   ],
+   "interactive": [
+    71
+   ],
+   "environments.": [
+    73
+   ],
+   "Our": [
+    74,
+    172,
+    212
+   ],
+   "approach": [
+    75
+   ],
+   "is": [
+    76,
+    91,
+    99
+   ],
+   "form": [
+    78
+   ],
+   "of": [
+    79,
+    126,
+    150,
+    170,
+    177,
+    197
+   ],
+   "best-first": [
+    80
+   ],
+   "tree": [
+    81,
+    102
+   ],
+   "that": [
+    83,
+    108,
+    185
+   ],
+   "operates": [
+    84
+   ],
+   "within": [
+    85
+   ],
+   "the": [
+    86,
+    100,
+    116,
+    140,
+    175
+   ],
+   "actual": [
+    87
+   ],
+   "environment": [
+    88
+   ],
+   "space,": [
+    89
+   ],
+   "complementary": [
+    92
+   ],
+   "most": [
+    94
+   ],
+   "existing": [
+    95
+   ],
+   "state-of-the-art": [
+    96,
+    147
+   ],
+   "agents.": [
+    97
+   ],
+   "It": [
+    98
+   ],
+   "first": [
+    101
+   ],
+   "shows": [
+    109
+   ],
+   "effectiveness": [
+    110,
+    176
+   ],
+   "on": [
+    111,
+    124
+   ],
+   "On": [
+    115,
+    152
+   ],
+   "challenging": [
+    117
+   ],
+   "VisualWebArena": [
+    118
+   ],
+   "benchmark,": [
+    119
+   ],
+   "applying": [
+    120
+   ],
+   "our": [
+    121,
+    198
+   ],
+   "top": [
+    125
+   ],
+   "GPT-4o": [
+    128
+   ],
+   "agent": [
+    129
+   ],
+   "yields": [
+    130,
+    156
+   ],
+   "39.7%": [
+    132
+   ],
+   "relative": [
+    133,
+    159
+   ],
+   "increase": [
+    134
+   ],
+   "success": [
+    136,
+    148,
+    168
+   ],
+   "rate": [
+    137,
+    149,
+    169
+   ],
+   "compared": [
+    138
+   ],
+   "same": [
+    141
+   ],
+   "baseline": [
+    142,
+    163
+   ],
+   "without": [
+    143
+   ],
+   "search,": [
+    144,
+    204
+   ],
+   "setting": [
+    145,
+    165
+   ],
+   "26.4%.": [
+    151
+   ],
+   "WebArena,": [
+    153
+   ],
+   "also": [
+    155
+   ],
+   "28.0%": [
+    158
+   ],
+   "improvement": [
+    160
+   ],
+   "over": [
+    161
+   ],
+   "agent,": [
+    164
+   ],
+   "competitive": [
+    167
+   ],
+   "19.2%.": [
+    171
+   ],
+   "experiments": [
+    173
+   ],
+   "highlight": [
+    174,
+    201
+   ],
+   "agents,": [
+    181
+   ],
+   "demonstrate": [
+    184
+   ],
+   "performance": [
+    186
+   ],
+   "scales": [
+    187
+   ],
+   "increased": [
+    189
+   ],
+   "test-time": [
+    190
+   ],
+   "compute.": [
+    191
+   ],
+   "We": [
+    192
+   ],
+   "conduct": [
+    193
+   ],
+   "thorough": [
+    195
+   ],
+   "analysis": [
+    196
+   ],
+   "results": [
+    199
+   ],
+   "improvements": [
+    202
+   ],
+   "from": [
+    203
+   ],
+   "limitations,": [
+    205
+   ],
+   "promising": [
+    207
+   ],
+   "directions": [
+    208
+   ],
+   "future": [
+    210
+   ],
+   "work.": [
+    211
+   ],
+   "code": [
+    213
+   ],
+   "are": [
+    216
+   ],
+   "publicly": [
+    217
+   ],
+   "released": [
+    218
+   ],
+   "at": [
+    219
+   ],
+   "https://jykoh.com/search-agents.": [
+    220
+   ]
+  },
+  "counts_by_year": [
+   {
+    "year": 2024,
+    "cited_by_count": 2
+   }
+  ],
+  "updated_date": "2026-10-16T09:59:22.235173",
+  "created_date": "2024-07-06T00:00:00"
+ },
+ "datacite": {
+  "data": {
+   "id": "10.48550/arxiv.2407.01476",
+   "type": "dois",
+   "attributes": {
+    "doi": "10.48550/arxiv.2407.01476",
+    "prefix": "10.48550",
+    "suffix": "arxiv.2407.01476",
+    "identifiers": [
+     {
+      "identifier": "2407.01476",
+      "identifierType": "arXiv"
+     }
+    ],
+    "alternateIdentifiers": [
+     {
+      "alternateIdentifierType": "arXiv",
+      "alternateIdentifier": "2407.01476"
+     }
+    ],
+    "creators": [
+     {
+      "name": "Koh, Jing Yu",
+      "nameType": "Personal",
+      "givenName": "Jing Yu",
+      "familyName": "Koh",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "McAleer, Stephen",
+      "nameType": "Personal",
+      "givenName": "Stephen",
+      "familyName": "McAleer",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Fried, Daniel",
+      "nameType": "Personal",
+      "givenName": "Daniel",
+      "familyName": "Fried",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Salakhutdinov, Ruslan",
+      "nameType": "Personal",
+      "givenName": "Ruslan",
+      "familyName": "Salakhutdinov",
+      "affiliation": [],
+      "nameIdentifiers": []
+     }
+    ],
+    "titles": [
+     {
+      "title": "Tree Search for Language Model Agents"
+     }
+    ],
+    "publisher": "arXiv",
+    "container": {},
+    "publicationYear": 2024,
+    "subjects": [
+     {
+      "lang": "en",
+      "subject": "Artificial Intelligence (cs.AI)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "lang": "en",
+      "subject": "Computation and Language (cs.CL)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "lang": "en",
+      "subject": "Machine Learning (cs.LG)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "subject": "FOS: Computer and information sciences",
+      "subjectScheme": "Fields of Science and Technology (FOS)"
+     },
+     {
+      "subject": "FOS: Computer and information sciences",
+      "schemeUri": "http://www.oecd.org/science/inno/38235147.pdf",
+      "subjectScheme": "Fields of Science and Technology (FOS)"
+     }
+    ],
+    "contributors": [],
+    "dates": [
+     {
+      "date": "2024-07-01T17:07:55Z",
+      "dateType": "Submitted",
+      "dateInformation": "v1"
+     },
+     {
+      "date": "2024-07-02T01:40:12Z",
+      "dateType": "Updated",
+      "dateInformation": "v1"
+     },
+     {
+      "date": "2024-10-12T19:58:57Z",
+      "dateType": "Submitted",
+      "dateInformation": "v2"
+     },
+     {
+      "date": "2024-10-15T00:48:29Z",
+      "dateType": "Updated",
+      "dateInformation": "v2"
+     },
+     {
+      "date": "2025-09-24T05:46:23Z",
+      "dateType": "Submitted",
+      "dateInformation": "v3"
+     },
+     {
+      "date": "2025-09-25T00:26:18Z",
+      "dateType": "Updated",
+      "dateInformation": "v3"
+     },
+     {
+      "date": "2026-02-08T15:06:40Z",
+      "dateType": "Submitted",
+      "dateInformation": "v4"
+     },
+     {
+      "date": "2026-02-10T02:09:08Z",
+      "dateType": "Updated",
+      "dateInformation": "v4"
+     },
+     {
+      "date": "2024-07",
+      "dateType": "Available",
+      "dateInformation": "v1"
+     },
+     {
+      "date": "2024",
+      "dateType": "Issued"
+     }
+    ],
+    "language": null,
+    "types": {
+     "ris": "GEN",
+     "bibtex": "misc",
+     "citeproc": "article",
+     "schemaOrg": "CreativeWork",
+     "resourceType": "Article",
+     "resourceTypeGeneral": "Preprint"
+    },
+    "relatedIdentifiers": [],
+    "relatedItems": [],
+    "sizes": [],
+    "formats": [],
+    "version": "4",
+    "rightsList": [
+     {
+      "rights": "arXiv.org perpetual, non-exclusive license",
+      "rightsUri": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/"
+     }
+    ],
+    "descriptions": [
+     {
+      "description": "Autonomous agents powered by language models (LMs) have demonstrated promise in their ability to perform decision-making tasks such as web automation. However, a key limitation remains: LMs, primarily optimized for natural language understanding and generation, struggle with multi-step reasoning, planning, and using environmental feedback when attempting to solve realistic computer tasks. Towards addressing this, we propose an inference-time search algorithm for LM agents to explicitly perform exploration and multi-step planning in interactive web environments. Our approach is a form of best-first tree search that operates within the actual environment space, and is complementary with most existing state-of-the-art agents. It is the first tree search algorithm for LM agents that shows effectiveness on realistic web tasks. On the challenging VisualWebArena benchmark, applying our search algorithm on top of a GPT-4o agent yields a 39.7% relative increase in success rate compared to the same baseline without search, setting a state-of-the-art success rate of 26.4%. On WebArena, search also yields a 28.0% relative improvement over a baseline agent, setting a competitive success rate of 19.2%. Our experiments highlight the effectiveness of search for web agents, and we demonstrate that performance scales with increased test-time compute. We conduct a thorough analysis of our results to highlight improvements from search, limitations, and promising directions for future work. Our code and models are publicly released at https://jykoh.com/search-agents.",
+      "descriptionType": "Abstract"
+     },
+     {
+      "description": "13 pages. Models and code available at https://jykoh.com/search-agents",
+      "descriptionType": "Other"
+     }
+    ],
+    "geoLocations": [],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlc291cmNlIHhtbG5zPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeHNpOnNjaGVtYUxvY2F0aW9uPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCBodHRwOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00LjMvbWV0YWRhdGEueHNkIj4KICA8aWRlbnRpZmllciBpZGVudGlmaWVyVHlwZT0iRE9JIj4xMC40ODU1MC9BUlhJVi4yNDA3LjAxNDc2PC9pZGVudGlmaWVyPgogIDxhbHRlcm5hdGVJZGVudGlmaWVycz4KICAgIDxhbHRlcm5hdGVJZGVudGlmaWVyIGFsdGVybmF0ZUlkZW50aWZpZXJUeXBlPSJhclhpdiI+MjQwNy4wMTQ3NjwvYWx0ZXJuYXRlSWRlbnRpZmllcj4KICA8L2FsdGVybmF0ZUlkZW50aWZpZXJzPgogIDxjcmVhdG9ycz4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5Lb2gsIEppbmcgWXU8L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPkppbmcgWXU8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+S29oPC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSBuYW1lVHlwZT0iUGVyc29uYWwiPk1jQWxlZXIsIFN0ZXBoZW48L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPlN0ZXBoZW48L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+TWNBbGVlcjwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5GcmllZCwgRGFuaWVsPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5EYW5pZWw8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+RnJpZWQ8L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+U2FsYWtodXRkaW5vdiwgUnVzbGFuPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5SdXNsYW48L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+U2FsYWtodXRkaW5vdjwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICA8L2NyZWF0b3JzPgogIDx0aXRsZXM+CiAgICA8dGl0bGU+VHJlZSBTZWFyY2ggZm9yIExhbmd1YWdlIE1vZGVsIEFnZW50czwvdGl0bGU+CiAgPC90aXRsZXM+CiAgPHB1Ymxpc2hlcj5hclhpdjwvcHVibGlzaGVyPgogIDxwdWJsaWNhdGlvblllYXI+MjAyNDwvcHVibGljYXRpb25ZZWFyPgogIDxzdWJqZWN0cz4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJlbiIgc3ViamVjdFNjaGVtZT0iYXJYaXYiPkFydGlmaWNpYWwgSW50ZWxsaWdlbmNlIChjcy5BSSk8L3N1YmplY3Q+CiAgICA8c3ViamVjdCB4bWw6bGFuZz0iZW4iIHN1YmplY3RTY2hlbWU9ImFyWGl2Ij5Db21wdXRhdGlvbiBhbmQgTGFuZ3VhZ2UgKGNzLkNMKTwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJlbiIgc3ViamVjdFNjaGVtZT0iYXJYaXYiPk1hY2hpbmUgTGVhcm5pbmcgKGNzLkxHKTwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9IkZpZWxkcyBvZiBTY2llbmNlIGFuZCBUZWNobm9sb2d5IChGT1MpIj5GT1M6IENvbXB1dGVyIGFuZCBpbmZvcm1hdGlvbiBzY2llbmNlczwvc3ViamVjdD4KICA8L3N1YmplY3RzPgogIDxkYXRlcz4KICAgIDxkYXRlIGRhdGVUeXBlPSJTdWJtaXR0ZWQiIGRhdGVJbmZvcm1hdGlvbj0idjEiPjIwMjQtMDctMDFUMTc6MDc6NTVaPC9kYXRlPgogICAgPGRhdGUgZGF0ZVR5cGU9IlVwZGF0ZWQiIGRhdGVJbmZvcm1hdGlvbj0idjEiPjIwMjQtMDctMDJUMDE6NDA6MTJaPC9kYXRlPgogICAgPGRhdGUgZGF0ZVR5cGU9IlN1Ym1pdHRlZCIgZGF0ZUluZm9ybWF0aW9uPSJ2MiI+MjAyNC0xMC0xMlQxOTo1ODo1N1o8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iVXBkYXRlZCIgZGF0ZUluZm9ybWF0aW9uPSJ2MiI+MjAyNC0xMC0xNVQwMDo0ODoyOVo8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iU3VibWl0dGVkIiBkYXRlSW5mb3JtYXRpb249InYzIj4yMDI1LTA5LTI0VDA1OjQ2OjIzWjwvZGF0ZT4KICAgIDxkYXRlIGRhdGVUeXBlPSJVcGRhdGVkIiBkYXRlSW5mb3JtYXRpb249InYzIj4yMDI1LTA5LTI1VDAwOjI2OjE4WjwvZGF0ZT4KICAgIDxkYXRlIGRhdGVUeXBlPSJTdWJtaXR0ZWQiIGRhdGVJbmZvcm1hdGlvbj0idjQiPjIwMjYtMDItMDhUMTU6MDY6NDBaPC9kYXRlPgogICAgPGRhdGUgZGF0ZVR5cGU9IlVwZGF0ZWQiIGRhdGVJbmZvcm1hdGlvbj0idjQiPjIwMjYtMDItMTBUMDI6MDk6MDhaPC9kYXRlPgogICAgPGRhdGUgZGF0ZVR5cGU9IkF2YWlsYWJsZSIgZGF0ZUluZm9ybWF0aW9uPSJ2MSI+MjAyNC0wNzwvZGF0ZT4KICA8L2RhdGVzPgogIDxyZXNvdXJjZVR5cGUgcmVzb3VyY2VUeXBlR2VuZXJhbD0iUHJlcHJpbnQiPkFydGljbGU8L3Jlc291cmNlVHlwZT4KICA8dmVyc2lvbj40PC92ZXJzaW9uPgogIDxyaWdodHNMaXN0PgogICAgPHJpZ2h0cyByaWdodHNVUkk9Imh0dHA6Ly9hcnhpdi5vcmcvbGljZW5zZXMvbm9uZXhjbHVzaXZlLWRpc3RyaWIvMS4wLyI+YXJYaXYub3JnIHBlcnBldHVhbCwgbm9uLWV4Y2x1c2l2ZSBsaWNlbnNlPC9yaWdodHM+CiAgPC9yaWdodHNMaXN0PgogIDxkZXNjcmlwdGlvbnM+CiAgICA8ZGVzY3JpcHRpb24gZGVzY3JpcHRpb25UeXBlPSJBYnN0cmFjdCI+QXV0b25vbW91cyBhZ2VudHMgcG93ZXJlZCBieSBsYW5ndWFnZSBtb2RlbHMgKExNcykgaGF2ZSBkZW1vbnN0cmF0ZWQgcHJvbWlzZSBpbiB0aGVpciBhYmlsaXR5IHRvIHBlcmZvcm0gZGVjaXNpb24tbWFraW5nIHRhc2tzIHN1Y2ggYXMgd2ViIGF1dG9tYXRpb24uIEhvd2V2ZXIsIGEga2V5IGxpbWl0YXRpb24gcmVtYWluczogTE1zLCBwcmltYXJpbHkgb3B0aW1pemVkIGZvciBuYXR1cmFsIGxhbmd1YWdlIHVuZGVyc3RhbmRpbmcgYW5kIGdlbmVyYXRpb24sIHN0cnVnZ2xlIHdpdGggbXVsdGktc3RlcCByZWFzb25pbmcsIHBsYW5uaW5nLCBhbmQgdXNpbmcgZW52aXJvbm1lbnRhbCBmZWVkYmFjayB3aGVuIGF0dGVtcHRpbmcgdG8gc29sdmUgcmVhbGlzdGljIGNvbXB1dGVyIHRhc2tzLiBUb3dhcmRzIGFkZHJlc3NpbmcgdGhpcywgd2UgcHJvcG9zZSBhbiBpbmZlcmVuY2UtdGltZSBzZWFyY2ggYWxnb3JpdGhtIGZvciBMTSBhZ2VudHMgdG8gZXhwbGljaXRseSBwZXJmb3JtIGV4cGxvcmF0aW9uIGFuZCBtdWx0aS1zdGVwIHBsYW5uaW5nIGluIGludGVyYWN0aXZlIHdlYiBlbnZpcm9ubWVudHMuIE91ciBhcHByb2FjaCBpcyBhIGZvcm0gb2YgYmVzdC1maXJzdCB0cmVlIHNlYXJjaCB0aGF0IG9wZXJhdGVzIHdpdGhpbiB0aGUgYWN0dWFsIGVudmlyb25tZW50IHNwYWNlLCBhbmQgaXMgY29tcGxlbWVudGFyeSB3aXRoIG1vc3QgZXhpc3Rpbmcgc3RhdGUtb2YtdGhlLWFydCBhZ2VudHMuIEl0IGlzIHRoZSBmaXJzdCB0cmVlIHNlYXJjaCBhbGdvcml0aG0gZm9yIExNIGFnZW50cyB0aGF0IHNob3dzIGVmZmVjdGl2ZW5lc3Mgb24gcmVhbGlzdGljIHdlYiB0YXNrcy4gT24gdGhlIGNoYWxsZW5naW5nIFZpc3VhbFdlYkFyZW5hIGJlbmNobWFyaywgYXBwbHlpbmcgb3VyIHNlYXJjaCBhbGdvcml0aG0gb24gdG9wIG9mIGEgR1BULTRvIGFnZW50IHlpZWxkcyBhIDM5LjclIHJlbGF0aXZlIGluY3JlYXNlIGluIHN1Y2Nlc3MgcmF0ZSBjb21wYXJlZCB0byB0aGUgc2FtZSBiYXNlbGluZSB3aXRob3V0IHNlYXJjaCwgc2V0dGluZyBhIHN0YXRlLW9mLXRoZS1hcnQgc3VjY2VzcyByYXRlIG9mIDI2LjQlLiBPbiBXZWJBcmVuYSwgc2VhcmNoIGFsc28geWllbGRzIGEgMjguMCUgcmVsYXRpdmUgaW1wcm92ZW1lbnQgb3ZlciBhIGJhc2VsaW5lIGFnZW50LCBzZXR0aW5nIGEgY29tcGV0aXRpdmUgc3VjY2VzcyByYXRlIG9mIDE5LjIlLiBPdXIgZXhwZXJpbWVudHMgaGlnaGxpZ2h0IHRoZSBlZmZlY3RpdmVuZXNzIG9mIHNlYXJjaCBmb3Igd2ViIGFnZW50cywgYW5kIHdlIGRlbW9uc3RyYXRlIHRoYXQgcGVyZm9ybWFuY2Ugc2NhbGVzIHdpdGggaW5jcmVhc2VkIHRlc3QtdGltZSBjb21wdXRlLiBXZSBjb25kdWN0IGEgdGhvcm91Z2ggYW5hbHlzaXMgb2Ygb3VyIHJlc3VsdHMgdG8gaGlnaGxpZ2h0IGltcHJvdmVtZW50cyBmcm9tIHNlYXJjaCwgbGltaXRhdGlvbnMsIGFuZCBwcm9taXNpbmcgZGlyZWN0aW9ucyBmb3IgZnV0dXJlIHdvcmsuIE91ciBjb2RlIGFuZCBtb2RlbHMgYXJlIHB1YmxpY2x5IHJlbGVhc2VkIGF0IGh0dHBzOi8vanlrb2guY29tL3NlYXJjaC1hZ2VudHMuPC9kZXNjcmlwdGlvbj4KICAgIDxkZXNjcmlwdGlvbiBkZXNjcmlwdGlvblR5cGU9Ik90aGVyIj4xMyBwYWdlcy4gTW9kZWxzIGFuZCBjb2RlIGF2YWlsYWJsZSBhdCBodHRwczovL2p5a29oLmNvbS9zZWFyY2gtYWdlbnRzPC9kZXNjcmlwdGlvbj4KICA8L2Rlc2NyaXB0aW9ucz4KPC9yZXNvdXJjZT4=",
+    "url": "https://arxiv.org/abs/2407.01476",
+    "contentUrl": null,
+    "metadataVersion": 3,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "mds",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 0,
+    "viewsOverTime": [],
+    "downloadCount": 0,
+    "downloadsOverTime": [],
+    "referenceCount": 0,
+    "citationCount": 0,
+    "citationsOverTime": [],
+    "partCount": 0,
+    "partOfCount": 0,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2024-07-02T03:21:28.000Z",
+    "registered": "2024-07-02T03:21:29.000Z",
+    "published": "2024",
+    "updated": "2026-02-10T05:09:40.000Z"
+   },
+   "relationships": {
+    "client": {
+     "data": {
+      "id": "arxiv.content",
+      "type": "clients"
+     }
+    },
+    "provider": {
+     "data": {
+      "id": "arxiv",
+      "type": "providers"
+     }
+    },
+    "media": {
+     "data": {
+      "id": "10.48550/arxiv.2407.01476",
+      "type": "media"
+     }
+    },
+    "references": {
+     "data": []
+    },
+    "citations": {
+     "data": []
+    },
+    "parts": {
+     "data": []
+    },
+    "partOf": {
+     "data": []
+    },
+    "versions": {
+     "data": []
+    },
+    "versionOf": {
+     "data": []
+    }
+   }
+  }
+ },
+ "semantic_scholar": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+ "fetched": "2026-10-29",
+ "note": "Semantic Scholar 返回 429 限流，没拿到；用 arXiv + OpenAlex + DataCite 三库交叉核对"
+}

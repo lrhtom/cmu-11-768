@@ -1,0 +1,31 @@
+{
+  "slug": "10.48550_arxiv.2608.12355",
+  "doi": "10.48550/arXiv.2608.12355",
+  "title": "Humans are Missing from AI Coding Agent Research",
+  "title_note": "arXiv 元数据、OpenAlex、DataCite、摘要页的标题都是这一行；PDF 首页标题前多了 'Position:'（立场论文的格式），是同一篇",
+  "authors": ["Zora Z. Wang", "John Yang", "Kilian Lieret", "Alexa Tartaglini", "Valerie Chen", "Yuxiang Wei", "Zijian Wang", "Lingming Zhang", "Karthik Narasimhan", "Ludwig Schmidt", "Graham Neubig", "Daniel Fried", "Diyi Yang"],
+  "authors_note": "13 人，顺序在 arXiv API、DataCite、OpenAlex、摘要页、PDF 首页一致；第一作者在 PDF 和 OpenAlex 里写作 Zora Zhiruo Wang；前三位为共同一作。第 5 位 Valerie Chen 是本课第 19 讲讲者",
+  "year": 2026,
+  "date": "2026-07-04（v1）",
+  "version": "arxiv-v1",
+  "version_note": "只有 v1（2026-07-04 01:24:03 UTC，2,321 KB）。注：arXiv 号 2608 的年月和提交日期 7 月对不上，四处来源都是这样记的，属 arXiv 一侧数据，不影响身份核对",
+  "venue": "arXiv preprint（cs.HC；另列 cs.AI、cs.SE），立场论文；arXiv 没有期刊或会议信息",
+  "pages": "30 页（PDF，正文 1–14 页，参考文献，附录 A 指标、附录 B 扩展讨论）",
+  "arxiv_id": "2608.12355v1",
+  "urls": {"abs": "https://arxiv.org/abs/2608.12355v1", "pdf": "https://arxiv.org/pdf/2608.12355v1"},
+  "openalex_id": "W7203443502",
+  "course_use": "官网第 17、18 讲阅读 / 参考清单里的候选文献，用于预写第 19 讲（Interaction 2: Human-Agent Interaction，Valerie Chen，11/10）",
+  "check_8_items": {
+    "1_title": "一致（见 title_note）",
+    "2_authors": "一致：13 人，顺序五处相同",
+    "3_year": "2026",
+    "4_version": "arxiv-v1（唯一版本）",
+    "5_venue": "arXiv 预印本，立场论文",
+    "6_pages": "30 页",
+    "7_doi": "10.48550/arXiv.2608.12355，DataCite 解析通过，摘要页同一个 DOI",
+    "8_content": "全文 30 页读完（正文、附录 A 的补丁臃肿与功能差异、附录 B.1/B.2）。逐句判定见 summary_cn_en.md"
+  },
+  "verified_date": "2026-11-12",
+  "verified_by": "claude",
+  "verification_method": "arxiv-api+openalex+datacite+playwright-edge-screenshot+pdf-fullread"
+}

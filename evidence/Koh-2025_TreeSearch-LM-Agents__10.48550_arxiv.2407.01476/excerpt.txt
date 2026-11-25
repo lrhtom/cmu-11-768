@@ -1,0 +1,34 @@
+出处：Koh, McAleer, Fried, Salakhutdinov. Tree Search for Language Model Agents. TMLR (09/2025), arXiv:2407.01476v3.
+用途：CMU 11-768 笔记第 11 章"搜索 2：树搜索"一节（课 11/17 才上，讲者 JY Koh 即本文第一作者；课前先依据本文写）。
+
+【claim 1】方法是在真实环境里做的最佳优先树搜索，用价值函数打分，可以回溯。
+PDF p.1 摘要："Our approach is a form of best-first tree search that operates within the actual environment space, and is complementary with most existing state-of-the-art agents."
+PDF p.2 图 1 说明："At each iteration, we pick the next state sp to expand from frontier F and compute a score v for it using the value function. Then, we add the possible states that the agent can get to from sp to the frontier and repeat the search procedure."
+
+【claim 2】价值函数 v_t = f_v(I, {o1..ot}) ∈ [0,1]，用多模态 LM 打分；成功 1、失败 0、失败但在正轨上 0.5，采 20 条推理链取平均（自一致）。
+PDF p.5 §3.2："vt = fv(I, {o1, . . . , ot}) ∈[0, 1]"
+PDF p.7 §4.1："These outputs are assigned values of 1, 0, and 0.5 respectively (and 0 for invalid output)." "We sample 20 different paths from the GPT-4o model ... The final value assigned to state st ... is computed by averaging the values from each of the 20 reasoning paths."
+
+【claim 3】超参数：深度 d、分支 b、预算 c、终止阈值 θ；实验 d = 5, b = 5, c = 20，最多执行 5 个动作；每步采 20 个输出，取出现次数最多的前 b 个动作当分支。
+PDF p.5 §3.3："The search has hyperparameters depth d, branching factor b, and search budget c which determine the maximum size of the search tree, and termination threshold θ."
+PDF p.6 §4.1："Our search parameters are set to d = 5, b = 5, c = 20, and we stop execution after a maximum of 5 actions." "At each step of execution, we generate 20 outputs from the model ... We aggregate the count of the actions and use the top-b actions for branching."
+
+【claim 4】新子节点用父节点的分数入队（不立刻评估），以减少回溯开销。
+PDF p.6 脚注 2："We opt for this approach instead of immediately computing the value for resulting states si p as immediate evaluation requires more backtracking calls, which would incur much more overhead in the (V)WA simulators."
+
+【claim 5】结果：VWA 上 GPT-4o + SoM 18.9% → 26.4%（+39.7%）；Llama-3-70B + captions 7.6% → 16.7%（+119.7%）；WA 上 GPT-4o 15.0% → 19.2%（+28.0%），Llama-3-70B 7.6% → 10.1%（+32.3%）。
+PDF p.7 表 2。
+
+【claim 6】消融（200 个 VWA 任务子集）：c = 0/5/20 → 24.5% / 32.0% / 37.0%；d、b 都要变大；价值函数 LLaVA 30.0%、GPT-4o 无自一致 28.5%、n=5 32.5%、n=20 37.0%、真值奖励 43.5%；轨迹重排序约 7 条时走平在 30%。
+PDF p.8 图 2、表 3、表 4；PDF p.10 图 3。
+
+【claim 7】按难度：easy 34.2→42.3、medium 12.7→22.2（+75%）、hard 10.2→14.9。
+PDF p.10 表 5。
+
+【claim 8】回溯的实现：重置环境再重放动作序列，因为 go_back 会丢掉滚动位置和已输入的文字；局限：慢（c = 20 最多多 20 倍 LM 调用）、破坏性动作要限制、价值函数是为网页定制的。
+PDF p.12 §5.4；PDF p.21 附录 A.4.1。
+
+【原文前后不一致，原文如此】
+- 正文 §3.3 写 ˆvt ← 0、条件 vp > ˆvt；附录算法 1 写 ˆvt ← −∞、条件 vp ≥ ˆvt。
+- SteP 在表 2 是 33.5%，在附录表 8 是 35.8%（表 2 里 35.8% 是 GUI-API Hybrid Agent）。
+- 摘要写 "using kenvironmental feedback"（多了一个 k）。

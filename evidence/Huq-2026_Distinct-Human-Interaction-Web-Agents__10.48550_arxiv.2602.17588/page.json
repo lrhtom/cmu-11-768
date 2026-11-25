@@ -1,0 +1,1567 @@
+{
+ "arxiv_api_atom_entry": "<ns0:entry xmlns:ns0=\"http://www.w3.org/2005/Atom\" xmlns:ns1=\"http://arxiv.org/schemas/atom\">\n    <ns0:id>http://arxiv.org/abs/2602.17588v4</ns0:id>\n    <ns0:title>Modeling Distinct Human Interaction in Web Agents</ns0:title>\n    <ns0:updated>2026-07-07T23:37:46Z</ns0:updated>\n    <ns0:link href=\"https://arxiv.org/abs/2602.17588v4\" rel=\"alternate\" type=\"text/html\" />\n    <ns0:link href=\"https://arxiv.org/pdf/2602.17588v4\" rel=\"related\" type=\"application/pdf\" title=\"pdf\" />\n    <ns0:summary>Despite rapid progress in autonomous web agents, human involvement remains essential for shaping preferences and correcting agent behavior as tasks unfold. However, current agentic systems lack a principled understanding of when and why humans intervene, often proceeding autonomously past critical decision points or requesting unnecessary confirmation. In this work, we introduce the task of modeling human intervention to support collaborative web task execution. We collect CowCorpus, a dataset of 400 real-user web navigation trajectories containing over 4,200 interleaved human and agent actions. We identify four distinct patterns of user interaction with agents -- hands-off supervision, hands-on oversight, collaborative task-solving, and full user takeover. Leveraging these insights, we train language models (LMs) to anticipate when users are likely to intervene based on their interaction styles, yielding a 61.4-63.4% improvement in intervention prediction accuracy over base LMs. Finally, we deploy these intervention-aware models in live web navigation agents and evaluate them in a user study, finding a 36.8% increase in user-rated agent usefulness. Together, our results show structured modeling of human intervention leads to more adaptive, collaborative agents.</ns0:summary>\n    <ns0:category term=\"cs.CL\" scheme=\"http://arxiv.org/schemas/atom\" />\n    <ns0:category term=\"cs.HC\" scheme=\"http://arxiv.org/schemas/atom\" />\n    <ns0:published>2026-02-19T18:11:28Z</ns0:published>\n    <ns1:comment>Preprint</ns1:comment>\n    <ns1:primary_category term=\"cs.CL\" />\n    <ns0:author>\n      <ns0:name>Faria Huq</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Zora Zhiruo Wang</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Zhanqiu Guo</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Venu Arvind Arangarajan</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Tianyue Ou</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Frank Xu</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Shuyan Zhou</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Graham Neubig</ns0:name>\n    </ns0:author>\n    <ns0:author>\n      <ns0:name>Jeffrey P. Bigham</ns0:name>\n    </ns0:author>\n  </ns0:entry>\n  ",
+ "arxiv_api_query": "https://export.arxiv.org/api/query?id_list=2606.09833,2609.04141,2501.16609,2608.12355,2602.17588,2511.02208&max_results=10（2026-11-12，一次取 6 篇候选）",
+ "openalex": {
+  "id": "https://openalex.org/W7130712562",
+  "doi": "https://doi.org/10.18653/2026.findings-emnlp.2029",
+  "title": "Modeling Distinct Human Interaction in Web Agents",
+  "display_name": "Modeling Distinct Human Interaction in Web Agents",
+  "publication_year": 2026,
+  "publication_date": "2026-01-01",
+  "ids": {
+   "openalex": "https://openalex.org/W7130712562",
+   "doi": "https://doi.org/10.18653/2026.findings-emnlp.2029"
+  },
+  "language": "en",
+  "primary_location": {
+   "id": "doi:10.18653/2026.findings-emnlp.2029",
+   "doi": "https://doi.org/10.18653/2026.findings-emnlp.2029",
+   "is_oa": true,
+   "landing_page_url": "https://doi.org/10.18653/2026.findings-emnlp.2029",
+   "pdf_url": "https://aclanthology.org/2026.findings-emnlp.2029.pdf",
+   "source": {
+    "id": "https://openalex.org/S7407096085",
+    "display_name": "Findings of the Association for Computational Linguistics: EMNLP (Findings of EMNLP)",
+    "issn_l": null,
+    "issn": null,
+    "is_oa": false,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/P4310320244",
+    "host_organization_name": "Association for Computational Linguistics",
+    "host_organization_lineage": [
+     "https://openalex.org/P4310320244"
+    ],
+    "host_organization_lineage_names": [
+     "Association for Computational Linguistics"
+    ],
+    "type": "conference"
+   },
+   "license": null,
+   "license_id": null,
+   "version": "publishedVersion",
+   "is_accepted": true,
+   "is_published": true,
+   "raw_source_name": "Findings of the Association for Computational Linguistics: EMNLP 2026",
+   "raw_type": "proceedings-article"
+  },
+  "volume": null,
+  "type": "conference-paper",
+  "is_traditional": true,
+  "indexed_in": [
+   "arxiv",
+   "crossref",
+   "datacite"
+  ],
+  "open_access": {
+   "is_oa": true,
+   "oa_status": "bronze",
+   "oa_url": "https://aclanthology.org/2026.findings-emnlp.2029.pdf",
+   "any_repository_has_fulltext": true
+  },
+  "authorships": [
+   {
+    "author_position": "first",
+    "author": {
+     "id": "https://openalex.org/A5031873278",
+     "display_name": "Faria Huq",
+     "orcid": "https://orcid.org/0000-0002-6247-8283",
+     "observed_orcids": [
+      "https://orcid.org/0000-0002-6247-8283"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Faria Huq",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University ,"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University ,",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5041297063",
+     "display_name": "Zora Zhiruo Wang",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Zora Zhiruo Wang",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University ,"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University ,",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5153435506",
+     "display_name": "Zhanqiu Guo",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Zhanqiu Guo",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University ,"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University ,",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5126510921",
+     "display_name": "Venu Arvind Arangarajan",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Venu Arvind Arangarajan",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University ,"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University ,",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5114110725",
+     "display_name": "Tianyue Ou",
+     "orcid": "https://orcid.org/0009-0007-3834-3630",
+     "observed_orcids": [
+      "https://orcid.org/0009-0007-3834-3630"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Tianyue Ou",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University ,"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University ,",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5126474434",
+     "display_name": "Frank Xu",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Frank F. Xu",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University ,"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University ,",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5122702046",
+     "display_name": "Shuyan Zhou",
+     "orcid": null,
+     "observed_orcids": []
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I170897317",
+      "display_name": "Duke University",
+      "ror": "https://ror.org/00py81415",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I170897317"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Shuyan Zhou",
+    "raw_affiliation_strings": [
+     "Duke University"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Duke University",
+      "institution_ids": [
+       "https://openalex.org/I170897317"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "middle",
+    "author": {
+     "id": "https://openalex.org/A5068811427",
+     "display_name": "Graham Neubig",
+     "orcid": "https://orcid.org/0000-0002-2072-3789",
+     "observed_orcids": [
+      "https://orcid.org/0000-0002-2072-3789"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Graham Neubig",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University ,"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University ,",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   },
+   {
+    "author_position": "last",
+    "author": {
+     "id": "https://openalex.org/A5082603621",
+     "display_name": "Jeffrey P. Bigham",
+     "orcid": "https://orcid.org/0000-0002-2072-0625",
+     "observed_orcids": [
+      "https://orcid.org/0000-0002-2072-0625"
+     ]
+    },
+    "institutions": [
+     {
+      "id": "https://openalex.org/I74973139",
+      "display_name": "Carnegie Mellon University",
+      "ror": "https://ror.org/05x2bcf33",
+      "country_code": "US",
+      "type": "education",
+      "lineage": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ],
+    "countries": [
+     "US"
+    ],
+    "is_corresponding": false,
+    "raw_author_name": "Jeffrey P. Bigham",
+    "raw_affiliation_strings": [
+     "Carnegie Mellon University ,"
+    ],
+    "raw_orcid": null,
+    "affiliations": [
+     {
+      "raw_affiliation_string": "Carnegie Mellon University ,",
+      "institution_ids": [
+       "https://openalex.org/I74973139"
+      ]
+     }
+    ]
+   }
+  ],
+  "institutions": [],
+  "countries_distinct_count": 1,
+  "institutions_distinct_count": 2,
+  "corresponding_author_ids": [],
+  "corresponding_institution_ids": [],
+  "apc_list": null,
+  "apc_paid": null,
+  "fwci": 10.9053,
+  "has_fulltext": true,
+  "cited_by_count": 6,
+  "citation_normalized_percentile": {
+   "value": 0.9758794,
+   "is_in_top_1_percent": false,
+   "is_in_top_10_percent": true
+  },
+  "cited_by_percentile_year": {
+   "min": 98,
+   "max": 99
+  },
+  "biblio": {
+   "volume": null,
+   "issue": null,
+   "first_page": "43195",
+   "last_page": "43212"
+  },
+  "is_retracted": false,
+  "is_paratext": false,
+  "is_xpac": false,
+  "primary_topic": {
+   "id": "https://openalex.org/T12016",
+   "display_name": "Web Data Mining and Analysis",
+   "score": 0.6060000061988831,
+   "subfield": {
+    "id": "https://openalex.org/subfields/1710",
+    "display_name": "Information Systems"
+   },
+   "field": {
+    "id": "https://openalex.org/fields/17",
+    "display_name": "Computer Science"
+   },
+   "domain": {
+    "id": "https://openalex.org/domains/3",
+    "display_name": "Physical Sciences"
+   }
+  },
+  "topics": [
+   {
+    "id": "https://openalex.org/T12016",
+    "display_name": "Web Data Mining and Analysis",
+    "score": 0.6060000061988831,
+    "subfield": {
+     "id": "https://openalex.org/subfields/1710",
+     "display_name": "Information Systems"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/17",
+     "display_name": "Computer Science"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/3",
+     "display_name": "Physical Sciences"
+    }
+   },
+   {
+    "id": "https://openalex.org/T10286",
+    "display_name": "Information Retrieval and Search Behavior",
+    "score": 0.17720000445842743,
+    "subfield": {
+     "id": "https://openalex.org/subfields/1710",
+     "display_name": "Information Systems"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/17",
+     "display_name": "Computer Science"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/3",
+     "display_name": "Physical Sciences"
+    }
+   },
+   {
+    "id": "https://openalex.org/T10203",
+    "display_name": "Recommender Systems and Techniques",
+    "score": 0.06939999759197235,
+    "subfield": {
+     "id": "https://openalex.org/subfields/1710",
+     "display_name": "Information Systems"
+    },
+    "field": {
+     "id": "https://openalex.org/fields/17",
+     "display_name": "Computer Science"
+    },
+    "domain": {
+     "id": "https://openalex.org/domains/3",
+     "display_name": "Physical Sciences"
+    }
+   }
+  ],
+  "keywords": [
+   {
+    "id": "https://openalex.org/keywords/web-agents",
+    "display_name": "web agents",
+    "score": 0.7630000114440918
+   },
+   {
+    "id": "https://openalex.org/keywords/human-agent-interaction",
+    "display_name": "human-agent interaction",
+    "score": 0.5590000152587891
+   },
+   {
+    "id": "https://openalex.org/keywords/intervention-prediction",
+    "display_name": "intervention prediction",
+    "score": 0.5109999775886536
+   },
+   {
+    "id": "https://openalex.org/keywords/language-models",
+    "display_name": "language models",
+    "score": 0.546999990940094
+   }
+  ],
+  "concepts": [
+   {
+    "id": "https://openalex.org/C41008148",
+    "wikidata": "https://www.wikidata.org/wiki/Q21198",
+    "display_name": "Computer science",
+    "level": 0,
+    "score": 0.723800003528595
+   },
+   {
+    "id": "https://openalex.org/C2780451532",
+    "wikidata": "https://www.wikidata.org/wiki/Q759676",
+    "display_name": "Task (project management)",
+    "level": 2,
+    "score": 0.6735000014305115
+   },
+   {
+    "id": "https://openalex.org/C107457646",
+    "wikidata": "https://www.wikidata.org/wiki/Q207434",
+    "display_name": "Human–computer interaction",
+    "level": 1,
+    "score": 0.649399995803833
+   },
+   {
+    "id": "https://openalex.org/C2780665704",
+    "wikidata": "https://www.wikidata.org/wiki/Q959298",
+    "display_name": "Intervention (counseling)",
+    "level": 2,
+    "score": 0.461899995803833
+   },
+   {
+    "id": "https://openalex.org/C118643609",
+    "wikidata": "https://www.wikidata.org/wiki/Q189210",
+    "display_name": "Web application",
+    "level": 2,
+    "score": 0.4422999918460846
+   },
+   {
+    "id": "https://openalex.org/C175154964",
+    "wikidata": "https://www.wikidata.org/wiki/Q380077",
+    "display_name": "Task analysis",
+    "level": 3,
+    "score": 0.36250001192092896
+   },
+   {
+    "id": "https://openalex.org/C136764020",
+    "wikidata": "https://www.wikidata.org/wiki/Q466",
+    "display_name": "World Wide Web",
+    "level": 1,
+    "score": 0.35839998722076416
+   },
+   {
+    "id": "https://openalex.org/C67712803",
+    "wikidata": "https://www.wikidata.org/wiki/Q7901853",
+    "display_name": "User modeling",
+    "level": 3,
+    "score": 0.35010001063346863
+   },
+   {
+    "id": "https://openalex.org/C41550386",
+    "wikidata": "https://www.wikidata.org/wiki/Q529909",
+    "display_name": "Multi-agent system",
+    "level": 2,
+    "score": 0.3303000032901764
+   },
+   {
+    "id": "https://openalex.org/C2987082051",
+    "wikidata": "https://www.wikidata.org/wiki/Q223642",
+    "display_name": "Human interaction",
+    "level": 2,
+    "score": 0.328000009059906
+   },
+   {
+    "id": "https://openalex.org/C74072328",
+    "wikidata": "https://www.wikidata.org/wiki/Q1142726",
+    "display_name": "Intelligent agent",
+    "level": 2,
+    "score": 0.3125999867916107
+   },
+   {
+    "id": "https://openalex.org/C4554734",
+    "wikidata": "https://www.wikidata.org/wiki/Q593744",
+    "display_name": "Knowledge base",
+    "level": 2,
+    "score": 0.31119999289512634
+   },
+   {
+    "id": "https://openalex.org/C35578498",
+    "wikidata": "https://www.wikidata.org/wiki/Q193424",
+    "display_name": "Web service",
+    "level": 2,
+    "score": 0.3075999915599823
+   },
+   {
+    "id": "https://openalex.org/C61096286",
+    "wikidata": "https://www.wikidata.org/wiki/Q7978592",
+    "display_name": "Web navigation",
+    "level": 3,
+    "score": 0.28610000014305115
+   },
+   {
+    "id": "https://openalex.org/C5894958",
+    "wikidata": "https://www.wikidata.org/wiki/Q2297769",
+    "display_name": "Software agent",
+    "level": 2,
+    "score": 0.28540000319480896
+   },
+   {
+    "id": "https://openalex.org/C154945302",
+    "wikidata": "https://www.wikidata.org/wiki/Q11660",
+    "display_name": "Artificial intelligence",
+    "level": 1,
+    "score": 0.2840000092983246
+   },
+   {
+    "id": "https://openalex.org/C130436687",
+    "wikidata": "https://www.wikidata.org/wiki/Q7978591",
+    "display_name": "Web modeling",
+    "level": 3,
+    "score": 0.2768000066280365
+   },
+   {
+    "id": "https://openalex.org/C13687954",
+    "wikidata": "https://www.wikidata.org/wiki/Q4826847",
+    "display_name": "Autonomous agent",
+    "level": 2,
+    "score": 0.27160000801086426
+   },
+   {
+    "id": "https://openalex.org/C554579003",
+    "wikidata": "https://www.wikidata.org/wiki/Q474157",
+    "display_name": "Collaborative software",
+    "level": 2,
+    "score": 0.2705000042915344
+   },
+   {
+    "id": "https://openalex.org/C177264268",
+    "wikidata": "https://www.wikidata.org/wiki/Q1514741",
+    "display_name": "Set (abstract data type)",
+    "level": 2,
+    "score": 0.2667999863624573
+   },
+   {
+    "id": "https://openalex.org/C89505385",
+    "wikidata": "https://www.wikidata.org/wiki/Q47146",
+    "display_name": "User interface",
+    "level": 2,
+    "score": 0.2662000060081482
+   }
+  ],
+  "mesh": [],
+  "locations_count": 3,
+  "locations": [
+   {
+    "id": "doi:10.18653/2026.findings-emnlp.2029",
+    "doi": "https://doi.org/10.18653/2026.findings-emnlp.2029",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.18653/2026.findings-emnlp.2029",
+    "pdf_url": "https://aclanthology.org/2026.findings-emnlp.2029.pdf",
+    "source": {
+     "id": "https://openalex.org/S7407096085",
+     "display_name": "Findings of the Association for Computational Linguistics: EMNLP (Findings of EMNLP)",
+     "issn_l": null,
+     "issn": null,
+     "is_oa": false,
+     "is_in_doaj": false,
+     "is_core": false,
+     "listed_in": [],
+     "host_organization": "https://openalex.org/P4310320244",
+     "host_organization_name": "Association for Computational Linguistics",
+     "host_organization_lineage": [
+      "https://openalex.org/P4310320244"
+     ],
+     "host_organization_lineage_names": [
+      "Association for Computational Linguistics"
+     ],
+     "type": "conference"
+    },
+    "license": null,
+    "license_id": null,
+    "version": "publishedVersion",
+    "is_accepted": true,
+    "is_published": true,
+    "raw_source_name": "Findings of the Association for Computational Linguistics: EMNLP 2026",
+    "raw_type": "proceedings-article"
+   },
+   {
+    "id": "pmh:oai:arXiv.org:2602.17588",
+    "doi": null,
+    "is_oa": true,
+    "landing_page_url": "https://arxiv.org/abs/2602.17588",
+    "pdf_url": "https://arxiv.org/pdf/2602.17588",
+    "source": {
+     "id": "https://openalex.org/S4306400194",
+     "display_name": "arXiv (Cornell University)",
+     "issn_l": "2331-8422",
+     "issn": [
+      "2331-8422"
+     ],
+     "is_oa": true,
+     "is_in_doaj": false,
+     "is_core": false,
+     "listed_in": [],
+     "host_organization": "https://openalex.org/I205783295",
+     "host_organization_name": "Cornell University",
+     "host_organization_lineage": [
+      "https://openalex.org/I205783295"
+     ],
+     "host_organization_lineage_names": [],
+     "type": "repository"
+    },
+    "license": "cc-by",
+    "license_id": "https://openalex.org/licenses/cc-by",
+    "version": "submittedVersion",
+    "is_accepted": false,
+    "is_published": false,
+    "raw_source_name": null,
+    "raw_type": "text"
+   },
+   {
+    "id": "doi:10.48550/arxiv.2602.17588",
+    "doi": "https://doi.org/10.48550/arxiv.2602.17588",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.48550/arxiv.2602.17588",
+    "pdf_url": null,
+    "source": {
+     "id": "https://openalex.org/S4306400194",
+     "display_name": "arXiv (Cornell University)",
+     "issn_l": "2331-8422",
+     "issn": [
+      "2331-8422"
+     ],
+     "is_oa": true,
+     "is_in_doaj": false,
+     "is_core": false,
+     "listed_in": [],
+     "host_organization": "https://openalex.org/I205783295",
+     "host_organization_name": "Cornell University",
+     "host_organization_lineage": [
+      "https://openalex.org/I205783295"
+     ],
+     "host_organization_lineage_names": [],
+     "type": "repository"
+    },
+    "license": "cc-by",
+    "license_id": "https://openalex.org/licenses/cc-by",
+    "version": null,
+    "is_accepted": false,
+    "is_published": false,
+    "raw_source_name": null,
+    "raw_type": "Preprint"
+   }
+  ],
+  "best_oa_location": {
+   "id": "doi:10.18653/2026.findings-emnlp.2029",
+   "doi": "https://doi.org/10.18653/2026.findings-emnlp.2029",
+   "is_oa": true,
+   "landing_page_url": "https://doi.org/10.18653/2026.findings-emnlp.2029",
+   "pdf_url": "https://aclanthology.org/2026.findings-emnlp.2029.pdf",
+   "source": {
+    "id": "https://openalex.org/S7407096085",
+    "display_name": "Findings of the Association for Computational Linguistics: EMNLP (Findings of EMNLP)",
+    "issn_l": null,
+    "issn": null,
+    "is_oa": false,
+    "is_in_doaj": false,
+    "is_core": false,
+    "listed_in": [],
+    "host_organization": "https://openalex.org/P4310320244",
+    "host_organization_name": "Association for Computational Linguistics",
+    "host_organization_lineage": [
+     "https://openalex.org/P4310320244"
+    ],
+    "host_organization_lineage_names": [
+     "Association for Computational Linguistics"
+    ],
+    "type": "conference"
+   },
+   "license": null,
+   "license_id": null,
+   "version": "publishedVersion",
+   "is_accepted": true,
+   "is_published": true,
+   "raw_source_name": "Findings of the Association for Computational Linguistics: EMNLP 2026",
+   "raw_type": "proceedings-article"
+  },
+  "sustainable_development_goals": [],
+  "study_designs": [],
+  "awards": [],
+  "funders": [],
+  "has_content": {
+   "pdf": true,
+   "grobid_xml": true
+  },
+  "content_urls": {
+   "pdf": "https://content.openalex.org/works/W7130712562.pdf",
+   "grobid_xml": "https://content.openalex.org/works/W7130712562.grobid-xml"
+  },
+  "referenced_works_count": 26,
+  "referenced_works": [
+   "https://openalex.org/W1501380514",
+   "https://openalex.org/W2611884151",
+   "https://openalex.org/W2765218414",
+   "https://openalex.org/W2964273112",
+   "https://openalex.org/W2972018816",
+   "https://openalex.org/W3047508744",
+   "https://openalex.org/W3120142301",
+   "https://openalex.org/W4387164935",
+   "https://openalex.org/W4391631536",
+   "https://openalex.org/W4394868250",
+   "https://openalex.org/W4399837154",
+   "https://openalex.org/W4401042999",
+   "https://openalex.org/W4402667079",
+   "https://openalex.org/W4404330874",
+   "https://openalex.org/W4404780931",
+   "https://openalex.org/W4404784045",
+   "https://openalex.org/W4405467589",
+   "https://openalex.org/W4405469679",
+   "https://openalex.org/W4407208775",
+   "https://openalex.org/W4408589738",
+   "https://openalex.org/W4411119774",
+   "https://openalex.org/W4416268557",
+   "https://openalex.org/W4417057081",
+   "https://openalex.org/W6891959969",
+   "https://openalex.org/W6948350236",
+   "https://openalex.org/W6948369276"
+  ],
+  "related_works": [
+   "https://openalex.org/W7154190398",
+   "https://openalex.org/W7112407357",
+   "https://openalex.org/W7130316356",
+   "https://openalex.org/W7127332544",
+   "https://openalex.org/W7154385001",
+   "https://openalex.org/W7137805993",
+   "https://openalex.org/W4396815328",
+   "https://openalex.org/W4412945278",
+   "https://openalex.org/W7130686652",
+   "https://openalex.org/W2906209262"
+  ],
+  "abstract_inverted_index": {
+   "Despite": [
+    0
+   ],
+   "rapid": [
+    1
+   ],
+   "progress": [
+    2
+   ],
+   "in": [
+    3,
+    129,
+    137,
+    144
+   ],
+   "autonomous": [
+    4
+   ],
+   "web": [
+    5,
+    58,
+    68,
+    131
+   ],
+   "agents,": [
+    6
+   ],
+   "human": [
+    7,
+    53,
+    75,
+    154
+   ],
+   "involvement": [
+    8
+   ],
+   "remains": [
+    9
+   ],
+   "essential": [
+    10
+   ],
+   "for": [
+    11
+   ],
+   "shaping": [
+    12
+   ],
+   "preferences": [
+    13
+   ],
+   "and": [
+    14,
+    30,
+    76,
+    94,
+    134,
+    162
+   ],
+   "correcting": [
+    15
+   ],
+   "agent": [
+    16,
+    77,
+    146
+   ],
+   "behavior": [
+    17
+   ],
+   "as": [
+    18
+   ],
+   "tasks": [
+    19
+   ],
+   "unfold.However,": [
+    20
+   ],
+   "current": [
+    21
+   ],
+   "agentic": [
+    22
+   ],
+   "systems": [
+    23
+   ],
+   "lack": [
+    24
+   ],
+   "a": [
+    25,
+    63,
+    138,
+    142
+   ],
+   "principled": [
+    26
+   ],
+   "understanding": [
+    27
+   ],
+   "of": [
+    28,
+    51,
+    65,
+    83,
+    153
+   ],
+   "when": [
+    29,
+    107
+   ],
+   "why": [
+    31
+   ],
+   "humans": [
+    32
+   ],
+   "intervene,": [
+    33
+   ],
+   "often": [
+    34
+   ],
+   "proceeding": [
+    35
+   ],
+   "autonomously": [
+    36
+   ],
+   "past": [
+    37
+   ],
+   "critical": [
+    38
+   ],
+   "decision": [
+    39
+   ],
+   "points": [
+    40
+   ],
+   "or": [
+    41
+   ],
+   "requesting": [
+    42
+   ],
+   "unnecessary": [
+    43
+   ],
+   "confirmation.In": [
+    44
+   ],
+   "this": [
+    45
+   ],
+   "work,": [
+    46
+   ],
+   "we": [
+    47,
+    100,
+    124
+   ],
+   "introduce": [
+    48
+   ],
+   "the": [
+    49
+   ],
+   "task": [
+    50,
+    59
+   ],
+   "modeling": [
+    52,
+    152
+   ],
+   "intervention": [
+    54,
+    155
+   ],
+   "to": [
+    55,
+    105,
+    111,
+    157
+   ],
+   "support": [
+    56
+   ],
+   "collaborative": [
+    57,
+    92,
+    160
+   ],
+   "execution.We": [
+    60
+   ],
+   "collect": [
+    61
+   ],
+   "COWCORPUS,": [
+    62
+   ],
+   "dataset": [
+    64
+   ],
+   "400": [
+    66
+   ],
+   "real-user": [
+    67
+   ],
+   "navigation": [
+    69,
+    132
+   ],
+   "trajectories": [
+    70
+   ],
+   "containing": [
+    71
+   ],
+   "over": [
+    72,
+    121
+   ],
+   "4,200": [
+    73
+   ],
+   "interleaved": [
+    74
+   ],
+   "actions.We": [
+    78
+   ],
+   "identify": [
+    79
+   ],
+   "four": [
+    80
+   ],
+   "distinct": [
+    81
+   ],
+   "patterns": [
+    82
+   ],
+   "user": [
+    84,
+    96,
+    139
+   ],
+   "interaction": [
+    85,
+    116
+   ],
+   "with": [
+    86
+   ],
+   "agents": [
+    87,
+    133
+   ],
+   "-hands-off": [
+    88
+   ],
+   "supervision,": [
+    89
+   ],
+   "hands-on": [
+    90
+   ],
+   "oversight,": [
+    91
+   ],
+   "task-solving,": [
+    93
+   ],
+   "full": [
+    95
+   ],
+   "takeover.Leveraging": [
+    97
+   ],
+   "these": [
+    98,
+    126
+   ],
+   "insights,": [
+    99
+   ],
+   "train": [
+    101
+   ],
+   "language": [
+    102
+   ],
+   "models": [
+    103,
+    128,
+    163
+   ],
+   "(LMs)": [
+    104
+   ],
+   "anticipate": [
+    106
+   ],
+   "users": [
+    108
+   ],
+   "are": [
+    109
+   ],
+   "likely": [
+    110
+   ],
+   "intervene": [
+    112
+   ],
+   "based": [
+    113
+   ],
+   "on": [
+    114
+   ],
+   "their": [
+    115
+   ],
+   "styles,": [
+    117
+   ],
+   "yielding": [
+    118
+   ],
+   "11.6-18.4%": [
+    119
+   ],
+   "improvement": [
+    120
+   ],
+   "base": [
+    122
+   ],
+   "LMs.Finally,": [
+    123
+   ],
+   "deploy": [
+    125
+   ],
+   "interventionaware": [
+    127
+   ],
+   "live": [
+    130
+   ],
+   "evaluate": [
+    135
+   ],
+   "them": [
+    136
+   ],
+   "study,": [
+    140
+   ],
+   "finding": [
+    141
+   ],
+   "36.8%increase": [
+    143
+   ],
+   "user-rated": [
+    145
+   ],
+   "usefulness.Together,": [
+    147
+   ],
+   "our": [
+    148
+   ],
+   "results": [
+    149
+   ],
+   "show": [
+    150
+   ],
+   "structured": [
+    151
+   ],
+   "leads": [
+    156
+   ],
+   "more": [
+    158
+   ],
+   "adaptive,": [
+    159
+   ],
+   "agents.Code": [
+    161
+   ],
+   "available": [
+    164
+   ],
+   "at:": [
+    165
+   ],
+   "huggingface.co/CowCorpus.": [
+    166
+   ]
+  },
+  "counts_by_year": [
+   {
+    "year": 2026,
+    "cited_by_count": 6
+   }
+  ],
+  "updated_date": "2026-11-08T12:12:28.789561",
+  "created_date": "2026-02-21T00:00:00"
+ },
+ "datacite": {
+  "data": {
+   "id": "10.48550/arxiv.2602.17588",
+   "type": "dois",
+   "attributes": {
+    "doi": "10.48550/arxiv.2602.17588",
+    "prefix": "10.48550",
+    "suffix": "arxiv.2602.17588",
+    "identifiers": [
+     {
+      "identifier": "2602.17588",
+      "identifierType": "arXiv"
+     }
+    ],
+    "alternateIdentifiers": [
+     {
+      "alternateIdentifierType": "arXiv",
+      "alternateIdentifier": "2602.17588"
+     }
+    ],
+    "creators": [
+     {
+      "name": "Huq, Faria",
+      "nameType": "Personal",
+      "givenName": "Faria",
+      "familyName": "Huq",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Wang, Zora Zhiruo",
+      "nameType": "Personal",
+      "givenName": "Zora Zhiruo",
+      "familyName": "Wang",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Guo, Zhanqiu",
+      "nameType": "Personal",
+      "givenName": "Zhanqiu",
+      "familyName": "Guo",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Arangarajan, Venu Arvind",
+      "nameType": "Personal",
+      "givenName": "Venu Arvind",
+      "familyName": "Arangarajan",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Ou, Tianyue",
+      "nameType": "Personal",
+      "givenName": "Tianyue",
+      "familyName": "Ou",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Xu, Frank",
+      "nameType": "Personal",
+      "givenName": "Frank",
+      "familyName": "Xu",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Zhou, Shuyan",
+      "nameType": "Personal",
+      "givenName": "Shuyan",
+      "familyName": "Zhou",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Neubig, Graham",
+      "nameType": "Personal",
+      "givenName": "Graham",
+      "familyName": "Neubig",
+      "affiliation": [],
+      "nameIdentifiers": []
+     },
+     {
+      "name": "Bigham, Jeffrey P.",
+      "nameType": "Personal",
+      "givenName": "Jeffrey P.",
+      "familyName": "Bigham",
+      "affiliation": [],
+      "nameIdentifiers": []
+     }
+    ],
+    "titles": [
+     {
+      "title": "Modeling Distinct Human Interaction in Web Agents"
+     }
+    ],
+    "publisher": "arXiv",
+    "container": {},
+    "publicationYear": 2026,
+    "subjects": [
+     {
+      "lang": "en",
+      "subject": "Computation and Language (cs.CL)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "lang": "en",
+      "subject": "Human-Computer Interaction (cs.HC)",
+      "subjectScheme": "arXiv"
+     },
+     {
+      "subject": "FOS: Computer and information sciences",
+      "subjectScheme": "Fields of Science and Technology (FOS)"
+     }
+    ],
+    "contributors": [],
+    "dates": [
+     {
+      "date": "2026-02-19T18:11:28Z",
+      "dateType": "Submitted",
+      "dateInformation": "v1"
+     },
+     {
+      "date": "2026-02-20T01:56:23Z",
+      "dateType": "Updated",
+      "dateInformation": "v1"
+     },
+     {
+      "date": "2026-02-27T05:29:41Z",
+      "dateType": "Submitted",
+      "dateInformation": "v2"
+     },
+     {
+      "date": "2026-03-02T01:24:41Z",
+      "dateType": "Updated",
+      "dateInformation": "v2"
+     },
+     {
+      "date": "2026-05-31T08:32:10Z",
+      "dateType": "Submitted",
+      "dateInformation": "v3"
+     },
+     {
+      "date": "2026-06-02T01:04:10Z",
+      "dateType": "Updated",
+      "dateInformation": "v3"
+     },
+     {
+      "date": "2026-07-07T23:37:46Z",
+      "dateType": "Submitted",
+      "dateInformation": "v4"
+     },
+     {
+      "date": "2026-07-09T00:11:43Z",
+      "dateType": "Updated",
+      "dateInformation": "v4"
+     },
+     {
+      "date": "2026-02",
+      "dateType": "Available",
+      "dateInformation": "v1"
+     }
+    ],
+    "language": null,
+    "types": {
+     "ris": "GEN",
+     "bibtex": "misc",
+     "citeproc": "article",
+     "schemaOrg": "CreativeWork",
+     "resourceType": "Article",
+     "resourceTypeGeneral": "Preprint"
+    },
+    "relatedIdentifiers": [],
+    "relatedItems": [],
+    "sizes": [],
+    "formats": [],
+    "version": "4",
+    "rightsList": [
+     {
+      "rights": "Creative Commons Attribution 4.0 International",
+      "rightsUri": "https://creativecommons.org/licenses/by/4.0/legalcode",
+      "schemeUri": "https://spdx.org/licenses/",
+      "rightsIdentifier": "cc-by-4.0",
+      "rightsIdentifierScheme": "SPDX"
+     }
+    ],
+    "descriptions": [
+     {
+      "description": "Despite rapid progress in autonomous web agents, human involvement remains essential for shaping preferences and correcting agent behavior as tasks unfold. However, current agentic systems lack a principled understanding of when and why humans intervene, often proceeding autonomously past critical decision points or requesting unnecessary confirmation. In this work, we introduce the task of modeling human intervention to support collaborative web task execution. We collect CowCorpus, a dataset of 400 real-user web navigation trajectories containing over 4,200 interleaved human and agent actions. We identify four distinct patterns of user interaction with agents -- hands-off supervision, hands-on oversight, collaborative task-solving, and full user takeover. Leveraging these insights, we train language models (LMs) to anticipate when users are likely to intervene based on their interaction styles, yielding a 61.4-63.4% improvement in intervention prediction accuracy over base LMs. Finally, we deploy these intervention-aware models in live web navigation agents and evaluate them in a user study, finding a 36.8% increase in user-rated agent usefulness. Together, our results show structured modeling of human intervention leads to more adaptive, collaborative agents.",
+      "descriptionType": "Abstract"
+     },
+     {
+      "description": "Preprint",
+      "descriptionType": "Other"
+     }
+    ],
+    "geoLocations": [],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlc291cmNlIHhtbG5zPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeHNpOnNjaGVtYUxvY2F0aW9uPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCBodHRwOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00LjMvbWV0YWRhdGEueHNkIj4KICA8aWRlbnRpZmllciBpZGVudGlmaWVyVHlwZT0iRE9JIj4xMC40ODU1MC9BUlhJVi4yNjAyLjE3NTg4PC9pZGVudGlmaWVyPgogIDxhbHRlcm5hdGVJZGVudGlmaWVycz4KICAgIDxhbHRlcm5hdGVJZGVudGlmaWVyIGFsdGVybmF0ZUlkZW50aWZpZXJUeXBlPSJhclhpdiI+MjYwMi4xNzU4ODwvYWx0ZXJuYXRlSWRlbnRpZmllcj4KICA8L2FsdGVybmF0ZUlkZW50aWZpZXJzPgogIDxjcmVhdG9ycz4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5IdXEsIEZhcmlhPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5GYXJpYTwvZ2l2ZW5OYW1lPgogICAgICA8ZmFtaWx5TmFtZT5IdXE8L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+V2FuZywgWm9yYSBaaGlydW88L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPlpvcmEgWmhpcnVvPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPldhbmc8L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+R3VvLCBaaGFucWl1PC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5aaGFucWl1PC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPkd1bzwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5BcmFuZ2FyYWphbiwgVmVudSBBcnZpbmQ8L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPlZlbnUgQXJ2aW5kPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPkFyYW5nYXJhamFuPC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSBuYW1lVHlwZT0iUGVyc29uYWwiPk91LCBUaWFueXVlPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5UaWFueXVlPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPk91PC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSBuYW1lVHlwZT0iUGVyc29uYWwiPlh1LCBGcmFuazwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+RnJhbms8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+WHU8L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+WmhvdSwgU2h1eWFuPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5TaHV5YW48L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+WmhvdTwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5OZXViaWcsIEdyYWhhbTwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+R3JhaGFtPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPk5ldWJpZzwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5CaWdoYW0sIEplZmZyZXkgUC48L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPkplZmZyZXkgUC48L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+QmlnaGFtPC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogIDwvY3JlYXRvcnM+CiAgPHRpdGxlcz4KICAgIDx0aXRsZT5Nb2RlbGluZyBEaXN0aW5jdCBIdW1hbiBJbnRlcmFjdGlvbiBpbiBXZWIgQWdlbnRzPC90aXRsZT4KICA8L3RpdGxlcz4KICA8cHVibGlzaGVyPmFyWGl2PC9wdWJsaXNoZXI+CiAgPHB1YmxpY2F0aW9uWWVhcj4yMDI2PC9wdWJsaWNhdGlvblllYXI+CiAgPHN1YmplY3RzPgogICAgPHN1YmplY3QgeG1sOmxhbmc9ImVuIiBzdWJqZWN0U2NoZW1lPSJhclhpdiI+Q29tcHV0YXRpb24gYW5kIExhbmd1YWdlIChjcy5DTCk8L3N1YmplY3Q+CiAgICA8c3ViamVjdCB4bWw6bGFuZz0iZW4iIHN1YmplY3RTY2hlbWU9ImFyWGl2Ij5IdW1hbi1Db21wdXRlciBJbnRlcmFjdGlvbiAoY3MuSEMpPC9zdWJqZWN0PgogICAgPHN1YmplY3Qgc3ViamVjdFNjaGVtZT0iRmllbGRzIG9mIFNjaWVuY2UgYW5kIFRlY2hub2xvZ3kgKEZPUykiPkZPUzogQ29tcHV0ZXIgYW5kIGluZm9ybWF0aW9uIHNjaWVuY2VzPC9zdWJqZWN0PgogIDwvc3ViamVjdHM+CiAgPGRhdGVzPgogICAgPGRhdGUgZGF0ZVR5cGU9IlN1Ym1pdHRlZCIgZGF0ZUluZm9ybWF0aW9uPSJ2MSI+MjAyNi0wMi0xOVQxODoxMToyOFo8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iVXBkYXRlZCIgZGF0ZUluZm9ybWF0aW9uPSJ2MSI+MjAyNi0wMi0yMFQwMTo1NjoyM1o8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iU3VibWl0dGVkIiBkYXRlSW5mb3JtYXRpb249InYyIj4yMDI2LTAyLTI3VDA1OjI5OjQxWjwvZGF0ZT4KICAgIDxkYXRlIGRhdGVUeXBlPSJVcGRhdGVkIiBkYXRlSW5mb3JtYXRpb249InYyIj4yMDI2LTAzLTAyVDAxOjI0OjQxWjwvZGF0ZT4KICAgIDxkYXRlIGRhdGVUeXBlPSJTdWJtaXR0ZWQiIGRhdGVJbmZvcm1hdGlvbj0idjMiPjIwMjYtMDUtMzFUMDg6MzI6MTBaPC9kYXRlPgogICAgPGRhdGUgZGF0ZVR5cGU9IlVwZGF0ZWQiIGRhdGVJbmZvcm1hdGlvbj0idjMiPjIwMjYtMDYtMDJUMDE6MDQ6MTBaPC9kYXRlPgogICAgPGRhdGUgZGF0ZVR5cGU9IlN1Ym1pdHRlZCIgZGF0ZUluZm9ybWF0aW9uPSJ2NCI+MjAyNi0wNy0wN1QyMzozNzo0Nlo8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iVXBkYXRlZCIgZGF0ZUluZm9ybWF0aW9uPSJ2NCI+MjAyNi0wNy0wOVQwMDoxMTo0M1o8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iQXZhaWxhYmxlIiBkYXRlSW5mb3JtYXRpb249InYxIj4yMDI2LTAyPC9kYXRlPgogIDwvZGF0ZXM+CiAgPHJlc291cmNlVHlwZSByZXNvdXJjZVR5cGVHZW5lcmFsPSJQcmVwcmludCI+QXJ0aWNsZTwvcmVzb3VyY2VUeXBlPgogIDx2ZXJzaW9uPjQ8L3ZlcnNpb24+CiAgPHJpZ2h0c0xpc3Q+CiAgICA8cmlnaHRzIHJpZ2h0c1VSST0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbGljZW5zZXMvYnkvNC4wLyIgcmlnaHRzSWRlbnRpZmllclNjaGVtZT0iU1BEWCIgcmlnaHRzSWRlbnRpZmllcj0iQ0MtQlktNC4wIj5DcmVhdGl2ZSBDb21tb25zIEF0dHJpYnV0aW9uIDQuMCBJbnRlcm5hdGlvbmFsPC9yaWdodHM+CiAgPC9yaWdodHNMaXN0PgogIDxkZXNjcmlwdGlvbnM+CiAgICA8ZGVzY3JpcHRpb24gZGVzY3JpcHRpb25UeXBlPSJBYnN0cmFjdCI+RGVzcGl0ZSByYXBpZCBwcm9ncmVzcyBpbiBhdXRvbm9tb3VzIHdlYiBhZ2VudHMsIGh1bWFuIGludm9sdmVtZW50IHJlbWFpbnMgZXNzZW50aWFsIGZvciBzaGFwaW5nIHByZWZlcmVuY2VzIGFuZCBjb3JyZWN0aW5nIGFnZW50IGJlaGF2aW9yIGFzIHRhc2tzIHVuZm9sZC4gSG93ZXZlciwgY3VycmVudCBhZ2VudGljIHN5c3RlbXMgbGFjayBhIHByaW5jaXBsZWQgdW5kZXJzdGFuZGluZyBvZiB3aGVuIGFuZCB3aHkgaHVtYW5zIGludGVydmVuZSwgb2Z0ZW4gcHJvY2VlZGluZyBhdXRvbm9tb3VzbHkgcGFzdCBjcml0aWNhbCBkZWNpc2lvbiBwb2ludHMgb3IgcmVxdWVzdGluZyB1bm5lY2Vzc2FyeSBjb25maXJtYXRpb24uIEluIHRoaXMgd29yaywgd2UgaW50cm9kdWNlIHRoZSB0YXNrIG9mIG1vZGVsaW5nIGh1bWFuIGludGVydmVudGlvbiB0byBzdXBwb3J0IGNvbGxhYm9yYXRpdmUgd2ViIHRhc2sgZXhlY3V0aW9uLiBXZSBjb2xsZWN0IENvd0NvcnB1cywgYSBkYXRhc2V0IG9mIDQwMCByZWFsLXVzZXIgd2ViIG5hdmlnYXRpb24gdHJhamVjdG9yaWVzIGNvbnRhaW5pbmcgb3ZlciA0LDIwMCBpbnRlcmxlYXZlZCBodW1hbiBhbmQgYWdlbnQgYWN0aW9ucy4gV2UgaWRlbnRpZnkgZm91ciBkaXN0aW5jdCBwYXR0ZXJucyBvZiB1c2VyIGludGVyYWN0aW9uIHdpdGggYWdlbnRzIC0tIGhhbmRzLW9mZiBzdXBlcnZpc2lvbiwgaGFuZHMtb24gb3ZlcnNpZ2h0LCBjb2xsYWJvcmF0aXZlIHRhc2stc29sdmluZywgYW5kIGZ1bGwgdXNlciB0YWtlb3Zlci4gTGV2ZXJhZ2luZyB0aGVzZSBpbnNpZ2h0cywgd2UgdHJhaW4gbGFuZ3VhZ2UgbW9kZWxzIChMTXMpIHRvIGFudGljaXBhdGUgd2hlbiB1c2VycyBhcmUgbGlrZWx5IHRvIGludGVydmVuZSBiYXNlZCBvbiB0aGVpciBpbnRlcmFjdGlvbiBzdHlsZXMsIHlpZWxkaW5nIGEgNjEuNC02My40JSBpbXByb3ZlbWVudCBpbiBpbnRlcnZlbnRpb24gcHJlZGljdGlvbiBhY2N1cmFjeSBvdmVyIGJhc2UgTE1zLiBGaW5hbGx5LCB3ZSBkZXBsb3kgdGhlc2UgaW50ZXJ2ZW50aW9uLWF3YXJlIG1vZGVscyBpbiBsaXZlIHdlYiBuYXZpZ2F0aW9uIGFnZW50cyBhbmQgZXZhbHVhdGUgdGhlbSBpbiBhIHVzZXIgc3R1ZHksIGZpbmRpbmcgYSAzNi44JSBpbmNyZWFzZSBpbiB1c2VyLXJhdGVkIGFnZW50IHVzZWZ1bG5lc3MuIFRvZ2V0aGVyLCBvdXIgcmVzdWx0cyBzaG93IHN0cnVjdHVyZWQgbW9kZWxpbmcgb2YgaHVtYW4gaW50ZXJ2ZW50aW9uIGxlYWRzIHRvIG1vcmUgYWRhcHRpdmUsIGNvbGxhYm9yYXRpdmUgYWdlbnRzLjwvZGVzY3JpcHRpb24+CiAgICA8ZGVzY3JpcHRpb24gZGVzY3JpcHRpb25UeXBlPSJPdGhlciI+UHJlcHJpbnQ8L2Rlc2NyaXB0aW9uPgogIDwvZGVzY3JpcHRpb25zPgo8L3Jlc291cmNlPg==",
+    "url": "https://arxiv.org/abs/2602.17588",
+    "contentUrl": null,
+    "metadataVersion": 3,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "mds",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 0,
+    "viewsOverTime": [],
+    "downloadCount": 0,
+    "downloadsOverTime": [],
+    "referenceCount": 0,
+    "citationCount": 0,
+    "citationsOverTime": [],
+    "partCount": 0,
+    "partOfCount": 0,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2026-02-20T02:54:47.000Z",
+    "registered": "2026-02-20T02:54:47.000Z",
+    "published": "2026",
+    "updated": "2026-07-09T02:04:26.000Z"
+   },
+   "relationships": {
+    "client": {
+     "data": {
+      "id": "arxiv.content",
+      "type": "clients"
+     }
+    },
+    "provider": {
+     "data": {
+      "id": "arxiv",
+      "type": "providers"
+     }
+    },
+    "media": {
+     "data": {
+      "id": "10.48550/arxiv.2602.17588",
+      "type": "media"
+     }
+    },
+    "references": {
+     "data": []
+    },
+    "citations": {
+     "data": []
+    },
+    "parts": {
+     "data": []
+    },
+    "partOf": {
+     "data": []
+    },
+    "versions": {
+     "data": []
+    },
+    "versionOf": {
+     "data": []
+    }
+   }
+  }
+ },
+ "arxiv_abs_page_fields": "200\ntitle | Modeling Distinct Human Interaction in Web Agents\nauthors | Faria Huq, Zora Zhiruo Wang, Zhanqiu Guo, Venu Arvind Arangarajan, Tianyue Ou, Frank Xu, Shuyan Zhou, Graham Neubig, Jeffrey P. Bigham\ndateline | [Submitted on 19 Feb 2026 (v1), last revised 7 Jul 2026 (this version, v4)]\ndoi | https://doi.org/10.48550/arXiv.2602.17588\nhistory | Submission history\nFrom: Faria Huq [view email]\n[v1] Thu, 19 Feb 2026 18:11:28 UTC (14,011 KB)\n[v2] Fri, 27 Feb 2026 05:29:41 UTC (14,011 KB)\n[v3] Sun, 31 May 2026 08:32:10 UTC (13,752 KB)\n[v4] Tue, 7 Jul 2026 23:37:46 UTC (13,752 KB)\n\ncomments | Preprint\n",
+ "fetched": "2026-11-12，curl（OpenAlex、DataCite、PDF）+ 本机 Python playwright 驱动 Edge（摘要页截图），每次请求间隔 4–9 秒"
+}
